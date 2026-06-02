@@ -501,6 +501,33 @@ with tab2:
 
     st.markdown(f"**{len(filtered)} TFs** match current filters.")
 
+    with st.expander("ℹ️ What is the Evidence Score?"):
+        st.markdown("""
+        The **evidence score** is a numeric quality weight (0–1) derived from the
+        [SGD evidence codes](https://www.yeastgenome.org/help/analyze/go-slim-mapping) that
+        describe how each TF's regulatory role was determined. It acts as the **prior for π**:
+        a TF with strong experimental evidence is more likely to have stable, heritable
+        regulatory links.
+
+        | Code | Meaning | Score |
+        |------|---------|-------|
+        | **IDA** | Inferred from Direct Assay | 0.90 |
+        | **IMP** | Inferred from Mutant Phenotype | 0.82 |
+        | **IGI** | Inferred from Genetic Interaction | 0.72 |
+        | **IPI** | Inferred from Physical Interaction | 0.68 |
+        | **IBA** | Inferred from Biological Aspect of Ancestor | 0.58 |
+        | **HDA** | High-throughput Direct Assay | 0.55 |
+        | **IC** | Inferred by Curator | 0.50 |
+        | **TAS** | Traceable Author Statement | 0.35 |
+        | **IEA** | Inferred from Electronic Annotation (automated) | 0.30 |
+        | **NAS** | Non-traceable Author Statement | 0.20 |
+        | **ND** | No biological Data | 0.10 |
+
+        When a TF has multiple evidence codes, the score is the **mean** across all codes.
+        DNA-binding TFs receive a +0.05 bonus; activators a further +0.03, reflecting
+        stronger evidence that their regulatory links are maintained after duplication.
+        """)
+
     # Evidence score distribution
     fig_ev = px.histogram(
         filtered, x="evidence_score", nbins=30,
@@ -755,9 +782,9 @@ with tab4:
     st.markdown("""
 Estimate **π⃗ = (π₁, …, πₖ)** — the per-family probability that regulatory
 links are inherited through gene duplication.
-
-Three methods are available (Scruse et al. Section 4, 6, 9.2):
 """)
+
+    st.markdown("Three estimation methods are available (Scruse et al. Sections 4, 6, 9.2):")
 
     with st.spinner("Loading families…"):
         fam_df4 = _load_tf_families(min_family_size)
@@ -988,189 +1015,392 @@ Three methods are available (Scruse et al. Section 4, 6, 9.2):
 
 with tab5:
     st.header("🧪 Subnetwork Motif Significance Testing")
-    st.markdown("""
+
+    inf_tab, pred_tab = st.tabs(["📊 Inferential Test", "🔮 Predictive Forecast"])
+
+    # ── Inferential Test ─────────────────────────────────────────────
+    with inf_tab:
+        st.markdown("""
 Tests whether a subnetwork motif M of size k is **significantly over- or under-represented**
 in the GRN relative to the gene duplication null model (Scruse et al. Sections 4–6).
 
 **Z-score** = (observed − expected) / std dev  ·  **p-value** via normal approximation.
 """)
 
-    with st.spinner("Loading families…"):
-        fam_df5 = _load_tf_families(min_family_size)
+        with st.spinner("Loading families…"):
+            fam_df5 = _load_tf_families(min_family_size)
 
-    if fam_df5.empty:
-        st.warning("No families found.")
-        st.stop()
+        if fam_df5.empty:
+            st.warning("No families found.")
+            st.stop()
 
-    params5 = estimate_model_parameters(fam_df5, "family_size")
-    m5, n5 = params5["m"], params5["n"]
+        params5 = estimate_model_parameters(fam_df5, "family_size")
+        m5, n5 = params5["m"], params5["n"]
 
-    # Controls
-    col5a, col5b, col5c = st.columns(3)
-    with col5a:
-        k5 = st.slider("Motif size k", 1, min(8, m5), 2, key="k5")
-    with col5b:
-        strat5 = st.selectbox(
-            "Family selection", ["largest", "highest_ev", "balanced", "random"],
-            key="strat5",
-        )
-    with col5c:
-        pi_method5 = st.selectbox(
-            "π estimation method",
-            ["Evidence-based", "MLE (Theorem 4)", "SNP proxy", "Manual"],
-            key="pm5",
-        )
-
-    fams5 = select_motif_families(fam_df5, k5, strategy=strat5)
-    gene_names5 = [f["go_id"] for f in fams5]
-    family_sizes5 = [f["family_size"] for f in fams5]
-    obs_full5 = count_observed_motif_instances(fams5)
-
-    st.markdown(f"**Selected {k5} families:** {', '.join(gene_names5[:4])}{'…' if k5 > 4 else ''}")
-    st.markdown(f"Family sizes: {family_sizes5}  |  Full-duplication count: **{obs_full5:,}**")
-
-    # Get π
-    if pi_method5 == "Evidence-based":
-        pi_res5 = estimate_pi_from_evidence(gene_names5)
-        pi_vec5 = pi_res5["pi_vec"]
-    elif pi_method5 == "MLE (Theorem 4)":
-        pi_res5 = estimate_pi_from_mle(float(obs_full5), m5, n5, gene_names5)
-        pi_vec5 = pi_res5["pi_vec"]
-    elif pi_method5 == "SNP proxy":
-        pi_res5 = estimate_pi_from_snp(gene_names5)
-        pi_vec5 = pi_res5["pi_vec"]
-    else:
-        st.markdown("**Manual π⃗ entry:**")
-        pi_vec5 = []
-        pi_cols = st.columns(k5)
-        for i, col in enumerate(pi_cols):
-            pi_i = col.slider(
-                f"π_{i+1}", 0.0, 1.0,
-                float(fams5[i].get("mean_evidence_score", 0.5)),
-                0.01, key=f"pi_manual_{i}",
+        col5a, col5b, col5c = st.columns(3)
+        with col5a:
+            k5 = st.slider("Motif size k", 1, min(8, m5), 2, key="k5")
+        with col5b:
+            strat5 = st.selectbox(
+                "Family selection", ["largest", "highest_ev", "balanced", "random"],
+                key="strat5",
             )
-            pi_vec5.append(pi_i)
+        with col5c:
+            pi_method5 = st.selectbox(
+                "π estimation method",
+                ["Evidence-based", "MLE (Theorem 4)", "SNP proxy", "Manual"],
+                key="pm5",
+            )
 
-    # Observed count input
-    obs5 = st.number_input(
-        "Observed motif instance count |M(n)|",
-        min_value=0, max_value=max(obs_full5 * 2, 10),
-        value=obs_full5, step=1,
-        help="Under Full Duplication this equals the Cartesian product of family sizes.",
-    )
+        fams5 = select_motif_families(fam_df5, k5, strategy=strat5)
+        gene_names5 = [f["go_id"] for f in fams5]
+        family_sizes5 = [f["family_size"] for f in fams5]
+        obs_full5 = count_observed_motif_instances(fams5)
 
-    # Run analysis
-    if st.button("Run Significance Test", type="primary"):
-        with st.spinner("Computing…"):
-            result5 = full_significance_analysis(pi_vec5, m5, n5, float(obs5), k5)
+        st.markdown(f"**Selected {k5} families:** {', '.join(gene_names5[:4])}{'…' if k5 > 4 else ''}")
+        st.markdown(f"Family sizes: {family_sizes5}  |  Full-duplication count: **{obs_full5:,}**")
 
-        # Show results
+        # Get π
+        if pi_method5 == "Evidence-based":
+            pi_res5 = estimate_pi_from_evidence(gene_names5)
+            pi_vec5 = pi_res5["pi_vec"]
+        elif pi_method5 == "MLE (Theorem 4)":
+            pi_res5 = estimate_pi_from_mle(float(obs_full5), m5, n5, gene_names5)
+            pi_vec5 = pi_res5["pi_vec"]
+        elif pi_method5 == "SNP proxy":
+            pi_res5 = estimate_pi_from_snp(gene_names5)
+            pi_vec5 = pi_res5["pi_vec"]
+        else:
+            st.markdown("**Manual π⃗ entry:**")
+            pi_vec5 = []
+            pi_cols = st.columns(k5)
+            for i, col in enumerate(pi_cols):
+                pi_i = col.slider(
+                    f"π_{i+1}", 0.0, 1.0,
+                    float(fams5[i].get("mean_evidence_score", 0.5)),
+                    0.01, key=f"pi_manual_{i}",
+                )
+                pi_vec5.append(pi_i)
+
+        # Observed count input
+        obs5 = st.number_input(
+            "Observed motif instance count |M(n)|",
+            min_value=0, max_value=max(obs_full5 * 2, 10),
+            value=obs_full5, step=1,
+            help="Under Full Duplication this equals the Cartesian product of family sizes.",
+        )
+
+        # Run analysis
+        if st.button("Run Significance Test", type="primary"):
+            with st.spinner("Computing…"):
+                result5 = full_significance_analysis(pi_vec5, m5, n5, float(obs5), k5)
+
+            st.divider()
+            st.subheader("Results")
+
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Observed |M(n)|", f"{obs5:,}")
+            c2.metric("Expected (Full Dup, Thm 1)",
+                      f"{result5['expected_full']:,.2f}",
+                      delta=f"{obs5 - result5['expected_full']:+.1f}")
+            c3.metric(f"Expected (Partial Dup, Thm 4, π̂={result5['pi_hat']})",
+                      f"{result5['expected_partial']:,.2f}",
+                      delta=f"{obs5 - result5['expected_partial']:+.1f}")
+
+            c4, c5, c6, c7 = st.columns(4)
+            c4.metric("Z-score (Full Dup)", result5["z_full"])
+            c5.metric("p-value (Full Dup)", result5["p_full"])
+            c6.metric("Z-score (Partial Dup)", result5["z_partial"])
+            c7.metric("p-value (Partial Dup)", result5["p_partial"])
+
+            sig_col1, sig_col2 = st.columns(2)
+            with sig_col1:
+                sig = result5["sig_full"]
+                colour = "🟢" if sig == "***" else "🟡" if sig in ("**", "*") else "⚪"
+                st.markdown(f"**Full Duplication significance:** {colour} `{sig}`")
+            with sig_col2:
+                sig2 = result5["sig_partial"]
+                colour2 = "🟢" if sig2 == "***" else "🟡" if sig2 in ("**", "*") else "⚪"
+                st.markdown(f"**Partial Duplication significance:** {colour2} `{sig2}`")
+
+            st.markdown(
+                f'<div class="result-box">{result5["interpretation"]}</div>',
+                unsafe_allow_html=True,
+            )
+
+            st.divider()
+            st.subheader("Variance Decomposition")
+            var_df = pd.DataFrame([
+                {
+                    "Model": "Full Duplication (Corollary 2)",
+                    "Expected": result5["expected_full"],
+                    "Std Dev": result5["std_full"],
+                    "Variance": result5["variance_full"],
+                    "Lower (−2σ)": result5["expected_full"] - 2 * result5["std_full"],
+                    "Upper (+2σ)": result5["expected_full"] + 2 * result5["std_full"],
+                },
+                {
+                    "Model": "Binary Inheritance (Corollary 16)",
+                    "Expected": result5["expected_partial"],
+                    "Std Dev": result5["std_binary"],
+                    "Variance": result5["variance_binary"],
+                    "Lower (−2σ)": result5["expected_partial"] - 2 * result5["std_binary"],
+                    "Upper (+2σ)": result5["expected_partial"] + 2 * result5["std_binary"],
+                },
+            ])
+            st.dataframe(var_df.set_index("Model"), use_container_width=True)
+
+            fig5 = go.Figure()
+            for label, mean_, std_, colour_ in [
+                ("Full Dup null", result5["expected_full"], result5["std_full"], "#1f77b4"),
+                ("Partial Dup null", result5["expected_partial"], result5["std_binary"], "#ff7f0e"),
+            ]:
+                x_range = np.linspace(max(0, mean_ - 4 * std_), mean_ + 4 * std_, 200)
+                y_range = np.exp(-0.5 * ((x_range - mean_) / max(std_, 1e-6)) ** 2)
+                y_range /= y_range.max()
+                fig5.add_trace(go.Scatter(
+                    x=x_range, y=y_range, name=label,
+                    line=dict(color=colour_, width=2), fill="tozeroy",
+                    fillcolor=colour_.replace(")", ",0.15)").replace("rgb(", "rgba("),
+                ))
+            fig5.add_vline(x=obs5, line_dash="dash", line_color="red", line_width=2,
+                           annotation_text=f"Observed = {obs5}")
+            fig5.update_layout(title="Observed Count vs Null Model Distributions",
+                               xaxis_title="|M(n)| count", yaxis_title="Relative density",
+                               height=320, margin=dict(t=50, b=30))
+            st.plotly_chart(fig5, use_container_width=True)
+
+            p_range = np.linspace(0.05, 1.0, 20)
+            s_range = list(range(1, 21))
+            f_matrix = np.array([[f_func(p, s) for s in s_range] for p in p_range])
+            fig_f = px.imshow(f_matrix,
+                              x=[str(s) for s in s_range], y=[f"{p:.2f}" for p in p_range],
+                              labels={"x": "Family size s", "y": "Inheritance prob p", "color": "f(p,s)"},
+                              title="f(p,s) = Γ(p+s) / [Γ(s)Γ(p+1)]  (Lemma 4)",
+                              color_continuous_scale="Blues", aspect="auto")
+            fig_f.update_layout(height=320, margin=dict(t=50, b=20))
+            st.plotly_chart(fig_f, use_container_width=True)
+
+            with st.expander("📋 Full result JSON"):
+                st.json(result5)
+
+            st.divider()
+            st.info(
+                "**Is this predictive?**  \n"
+                "The estimator is **inferential, not predictive**. It characterises the *current* "
+                "state of the yeast GRN — how much of its regulatory structure is consistent with "
+                "inherited duplication links — rather than forecasting the outcome of a specific "
+                "future duplication event. The estimated π⃗ can be interpreted as: "
+                "*given the observed network, what inheritance rate would a duplication model need "
+                "to produce networks like this one?* "
+                "To see forward projections under continued duplication, switch to the "
+                "**🔮 Predictive Forecast** tab.",
+                icon="ℹ️",
+            )
+
+    # ── Predictive Forecast ──────────────────────────────────────────
+    with pred_tab:
+        st.markdown("""
+### 🔮 Predictive Forecast
+**How is this different from the π Estimator tab?**
+
+| | π Estimator | Predictive Forecast |
+|---|---|---|
+| **Question asked** | What is π now? | What will the network look like later? |
+| **Direction** | Backward — fits π to the *current* observed network | Forward — projects *future* motif counts given π |
+| **Output** | π⃗ values and sensitivity curves | Growth trajectories and target-count queries |
+| **Use case** | Characterise the current GRN | Forecast evolutionary outcomes under duplication |
+
+This tab takes the π⃗ you estimate from real data and uses it to project how the
+expected number of regulatory motifs will grow as the yeast genome expands through
+further gene duplication events.
+
+> *Given the current inheritance rate, how many motif instances should we expect
+> after N more duplications? And how large would the genome need to be to reach
+> a target count?*
+""")
+
+        st.info(
+            "**Forward projection** under the Partial Duplication model (Theorem 4). "
+            "Assumes π⃗ remains stable and that each duplication event adds one TF "
+            "to the network (n increases by 1 per event). "
+            "The Inferential Test tab tells you *where you are*; this tab tells you *where you're going*.",
+            icon="🔮",
+        )
+
+        with st.spinner("Loading families…"):
+            fam_df_p = _load_tf_families(min_family_size)
+
+        if fam_df_p.empty:
+            st.warning("No families found.")
+            st.stop()
+
+        params_p = estimate_model_parameters(fam_df_p, "family_size")
+        m_p, n_p = params_p["m"], params_p["n"]
+
         st.divider()
-        st.subheader("Results")
+        st.subheader("Step 1 — Configure the motif")
+        pc1, pc2, pc3 = st.columns(3)
+        with pc1:
+            k_p = st.slider("Motif size k", 1, min(8, m_p), 2, key="k_pred")
+        with pc2:
+            strat_p = st.selectbox(
+                "Family selection", ["largest", "highest_ev", "balanced", "random"],
+                key="strat_pred",
+            )
+        with pc3:
+            pi_method_p = st.selectbox(
+                "π estimation method",
+                ["Evidence-based", "MLE (Theorem 4)", "Manual"],
+                key="pm_pred",
+            )
 
-        # Metrics row 1: expectations
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Observed |M(n)|", f"{obs5:,}")
-        c2.metric("Expected (Full Dup, Thm 1)",
-                  f"{result5['expected_full']:,.2f}",
-                  delta=f"{obs5 - result5['expected_full']:+.1f}")
-        c3.metric(f"Expected (Partial Dup, Thm 4, π̂={result5['pi_hat']})",
-                  f"{result5['expected_partial']:,.2f}",
-                  delta=f"{obs5 - result5['expected_partial']:+.1f}")
+        fams_p = select_motif_families(fam_df_p, k_p, strategy=strat_p)
+        gene_names_p = [f["go_id"] for f in fams_p]
+        obs_full_p = count_observed_motif_instances(fams_p)
 
-        # Metrics row 2: significance
-        c4, c5, c6, c7 = st.columns(4)
-        c4.metric("Z-score (Full Dup)", result5["z_full"])
-        c5.metric("p-value (Full Dup)", result5["p_full"])
-        c6.metric("Z-score (Partial Dup)", result5["z_partial"])
-        c7.metric("p-value (Partial Dup)", result5["p_partial"])
+        if pi_method_p == "Evidence-based":
+            pi_res_p = estimate_pi_from_evidence(gene_names_p)
+            pi_vec_p = pi_res_p["pi_vec"]
+        elif pi_method_p == "MLE (Theorem 4)":
+            pi_res_p = estimate_pi_from_mle(float(obs_full_p), m_p, n_p, gene_names_p)
+            pi_vec_p = pi_res_p["pi_vec"]
+        else:
+            st.markdown("**Manual π⃗ entry:**")
+            pi_vec_p = []
+            pcols = st.columns(k_p)
+            for i, col in enumerate(pcols):
+                pi_i = col.slider(
+                    f"π_{i+1}", 0.0, 1.0,
+                    float(fams_p[i].get("mean_evidence_score", 0.5)),
+                    0.01, key=f"pi_pred_{i}",
+                )
+                pi_vec_p.append(pi_i)
 
-        # Significance badges
-        sig_col1, sig_col2 = st.columns(2)
-        with sig_col1:
-            sig = result5["sig_full"]
-            colour = "🟢" if sig == "***" else "🟡" if sig in ("**", "*") else "⚪"
-            st.markdown(f"**Full Duplication significance:** {colour} `{sig}`")
-        with sig_col2:
-            sig2 = result5["sig_partial"]
-            colour2 = "🟢" if sig2 == "***" else "🟡" if sig2 in ("**", "*") else "⚪"
-            st.markdown(f"**Partial Duplication significance:** {colour2} `{sig2}`")
-
-        # Interpretation
+        pi_hat_p = sum(pi_vec_p)
         st.markdown(
-            f'<div class="result-box">{result5["interpretation"]}</div>',
-            unsafe_allow_html=True,
+            f"Selected **{k_p} families**: {', '.join(gene_names_p[:4])}{'…' if k_p > 4 else ''}  \n"
+            f"Current n = **{n_p}** TFs · π̂ = **{pi_hat_p:.4f}**"
         )
 
         st.divider()
-
-        # Variance / std breakdown
-        st.subheader("Variance Decomposition")
-        var_df = pd.DataFrame([
-            {
-                "Model": "Full Duplication (Corollary 2)",
-                "Expected": result5["expected_full"],
-                "Std Dev": result5["std_full"],
-                "Variance": result5["variance_full"],
-                "Lower (−2σ)": result5["expected_full"] - 2 * result5["std_full"],
-                "Upper (+2σ)": result5["expected_full"] + 2 * result5["std_full"],
-            },
-            {
-                "Model": "Binary Inheritance (Corollary 16)",
-                "Expected": result5["expected_partial"],
-                "Std Dev": result5["std_binary"],
-                "Variance": result5["variance_binary"],
-                "Lower (−2σ)": result5["expected_partial"] - 2 * result5["std_binary"],
-                "Upper (+2σ)": result5["expected_partial"] + 2 * result5["std_binary"],
-            },
-        ])
-        st.dataframe(var_df.set_index("Model"), use_container_width=True)
-
-        # Visualisation: observed vs expected distribution
-        fig5 = go.Figure()
-        for label, mean_, std_, colour_ in [
-            ("Full Dup null", result5["expected_full"], result5["std_full"], "#1f77b4"),
-            ("Partial Dup null", result5["expected_partial"], result5["std_binary"], "#ff7f0e"),
-        ]:
-            x_range = np.linspace(
-                max(0, mean_ - 4 * std_), mean_ + 4 * std_, 200
+        st.subheader("Step 2 — Set the forecast horizon")
+        ph1, ph2 = st.columns(2)
+        with ph1:
+            extra_dups = st.slider(
+                "Additional duplication events (Δn)",
+                min_value=10, max_value=2000, value=200, step=10,
+                help="Each event adds one TF to the network (n increases by 1).",
             )
-            y_range = np.exp(-0.5 * ((x_range - mean_) / max(std_, 1e-6)) ** 2)
-            y_range /= y_range.max()
-            fig5.add_trace(go.Scatter(
-                x=x_range, y=y_range, name=label,
-                line=dict(color=colour_, width=2), fill="tozeroy",
-                fillcolor=colour_.replace(")", ",0.15)").replace("rgb(", "rgba("),
-            ))
-        fig5.add_vline(
-            x=obs5, line_dash="dash", line_color="red", line_width=2,
-            annotation_text=f"Observed = {obs5}",
-        )
-        fig5.update_layout(
-            title="Observed Count vs Null Model Distributions",
-            xaxis_title="|M(n)| count",
-            yaxis_title="Relative density",
-            height=320, margin=dict(t=50, b=30),
-        )
-        st.plotly_chart(fig5, use_container_width=True)
+        with ph2:
+            target_count = st.number_input(
+                "Target motif count (optional inverse query)",
+                min_value=0, value=0, step=100,
+                help="If > 0, the chart will mark the n needed to reach this count.",
+            )
 
-        # f(p,s) heatmap for single-gene motifs
-        st.subheader("Lemma 4: f(p, s) — Single-gene motif expected count")
-        p_range = np.linspace(0.05, 1.0, 20)
-        s_range = list(range(1, 21))
-        f_matrix = np.array([[f_func(p, s) for s in s_range] for p in p_range])
-        fig_f = px.imshow(
-            f_matrix,
-            x=[str(s) for s in s_range],
-            y=[f"{p:.2f}" for p in p_range],
-            labels={"x": "Family size s", "y": "Inheritance prob p", "color": "f(p,s)"},
-            title="f(p,s) = Γ(p+s) / [Γ(s)Γ(p+1)]  (Lemma 4)",
-            color_continuous_scale="Blues",
-            aspect="auto",
-        )
-        fig_f.update_layout(height=320, margin=dict(t=50, b=20))
-        st.plotly_chart(fig_f, use_container_width=True)
+        # Build trajectory
+        n_values = list(range(n_p, n_p + extra_dups + 1, max(1, extra_dups // 100)))
+        e_full_traj    = [expected_full(k_p, m_p, nv) for nv in n_values]
+        e_partial_traj = [expected_partial(pi_hat_p, m_p, nv) for nv in n_values]
+        std_full_traj  = [variance_full(k_p, m_p, nv) ** 0.5 for nv in n_values]
 
-        # Full raw result
-        with st.expander("📋 Full result JSON"):
-            st.json(result5)
+        traj_df = pd.DataFrame({
+            "n (total TFs)":          n_values,
+            "E[|M|] Full Dup":        e_full_traj,
+            "E[|M|] Partial Dup":     e_partial_traj,
+            "±2σ upper (Full Dup)":   [e + 2*s for e, s in zip(e_full_traj, std_full_traj)],
+            "±2σ lower (Full Dup)":   [max(0, e - 2*s) for e, s in zip(e_full_traj, std_full_traj)],
+        })
+
+        # Growth trajectory chart
+        fig_pred = go.Figure()
+
+        # Full Dup ±2σ band
+        fig_pred.add_trace(go.Scatter(
+            x=n_values + n_values[::-1],
+            y=traj_df["±2σ upper (Full Dup)"].tolist() + traj_df["±2σ lower (Full Dup)"].tolist()[::-1],
+            fill="toself", fillcolor="rgba(31,119,180,0.10)",
+            line=dict(color="rgba(0,0,0,0)"), name="±2σ Full Dup",
+            showlegend=True,
+        ))
+        fig_pred.add_trace(go.Scatter(
+            x=n_values, y=e_full_traj,
+            name=f"Full Duplication (π=1)",
+            line=dict(color="#1f77b4", width=2, dash="dash"),
+        ))
+        fig_pred.add_trace(go.Scatter(
+            x=n_values, y=e_partial_traj,
+            name=f"Partial Duplication (π̂={pi_hat_p:.3f})",
+            line=dict(color="#d62728", width=2.5),
+        ))
+
+        # Mark current n
+        fig_pred.add_vline(
+            x=n_p, line_dash="dot", line_color="grey",
+            annotation_text=f"Current n={n_p}",
+        )
+
+        # Mark target count if specified
+        if target_count > 0:
+            # Find the n where partial dup first exceeds target
+            n_target = None
+            for nv, ev in zip(n_values, e_partial_traj):
+                if ev >= target_count:
+                    n_target = nv
+                    break
+            if n_target:
+                fig_pred.add_hline(
+                    y=target_count, line_dash="dot", line_color="#2ca02c",
+                    annotation_text=f"Target: {target_count:,}",
+                )
+                fig_pred.add_vline(
+                    x=n_target, line_dash="dot", line_color="#2ca02c",
+                    annotation_text=f"n≈{n_target} needed",
+                )
+
+        fig_pred.update_layout(
+            title=f"Predicted Motif Count Growth — k={k_p} motif, π̂={pi_hat_p:.3f}",
+            xaxis_title="n (total TFs in network)",
+            yaxis_title="E[|M(n)|]",
+            height=380, margin=dict(t=50, b=30),
+            legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
+        )
+        st.plotly_chart(fig_pred, use_container_width=True)
+
+        # Prediction summary at key horizons
+        st.subheader("Forecast Summary")
+        horizons = [n_p, n_p + extra_dups // 4, n_p + extra_dups // 2,
+                    n_p + 3 * extra_dups // 4, n_p + extra_dups]
+        rows = []
+        for nv in horizons:
+            ef = expected_full(k_p, m_p, nv)
+            ep = expected_partial(pi_hat_p, m_p, nv)
+            sf = variance_full(k_p, m_p, nv) ** 0.5
+            rows.append({
+                "n (total TFs)":              nv,
+                "Δn (extra duplications)":    nv - n_p,
+                "E[|M|] Full Dup":            round(ef, 2),
+                "E[|M|] Partial Dup (π̂)":    round(ep, 4),
+                "Fold change vs current":     round(ep / max(expected_partial(pi_hat_p, m_p, n_p), 1e-9), 2),
+                "±2σ Full Dup":               f"{max(0, ef-2*sf):.1f} – {ef+2*sf:.1f}",
+            })
+        st.dataframe(pd.DataFrame(rows).set_index("n (total TFs)"), use_container_width=True)
+
+        # Inverse query result
+        if target_count > 0:
+            if n_target:
+                st.success(
+                    f"To reach **{target_count:,}** expected motif instances under "
+                    f"Partial Duplication (π̂ = {pi_hat_p:.4f}), the network would need "
+                    f"approximately **n ≈ {n_target}** TFs "
+                    f"(**{n_target - n_p} more duplications** beyond current n = {n_p}).",
+                    icon="🎯",
+                )
+            else:
+                st.warning(
+                    f"The target count of {target_count:,} is not reached within "
+                    f"the forecast horizon (n = {n_p + extra_dups}). "
+                    f"Try increasing Δn or lowering the target.",
+                    icon="⚠️",
+                )

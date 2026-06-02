@@ -6,7 +6,7 @@ Implementation of the mathematical framework from:
 > Ashley Scruse, Jonathan Arnold, Robert Robinson
 > arXiv:2405.03148v1 · University of Georgia · May 2024
 
-Applied to *Saccharomyces cerevisiae* data from the [Saccharomyces Genome Database (SGD)](https://www.yeastgenome.org/) using 127 curated transcription factors from [YEASTRACT](https://www.yeastract.com/).
+Applied to *Saccharomyces cerevisiae* data from three curated sources: **179 transcription factors** drawn from [JASPAR 2024](https://jaspar.elixir.no/) (177 TFs with experimentally validated position frequency matrices), [YEASTRACT](https://www.yeastract.com/) (127 TFs with consensus binding sequences), and gene annotations from the [Saccharomyces Genome Database (SGD)](https://www.yeastgenome.org/).
 
 ---
 
@@ -17,7 +17,7 @@ Applied to *Saccharomyces cerevisiae* data from the [Saccharomyces Genome Databa
 pip install -r requirements.txt
 
 # 2. Launch the interactive frontend
-streamlit run app.py
+python -m streamlit run app.py
 
 # 3. Or use the CLI
 python main.py summary
