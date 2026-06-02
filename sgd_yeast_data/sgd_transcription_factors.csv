@@ -1,0 +1,733 @@
+gene_name,gene_id,full_name,synonyms,tf_function_go,tf_process_go,n_function_terms,n_process_terms,evidence_codes,has_dna_binding,is_activator,is_repressor
+ABF1,S000001595,DNA binding protein with possible chromatin-reorganizing activity,YKL112W|SBF1|GFI|BAF1|OBF1|REB2|DNA-binding protein ABF1|SBF-B|EBF2,GO:0001228|GO:0003677,GO:0000122|GO:0045944,11,15,HDA|IDA|IEA|IGI|IMP,True,True,True
+ABF2,S000004676,Mitochondrial DNA-binding protein,YMR072W|p19|HM|mtTFA|DNA-binding protein ABF2,GO:0003677,,6,3,HDA|IBA|IDA|IEA|IMP,True,False,False
+ACA1,S000000847,ATF/CREB family basic leucine zipper (bZIP) transcription factor,YER045C,GO:0000981|GO:0001228|GO:0003677|GO:0003700,GO:0006355|GO:0006357|GO:0045944,7,3,IBA|IC|IDA|IEA,True,True,False
+ACE2,S000004121,Transcription factor required for septum destruction after cytokinesis,YLR131C|DNA-binding transcription factor ACE2,GO:0000981|GO:0003677,GO:0000122|GO:0006357|GO:0045944,7,7,HDA|IBA|IDA|IEA|IMP,True,True,True
+ADA2,S000002856,Transcription coactivator,YDR448W|SWI8|chromatin-binding transcription regulator ADA2,,GO:0006357|GO:0045893,9,12,IBA|IDA|IEA|IMP,False,False,False
+ADF1,S000028518,Transcriptional repressor encoded by the FYV5 antisense strand,YCL058W-A,,GO:0000122,1,2,IDA|IEA|IMP,False,False,True
+ADR1,S000002624,Carbon source-responsive zinc-finger transcription factor,YDR216W|DNA-binding transcription factor ADR1,GO:0000981|GO:0001228|GO:0003677,GO:0006357|GO:0045944,18,13,HDA|IBA|IDA|IEA|IMP|IPI,True,True,False
+AFT1,S000003039,Transcription factor involved in iron utilization and homeostasis,YGL071W|RCS1|DNA-binding transcription factor AFT1,GO:0000981,GO:0000122|GO:0045944,6,11,HDA|IDA|IEA|IMP,False,True,True
+AFT2,S000006123,Iron-regulated transcriptional activator,YPL202C,GO:0000981|GO:0001228,GO:0045944,6,8,HDA|IC|IDA|IEA|IGI|IMP,False,True,False
+APN1,S000001597,Major apurinic/apyrimidinic endonuclease,YKL114C|DNA-(apurinic or apyrimidinic site) lyase APN1,GO:0003677,,12,7,IBA|IDA|IEA|IMP,True,False,False
+APN2,S000000115,Class II abasic (AP) endonuclease involved in repair of DNA damage,YBL019W|ETH1|DNA-(apurinic or apyrimidinic site) lyase APN2,GO:0003677,,13,11,IBA|IC|IDA|IEA|IGI,True,False,False
+"ARG5,6",S000000871,Acetylglutamate kinase and N-acetyl-gamma-glutamyl-phosphate reductase,YER069W|argB|bifunctional acetylglutamate kinase/N-acetyl-gamma-glutamyl-phosphate reductase|argC,,GO:0006355,21,12,HDA|IBA|IDA|IEA|IMP|TAS,False,False,False
+ARG80,S000004645,Transcription factor involved in regulating arginine-responsive genes,YMR042W|ARGRI|ARGR1,GO:0000981|GO:0003677,GO:0006357|GO:0045944,14,7,HDA|IBA|IC|IDA|IEA|IMP|ISA,True,True,False
+ARG81,S000004565,Zinc finger transcription factor involved in arginine-responsive genes,YML099C|ARGRII|ARGR2,GO:0000981|GO:0003677,GO:0006355|GO:0006357,7,5,IDA|IEA|IMP,True,False,False
+ARG82,S000002580,Inositol polyphosphate multikinase (IPMK),YDR173C|ARGRIII|ARGR3|IPK2|inositol polyphosphate multikinase,,GO:0000122|GO:0045944,23,14,IBA|IDA|IEA|IMP|IPI,False,True,True
+ARO80,S000002829,Zinc finger transcriptional activator of the Zn2Cys6 family,YDR421W,GO:0000981|GO:0003677,GO:0006355|GO:0045944,10,11,HDA|IBA|IDA|IEA|IMP|ISS,True,True,False
+ARP4,S000003617,Nuclear actin-related protein involved in chromatin remodeling,YJL081C|ACT3,,GO:0006355|GO:0006357,8,15,IBA|IDA|IEA|IMP|IPI,False,False,False
+ARP5,S000005004,Nuclear actin-related protein involved in chromatin remodeling,YNL059C,,GO:0006355,1,5,IBA|IDA|IEA|IMP|IPI,False,False,False
+ARP7,S000006238,Component of both the SWI/SNF and RSC chromatin remodeling complexes,YPR034W|RSC11|SWP61,,GO:0006357|GO:0045944,1,9,IBA|IDA|IEA|IMP,False,True,False
+ARP8,S000005667,Nuclear actin-related protein involved in chromatin remodeling,YOR141C,,GO:0006355,3,8,IBA|IDA|IEA|IMP|IPI,False,False,False
+ARP9,S000004636,Component of both the SWI/SNF and RSC chromatin remodeling complexes,YMR033W|RSC12|SWP59,,GO:0006357|GO:0045944,0,9,IBA|IDA|IEA|IMP,False,True,False
+ARR1,S000006403,Transcriptional activator of the basic leucine zipper (bZIP) family,YPR199C|ACR1|YAP8,GO:0001228|GO:0003677,,5,10,HMP|IDA|IEA|IGI|IMP,True,True,False
+ASG1,S000001392,Zinc cluster protein proposed to be a transcriptional regulator,YIL130W,GO:0000981|GO:0003677,GO:0006351|GO:0006355|GO:0045944,10,5,HDA|IBA|IEA|ND,True,True,False
+ASH1,S000001668,Component of the Rpd3L histone deacetylase complex,YKL185W|DNA-binding transcription repressor ASH1,GO:0001227|GO:0003677,GO:0000122|GO:0006355,8,8,HDA|IDA|IEA|IMP,True,False,True
+ASM4,S000002246,FG-nucleoporin component of central core of nuclear pore complex (NPC),YDL088C|NUP59|FG-nucleoporin ASM4,,GO:0006355,8,13,IBA|IDA|IEA|IGI|IMP|IPI,False,False,False
+AZF1,S000005639,Zinc-finger transcription factor,YOR113W,GO:0001228|GO:0003677|GO:0003700,GO:0006357|GO:0045944,10,7,HDA|IBA|IDA|IEA|IMP,True,True,False
+BAS1,S000001807,Myb-related transcription factor,YKR099W,GO:0000981|GO:0003677,GO:0006355|GO:0045944,7,6,IBA|IDA|IEA|IGI|IMP,True,True,False
+BMH1,S000000979,"14-3-3 protein, major isoform",YER177W|APR6|14-3-3 family protein BMH1,,GO:0000122,3,12,HDA|IDA|IGI|IMP|IPI,False,False,True
+BRE1,S000002232,E3 ubiquitin ligase,YDL074C|E3 ubiquitin-protein ligase BRE1,,GO:0006366,6,17,IDA|IEA|IGI|IMP|IPI,False,False,False
+BRF1,S000003478,TFIIIB B-related factor,YGR246C|PCF4|TDS4|TFIIIB70|transcription factor TFIIIB subunit BRF1,GO:0003677,,16,11,IBA|IC|IDA|IEA|IMP|IPI,True,False,False
+BUD14,S000000069,Protein involved in bud-site selection,YAR014C|protein phosphatase regulator BUD14,,GO:0006355,2,16,HDA|IBA|IDA|IEA|IGI|IMP,False,False,False
+BUD32,S000003494,Protein kinase,YGR262C|LDB14|serine/threonine protein kinase BUD32,,GO:0045944,16,16,HDA|HMP|IBA|IDA|IEA|IGI|IMP|IPI,False,True,False
+BUR2,S000004216,Cyclin for the Sgv1p (Bur1p) protein kinase,YLR226W|CST4,,GO:0006357,4,12,HDA|IBA|IDA|IEA|IMP|IPI,False,False,False
+BUR6,S000000961,Subunit of a heterodimeric NC2 transcription regulator complex,YER159C|NCB1|negative cofactor 2 transcription regulator complex subunit BUR6,,GO:0000122|GO:0006355|GO:0006366|GO:0045944,13,12,IBA|IDA|IEA|IGI|IMP|IPI,False,True,True
+BYE1,S000001488,Negative regulator of transcription elongation,YKL005C,,GO:0000122|GO:0006351,5,9,IBA|IC|IDA|IEA|IGI|IMP,False,False,True
+CAD1,S000002831,AP-1-like basic leucine zipper (bZIP) transcriptional activator,YDR423C|YAP2,GO:0001228|GO:0003677|GO:0003700,GO:0006355|GO:0045944,4,4,IDA|IEA|IGI,True,True,False
+CAF16,S000001866,Part of evolutionarily-conserved CCR4-NOT regulatory complex,YFL028C|putative ATP-binding cassette family ATPase CAF16,,GO:0006357,4,2,HDA|IBA|IDA|IEA|IMP|ISS,False,False,False
+CAF4,S000001744,WD40 repeat-containing protein associated with the CCR4-NOT complex,YKR036C,,GO:0006357,1,11,HDA|IBA|IDA|IEA|IGI|IMP|IPI|ND,False,False,False
+CAM1,S000005969,One of two isoforms of the gamma subunit of eEF1B,YPL048W|TEF3|CPBP|translation elongation factor EF1B gamma,GO:0003700,GO:0045944,8,12,HDA|IBA|IDA|IEA|IGI|IMP,False,True,False
+CAT8,S000004893,Zinc cluster transcriptional activator,YMR280C|DIL1|MSP8|DNA-binding transcription factor CAT8,GO:0000981|GO:0001228|GO:0003677,GO:0006351|GO:0006355|GO:0045944,12,15,HDA|IC|IDA|IEA|IMP,True,True,False
+CBF1,S000003821,Basic helix-loop-helix (bHLH) protein,YJR060W|CP1|CEP1|CPF1|GFII,GO:0001227|GO:0001228|GO:0003677|GO:0003700,GO:0000122|GO:0006357|GO:0045944,16,20,HDA|IBA|IDA|IEA|IGI|IMP|IPI,True,True,True
+CBF2,S000003372,Essential kinetochore protein,YGR140W|CSL5|CBF3A|CEP2|CTF14|NDC10,GO:0003677,,3,3,HDA|IDA|IEA|IMP,True,False,False
+CBF5,S000004165,Pseudouridine synthase catalytic subunit of box H/ACA snoRNPs,YLR175W|pseudouridine synthase CBF5,GO:0003677,,12,19,HDA|IBA|IC|IDA|IEA|IMP|IPI|ISA,True,False,False
+CCL1,S000006229,Cyclin partner of the cyclin-dependent kinase (CDK) Kin28p,YPR025C|TFIIH complex kinase subunit CCL1,,GO:0006351|GO:0006357|GO:0006366,4,12,HDA|IBA|IDA|IEA|IGI|IMP,False,False,False
+CCR4,S000000019,Component of the CCR4-NOT transcriptional complex,YAL021C|FUN27|NUT21|CCR4-NOT core exoribonuclease subunit CCR4,,GO:0006357,12,29,IBA|IDA|IEA|IGI|IMP|IPI,False,False,False
+CDC13,S000002379,Single stranded DNA-binding protein found at TG1-3 telomere G-tails,YDL220C|EST4|telomere-binding protein CDC13,GO:0003677,,11,18,IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+CDC28,S000000364,Cyclin-dependent kinase (CDK) catalytic subunit,YBR160W|CDK1|HSL5|SRM5|cyclin-dependent serine/threonine-protein kinase CDC28,,GO:0000122|GO:0045892|GO:0045893|GO:0045944,32,77,HDA|IBA|IDA|IEA|IGI|IMP,False,True,True
+CDC36,S000002324,"Component of the CCR4-NOT core complex, involved in mRNA decapping",YDL165W|DNA19|NOT2|CCR4-NOT core subunit CDC36,,GO:0006355,1,11,IDA|IEA|IMP|IPI|ND,False,False,False
+CDC39,S000000689,Subunit of the CCR4-NOT1 core complex,YCR093W|NOT1|ROS1|SMD6|CCR4-NOT core subunit CDC39,,GO:0006357,2,17,IBA|IDA|IEA|IGI|IMP|IPI,False,False,False
+CDC9,S000002323,DNA ligase I found in nucleus and mitochondria,YDL164C|MMS8|DNA ligase (ATP) CDC9,GO:0003677,,18,29,HDA|IBA|IDA|IEA|IMP,True,False,False
+CEF1,S000004826,Essential splicing factor,YMR213W|NTC85,GO:0003677,,3,5,IBA|IC|IDA|IEA|IMP,True,False,False
+CEG1,S000003098,Guanylyltransferase involved in mRNA 5' capping,YGL130W|mRNA guanylyltransferase,,GO:0045944,9,9,IBA|IEA|IGI|IMP|IPI,False,True,False
+CEP3,S000004778,Essential kinetochore protein,YMR168C|CBF3|CBF3B|CSL1,GO:0000981|GO:0003677,GO:0006355|GO:0006357,8,5,IBA|IDA|IEA|IMP,True,False,False
+CGI121,S000004500,Component of the EKC/KEOPS complex,YML036W,,GO:0045944,1,13,IBA|IDA|IEA|IGI|IMP|IPI|ND,False,True,False
+CHA4,S000004088,DNA binding transcriptional activator,YLR098C|SIL2|SIL3,GO:0000981|GO:0003677|GO:0003700,GO:0006351|GO:0006355|GO:0006357|GO:0045893,10,6,HDA|IC|IDA|IEA|IMP,True,False,False
+CHD1,S000000966,Chromatin remodeler that regulates various aspects of transcription,YER164W|chromatin-remodeling ATPase CHD1,GO:0003677,,15,30,HDA|IDA|IEA|IGI|IMP|IPI,True,False,False
+CHL1,S000005929,Probable DNA helicase,YPL008W|MCM12|CTF1|LPA9|DNA helicase,GO:0003677,,19,14,IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+CHS5,S000004322,Component of the exomer complex,YLR330W|CAL3,,GO:0006355,2,11,HDA|IBA|IDA|IEA|IGI|IMP|IPI,False,False,False
+CIN5,S000005554,Basic leucine zipper (bZIP) transcription factor of the yAP-1 family,YOR028C|HAL6|YAP4,GO:0003677|GO:0003700,GO:0006355|GO:0006357,6,7,HDA|IDA|IEA|IGI|IMP|ISA,True,False,False
+CKS1,S000000339,Cyclin-dependent protein kinase regulatory subunit and adaptor,YBR135W|cyclin-dependent protein kinase regulatory subunit CKS1,,GO:0006357|GO:0045944,9,12,HDA|IBA|IDA|IEA|IMP,False,True,False
+CLA4,S000005242,Cdc42p-activated signal transducing kinase,YNL298W|ERC10|serine/threonine protein kinase CLA4,,GO:0000122,16,22,HDA|IBA|IDA|IEA|IGI|IMP,False,False,True
+CMR1,S000002315,"Nuclear protein with role in transcription, protein quality control",YDL156W,GO:0003677,,3,4,HDA|IBA|IDA|IEA|IMP,True,False,False
+CMR3,S000006217,Putative zinc finger protein,YPR013C,GO:0000981|GO:0003677,GO:0006357,5,2,HDA|IBA|IDA|IEA|ND,True,False,False
+COM2,S000000932,Transcription factor that binds IME1 Upstream Activation Signal (UAS),YER130C,GO:0000981|GO:0003677,,4,4,IBA|IEA|IMP|ND,True,False,False
+CRF1,S000002631,Transcriptional corepressor,YDR223W,,GO:0006357,3,4,IBA|IDA|IEA|IMP|IPI,False,False,False
+CRP1,S000001189,Protein that binds to cruciform DNA structures,YHR146W,GO:0003677,,3,3,IBA|IC|IDA|IEA|ND,True,False,False
+CRZ1,S000004972,"Transcription factor, activates transcription of stress response genes",YNL027W|HAL8|TCN1|DNA-binding transcription factor CRZ1,GO:0000981|GO:0001228|GO:0003677,GO:0006355|GO:0045944,8,22,HDA|IBA|IDA|IEA|IGI|IMP,True,True,False
+CSE2,S000005293,Subunit of the RNA polymerase II mediator complex,YNR010W|MED9,,GO:0000122|GO:0006357|GO:0045944,3,4,IDA|IEA|IMP,False,True,True
+CSE4,S000001532,Centromeric histone H3-like protein,YKL049C|CSL2|centromeric DNA-binding histone H3-like protein CSE4,GO:0003677,,7,5,IBA|IDA|IEA|IGI|IMP,True,False,False
+CSM3,S000004651,Replication fork associated factor,YMR048W,GO:0003677,,2,28,HDA|IBA|IDA|IEA|IGI|IMP|ND,True,False,False
+CSR2,S000006234,Nuclear ubiquitin protein ligase binding protein,YPR030W|ART8|MRG19,,GO:0006357,3,6,HDA|IBA|IDA|IEA|IGI|IMP|IPI|ISA,False,False,False
+CST6,S000001298,Basic leucine zipper (bZIP) transcription factor from ATF/CREB family,YIL036W|SHF1|ACA2,GO:0001228|GO:0003677|GO:0003700,GO:0006355|GO:0045944,6,6,IDA|IEA|IMP,True,True,False
+CTF13,S000004700,Subunit of the CBF3 complex,YMR094W|CBF3C,GO:0003677,,2,2,IDA|IEA|IMP,True,False,False
+CTF18,S000004683,Subunit of a complex with Ctf8p,YMR078C|CHL12,GO:0003677,,6,9,HDA|IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+CTF8,S000001234,Subunit of a complex with Ctf18p,YHR191C,GO:0003677,,2,15,IEA|IGI|IMP|IPI|ND,True,False,False
+CTI6,S000006102,Component of the Rpd3L histone deacetylase complex,YPL181W|RXT1,,GO:0045893,5,9,HDA|IBA|IC|IDA|IEA|IMP,False,False,False
+CTK2,S000003543,Beta subunit of C-terminal domain kinase I (CTDK-I),YJL006C,,GO:0006357,3,11,IBA|IDA|IEA|IMP|IPI,False,False,False
+CTR9,S000005505,Component of the Paf1p complex involved in transcription elongation,YOL145C|CDP1,GO:0003677,GO:0006355,7,24,IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+CUP2,S000003134,Copper-binding transcription factor,YGL166W|ACE1,GO:0000981|GO:0003677|GO:0003700,GO:0006355|GO:0006357|GO:0045944,17,8,IBA|IDA|IEA|IMP,True,True,False
+CUP9,S000006098,Homeodomain-containing transcriptional repressor,YPL177C,GO:0000981|GO:0003677,GO:0000122|GO:0006355|GO:0006357,11,7,HDA|IBA|IC|IDA|IEA|IMP|IPI,True,False,True
+CWC24,S000004315,General splicing factor,YLR323C|U2-type spliceosomal complex subunit CWC24,GO:0003677,,5,7,IBA|IDA|IEA|IMP|IPI|ND,True,False,False
+CYC8,S000000316,General transcriptional co-repressor,YBR112C|[OCT1+]|[OCT]|CRT8|SSN6|transcription regulator CYC8,,GO:0000122|GO:0006357|GO:0045944,9,19,IBA|IDA|IEA|IGI|IMP|IPI,False,True,True
+DAL80,S000001742,Negative regulator of genes in multiple nitrogen degradation pathways,YKR034W|UGA43,GO:0000981|GO:0003677|GO:0003700,GO:0000122|GO:0006355|GO:0006357,10,11,IBA|IDA|IEA|IMP,True,False,True
+DAL81,S000001462,Positive regulator of genes in multiple nitrogen degradation pathways,YIR023W|UGA35|DURL,GO:0000981|GO:0003677,GO:0006351|GO:0006355,10,10,IBA|IC|IDA|IEA|IMP|IPI,True,False,False
+DAL82,S000005258,Positive regulator of allophanate inducible genes,YNL314W|DURM,GO:0003700,,4,3,IC|IDA|IMP|IPI,False,False,False
+DAT1,S000004581,DNA binding protein that recognizes oligo(dA).oligo(dT) tracts,YML113W,GO:0003677,GO:0000122,2,1,HDA|IDA|IEA|IMP,True,False,True
+DBF4,S000002459,Regulatory subunit of Cdc7p-Dbf4p kinase complex,YDR052C|DNA52|LSD7|protein serine/threonine kinase activating protein DBF4,GO:0003677,,8,18,HDA|IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+DDC1,S000006115,DNA damage checkpoint protein,YPL194W,GO:0003677,,2,18,HDA|IBA|IDA|IEA|IGI|IMP,True,False,False
+DEF1,S000001537,RNAPII degradation factor,YKL054C|VID31|DNA damage-responsive RNA polymerase-degradation factor DEF1,GO:0003677,,3,9,IDA|IEA|IGI|IMP|ND,True,False,False
+DEP1,S000000011,Component of the Rpd3L histone deacetylase complex,YAL013W|FUN54|Rpd3L histone deacetylase complex subunit DEP1,,GO:0000122|GO:0006357|GO:0045944,2,29,HDA|IBA|IDA|IEA|IMP|ND,False,True,True
+DIN7,S000002671,Mitochondrial nuclease functioning in DNA repair and replication,YDR263C|DIN3|exodeoxyribonuclease DIN7,GO:0003677,,13,10,IBA|IDA|IEA|IMP,True,False,False
+DMC1,S000000981,Meiosis-specific recombinase required for double-strand break repair,YER179W|ISC2|recombinase DMC1,GO:0003677,,21,18,HDA|IBA|IDA|IEA|IGI|IMP,True,False,False
+DNA2,S000001207,Tripartite DNA replication factor,YHR164C|WEB2|bifunctional ATP-dependent DNA helicase/ssDNA endodeoxyribonuclease DNA2,GO:0003677,,21,21,HDA|IBA|IDA|IEA|IGI|IMP,True,False,False
+DNL4,S000005531,DNA ligase required for nonhomologous end-joining (NHEJ),YOR005C|LIG4|DNA ligase (ATP) DNL4,GO:0003677,,24,23,IBA|IDA|IEA|IMP|IPI,True,False,False
+DOT1,S000002848,Nucleosomal histone H3-Lys79 methylase,YDR440W|KMT4|PCH1|histone methyltransferase DOT1,GO:0003677,,12,32,IBA|IDA|IEA|IGI|IMP,True,False,False
+DOT6,S000000890,Protein involved in rRNA and ribosome biogenesis,YER088C|PBF2,GO:0003677,GO:0006357,3,4,HDA|IDA|IEA|IMP,True,False,False
+DPB2,S000006379,Second largest subunit of DNA polymerase II (DNA polymerase epsilon),YPR175W|DNA polymerase epsilon noncatalytic subunit,GO:0003677,,8,14,IBA|IC|IDA|IEA|IMP,True,False,False
+DST1,S000003011,General transcription elongation factor TFIIS,YGL043W|P37|TFIIS|S-II|SII|PPR2|transcription elongation factor DST1,GO:0003677,GO:0000122|GO:0006351|GO:0006355,11,33,IBA|IDA|IEA|IGI|IMP|IPI,True,False,True
+EAF3,S000006227,Component of the Rpd3S histone deacetylase complex,YPR023C,,GO:0006355|GO:0006357|GO:0045892,0,19,IBA|IC|IDA|IEA|IGI|IMP,False,False,False
+EAF7,S000005080,Subunit of the NuA4 histone acetyltransferase complex,YNL136W,,GO:0006355|GO:0006357,1,9,HDA|IBA|IDA|IEA|IMP|IPI|ND,False,False,False
+ECM22,S000004218,Sterol regulatory element binding protein,YLR228C,GO:0000981|GO:0001228|GO:0003677,GO:0006355|GO:0006357|GO:0045944,11,8,HDA|IBA|IC|IDA|IEA|IGI|IMP,True,True,False
+ECM23,S000005942,Non-essential protein of unconfirmed function,YPL021W|SRD2,,GO:0006355,6,4,HDA|IDA|IEA|IMP|ND,False,False,False
+ECM32,S000000978,DNA dependent ATPase/DNA helicase,YER176W|MTT1|HEL1|RNA helicase,GO:0003677,,12,3,HDA|IBA|IDA|IEA|IMP,True,False,False
+ECM5,S000004788,Subunit of the Snt2C complex,YMR176W,GO:0003677,,6,5,HDA|IBA|IEA|IMP|ND,True,False,False
+EDS1,S000000237,"Putative zinc cluster protein, predicted to be a transcription factor",YBR033W,GO:0000981|GO:0003677,GO:0006355|GO:0006357,7,4,HDA|IEA|ND,True,False,False
+ELG1,S000005670,Subunit of an alternative replication factor C complex,YOR144C|RTT110,GO:0003677,,2,8,HDA|IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+ELP2,S000003432,Subunit of Elongator complex,YGR200C|KTI3|TOT2|Elongator subunit ELP2,,GO:0006357,1,6,IBA|IDA|IEA|IMP,False,False,False
+ELP3,S000006007,Subunit of Elongator complex,YPL086C|KTI8|TOT3|KAT9|HPA1|Elongator subunit ELP3,,GO:0006357,13,5,IBA|IDA|IEA|IMP,False,False,False
+ELP4,S000006022,Subunit of hexameric RecA-like ATPase Elp456 Elongator subcomplex,YPL101W|KTI9|HAP1|TOT7|Elongator subunit ELP4,,GO:0006357,2,5,HDA|IBA|IDA|IEA|IMP,False,False,False
+ELP6,S000004929,Subunit of hexameric RecA-like ATPase Elp456 Elongator subcomplex,YMR312W|KTI4|HAP3|TOT6|Elongator subunit ELP6,,GO:0006357,3,5,IBA|IDA|IEA|IMP,False,False,False
+EMI1,S000002920,Non-essential protein of unknown function,YDR512C,,GO:0045944,1,5,HMP|IEA|IMP|ND,False,True,False
+EMI2,S000002924,Non-essential protein of unknown function,YDR516C|putative glucokinase,,GO:0045944,18,17,HDA|HMP|IBA|IEA|ND,False,True,False
+ENV11,S000003303,Protein proposed to be involved in vacuolar functions,YGR071C,GO:0003677,GO:0006357,3,3,HDA|IBA|IEA|IMP|ND,True,False,False
+EPL1,S000001870,"Subunit of NuA4, an essential histone H4/H2A acetyltransferase complex",YFL024C,,GO:0006357,3,10,IBA|IDA|IEA|IMP,False,False,False
+ERT1,S000000443,Transcriptional regulator,YBR239C,GO:0000981|GO:0001227|GO:0003677|GO:0003700,GO:0000122|GO:0006355|GO:0045944,13,9,HDA|IBA|IDA|IEA|IGI|IMP,True,True,True
+ESA1,S000005770,Catalytic subunit of the histone acetyltransferase complex (NuA4),YOR244W|TAS1|KAT5|NuA4 histone acetyltransferase complex catalytic subunit ESA1,,GO:0006355|GO:0006357|GO:0045892|GO:0045944,12,23,IBA|IDA|IEA|IGI|IMP,False,True,False
+ESS1,S000003778,Peptidylprolyl-cis/trans-isomerase (PPIase),YJR017C|PTF1|PIN1|peptidylprolyl isomerase ESS1,,GO:0000122|GO:0045944,10,24,IBA|IC|IDA|IEA|IGI|IMP|IPI,False,True,True
+EST1,S000004223,TLC1 RNA-associated factor involved in telomere length regulation,YLR233C,GO:0003677,,4,7,IDA|IEA|IMP|IPI,True,False,False
+EST2,S000004310,Reverse transcriptase subunit of the telomerase holoenzyme,YLR318W|TERT|telomerase reverse transcriptase,GO:0003677,,15,5,IBA|IDA|IEA|IMP,True,False,False
+ETR1,S000000230,2-enoyl thioester reductase,YBR026C|MRF1'|MRF1|enoyl-[acyl-carrier-protein] reductase,GO:0003677,,4,6,HDA|IBA|IDA|IEA|IMP,True,False,False
+EUC1,S000004717,Sequence-specific DNA binding protein,YMR111C,GO:0000981|GO:0003677,,4,2,HDA|IBA|IDA|IEA|IMP,True,False,False
+EXO1,S000005559,5'-3' exonuclease and flap-endonuclease,YOR033C|DHS1|Rad2 family nuclease EXO1,GO:0003677,,18,22,HDA|IBA|IDA|IEA|IGI|IMP,True,False,False
+EXO5,S000000367,Mitochondrial 5'-3' exonuclease and sliding exonuclease,YBR163W|DEM1,GO:0003677,,11,6,HDA|IBA|IDA|IEA|IMP,True,False,False
+FAP1,S000004968,Protein that binds to Fpr1p,YNL023C,GO:0000981|GO:0003700,GO:0000122|GO:0006355,9,3,IBA|IDA|IEA|ISS|ND,False,False,True
+FCP1,S000004890,Carboxy-terminal domain (CTD) phosphatase,YMR277W|protein serine/threonine phosphatase,,GO:0006357,11,10,IBA|IDA|IEA|IGI|IMP,False,False,False
+FHL1,S000006308,Regulator of ribosomal protein (RP) transcription,YPR104C|SPP42,GO:0003677|GO:0003700,GO:0006355,12,8,HDA|IDA|IEA|IGI|IMP|IPI,True,False,False
+FKH1,S000001393,Forkhead family transcription factor,YIL131C|forkhead family transcription factor FKH1,GO:0000981|GO:0001227|GO:0001228|GO:0003677|GO:0003700,GO:0000122|GO:0006355|GO:0006357,23,36,HDA|IBA|IDA|IEA|IGI|IMP,True,True,True
+FKH2,S000005012,Forkhead family transcription factor,YNL068C|forkhead family transcription factor FKH2,GO:0000981|GO:0003677|GO:0003700,GO:0006355|GO:0006357,27,26,HDA|IBA|IDA|IEA|IGI|IMP,True,False,False
+FLO8,S000000911,Transcription factor,YER109C|PHD5|YER108C|STA10|transcription factor FLO8,GO:0001228,GO:0045944,2,12,HDA|IDA|IEA|IMP,False,True,False
+FLP1,S000029654,Site-specific recombinase encoded on the 2-micron plasmid,R0010W,GO:0003677,,7,6,IDA|IEA|IMP|ND,True,False,False
+FOB1,S000002517,Nucleolar protein that binds the rDNA replication fork barrier site,YDR110W|HRM1|replication fork barrier binding protein FOB1,GO:0003677,,4,17,IDA|IEA|IGI|IMP,True,False,False
+FPR1,S000005079,Peptidyl-prolyl cis-trans isomerase (PPIase),YNL135C|FKB1|RBP1|peptidylprolyl isomerase FPR1,GO:0001228,GO:0006366,8,6,HDA|IBA|IDA|IEA|IGI|IMP,False,True,False
+FUN19,S000002134,Non-essential protein of unknown function,YAL034C,,GO:0006357|GO:0045893,3,5,IBA|IEA|ND,False,False,False
+FUN30,S000000017,Snf2p family member with ATP-dependent chromatin remodeling activity,YAL019W|DNA-dependent ATPase FUN30,GO:0003677,GO:0000122,16,19,HDA|IBA|IDA|IEA|IGI|IMP,True,False,True
+FYV5,S000000563,De novo-originated gene from non-coding sequence,YCL058C|MDF1,,GO:0000122,1,8,HDA|IEA|IMP|ND,False,False,True
+FZF1,S000003223,Transcription factor involved in sulfite metabolism,YGL254W|NRC299|RSU1|SUL1,GO:0001228|GO:0003677,GO:0006357,7,2,HDA|IBA|IC|IDA|IEA|IMP,True,True,False
+GAL11,S000005411,Subunit of the RNA polymerase II mediator complex,YOL051W|MED15|RAR3|SDS4|SPT13|ABE1,,GO:0000122|GO:0006355|GO:0006357|GO:0045944,7,11,IDA|IEA|IGI|IMP,False,True,True
+GAL4,S000006169,DNA-binding transcription factor required for activating GAL genes,YPL248C|GAL81|galactose-responsive transcription factor GAL4,GO:0000981|GO:0001228|GO:0003677,GO:0006351|GO:0006355,18,9,IBA|IDA|IEA|IGI|IMP|IPI,True,True,False
+GAL80,S000004515,Transcriptional regulator involved in the repression of GAL genes,YML051W|transcription regulator GAL80,GO:0003677,GO:0000122,5,7,IDA|IEA|IMP|IPI,True,False,True
+GAT1,S000001873,Transcriptional activator of nitrogen catabolite repression genes,YFL021W|NIL1|MEP80,GO:0000981|GO:0001228|GO:0003677|GO:0003700,GO:0006355|GO:0006357,10,16,IBA|IDA|IEA|IGI|IMP|IPI,True,True,False
+GAT2,S000004744,Protein containing GATA family zinc finger motifs,YMR136W,GO:0000981|GO:0003677,GO:0006355|GO:0006357,6,6,IEA|ISA|ND,True,False,False
+GAT3,S000004003,Protein containing GATA family zinc finger motifs,YLR013W,GO:0003677,GO:0006355|GO:0006357,7,3,HDA|IDA|IEA|ISS|ND,True,False,False
+GAT4,S000001452,Protein containing GATA family zinc finger motifs,YIR013C,GO:0003677,GO:0006355|GO:0045944,6,3,HDA|IDA|IEA,True,True,False
+GBP2,S000000517,Poly(A+) RNA-binding protein,YCL011C|RLF6|single-stranded telomeric DNA-binding/mRNA-binding protein,GO:0003677,,12,8,HDA|IBA|IDA|IEA|IGI|IMP,True,False,False
+GCN4,S000000735,bZIP transcriptional activator of amino acid biosynthetic genes,YEL009C|AAS3|ARG9|AAS101|amino acid starvation-responsive transcription factor GCN4,GO:0000981|GO:0001228|GO:0003677|GO:0003700,GO:0000122|GO:0006355|GO:0006357,19,25,HDA|IBA|IDA|IEA|IGI|IMP|IPI,True,True,True
+GCR1,S000005996,Transcriptional activator of genes involved in glycolysis,YPL075W|LPF10|SIT3|transcription regulator GCR1,GO:0000981|GO:0001228|GO:0003677,GO:0045944,13,12,IBA|IDA|IEA|IMP,True,True,False
+GCR2,S000005143,Transcriptional activator of genes involved in glycolysis,YNL199C,,GO:0000122|GO:0045944,2,13,IDA|IEA|IGI|IMP,False,True,True
+GIM5,S000004559,Subunit of the heterohexameric cochaperone prefoldin complex,YML094W|PFD5,,GO:0006355,2,5,IBA|IC|IDA|IEA|IGI|IMP|IPI,False,False,False
+GIS1,S000002503,Histone demethylase and transcription factor,YDR096W|histone demethylase GIS1,GO:0001227|GO:0001228|GO:0003677,GO:0000122|GO:0045944,11,9,HDA|IBA|IC|IDA|IEA|IMP,True,True,True
+GLN3,S000000842,Transcriptional activator in nitrogen catabolite repression system,YER040W|nitrogen-responsive transcriptional regulator GLN3,GO:0000981|GO:0003677|GO:0003700,GO:0000122|GO:0006355|GO:0006357|GO:0045944,12,15,HDA|IBA|IDA|IEA|IMP,True,True,True
+GON7,S000003720,Component of the EKC/KEOPS protein complex,YJL184W|LDB6|PCC2|chromatin DNA-binding EKC/KEOPS complex subunit GON7,,GO:0045944,1,5,IDA|IEA|IGI|IMP|IPI,False,True,False
+GPB2,S000000052,Multistep regulator of cAMP-PKA signaling,YAL056W|KRH1,,GO:0045944,7,12,HDA|HMP|IBA|IDA|IEA|IGI|IMP|IPI,False,True,False
+GSM1,S000003639,Putative zinc cluster protein of unknown function,YJL103C,GO:0000981|GO:0003677|GO:0003700,GO:0006355|GO:0006357,11,6,HDA|IBA|IC|IDA|IEA|IMP,True,False,False
+GTR2,S000003395,Subunit of a TORC1-stimulating GTPase and the EGO/GSE complex,YGR163W,,GO:0045944,6,14,HDA|IBA|IDA|IEA|IGI|IMP|IPI,False,True,False
+GTS1,S000003149,Protein involved in Arf3p regulation and in transcription regulation,YGL181W|LSR1|FHT1,,GO:0006357|GO:0045944,7,8,HDA|IBA|IDA|IEA|IMP|IPI|ISS,False,True,False
+GZF3,S000003646,GATA zinc finger protein,YJL110C|DEH1|NIL2,GO:0000981|GO:0003677|GO:0003700,GO:0000122|GO:0006355|GO:0006357,12,9,HDA|IBA|IDA|IEA|IGI|IMP|IPI,True,False,True
+HAA1,S000006212,Transcriptional activator involved in adaptation to weak acid stress,YPR008W,GO:0000981|GO:0003677|GO:0003700,GO:0006355|GO:0045944,12,10,HDA|IBA|IDA|IEA|IMP,True,True,False
+HAC1,S000001863,Basic leucine zipper (bZIP) transcription factor (ATF/CREB1 homolog),YFL031W|ERN4|IRE15|transcription factor HAC1,GO:0000981|GO:0003677|GO:0003700,GO:0006355|GO:0045944,7,10,IDA|IEA|IMP,True,True,False
+HAL1,S000006209,Cytoplasmic protein involved in halotolerance,YPR005C,,GO:0045944,1,2,IDA|IEA|IMP|ND,False,True,False
+HAL9,S000005449,Putative transcription factor containing a zinc finger,YOL089C,GO:0000981|GO:0003677,GO:0006351|GO:0006355|GO:0045944,9,6,HDA|IC|IEA|IMP,True,True,False
+HAP1,S000004246,Zinc finger transcription factor,YLR256W|CYP1,GO:0000981|GO:0001228|GO:0003677,GO:0006351|GO:0006355|GO:0006357,15,9,HDA|IBA|IDA|IEA|IGI|IMP,True,True,False
+HAP2,S000003206,Subunit of the Hap2p/3p/4p/5p CCAAT-binding complex,YGL237C|transcription activator HAP2,GO:0000981|GO:0001228|GO:0003677|GO:0003700,GO:0006355|GO:0006357,6,4,HDA|IBA|IDA|IEA|IMP|IPI,True,True,False
+HAP3,S000000117,Subunit of the Hap2p/3p/4p/5p CCAAT-binding complex,YBL021C,GO:0000981|GO:0001228|GO:0003677,GO:0006355|GO:0006357,8,5,IBA|IDA|IEA|IMP|IPI,True,True,False
+HAP4,S000001592,Transcription factor,YKL109W|transcription factor HAP4,GO:0003677,GO:0006355,4,3,IDA|IEA|IMP|IPI,True,False,False
+HAP5,S000005885,Subunit of the Hap2p/3p/4p/5p CCAAT-binding complex,YOR358W,GO:0001228|GO:0003677|GO:0003700,GO:0006355,8,4,IBA|IC|IDA|IEA|IGI|IMP|IPI,True,True,False
+HCM1,S000000661,Forkhead transcription factor,YCR065W,GO:0000981|GO:0003677|GO:0003700,GO:0006355|GO:0006357|GO:0045944,21,9,HDA|IBA|IDA|IEA|IGI|IMP,True,True,False
+HCS1,S000001500,Hexameric DNA polymerase alpha-associated DNA helicase A,YKL017C|DIP1|ATP-dependent 5'-3' DNA helicase HCS1,GO:0003677,,11,2,IBA|IDA|IEA,True,False,False
+HDA1,S000004966,Putative catalytic subunit of a class II histone deacetylase complex,YNL021W|histone deacetylase HDA1,,GO:0000122|GO:0045944,5,11,IDA|IEA|IGI|IMP|IPI,False,True,True
+HDA2,S000002703,Subunit of the HDA1 histone deacetylase complex,YDR295C|PLO2,GO:0003677,GO:0000122|GO:0045944,4,7,HDA|IBA|IDA|IEA|IMP|IPI,True,True,True
+HDA3,S000006383,Subunit of the HDA1 histone deacetylase complex,YPR179C|PLO1,GO:0003677,GO:0000122,3,10,HDA|IDA|IEA|IMP|IPI,True,False,True
+HFI1,S000006175,Adaptor protein required for structural integrity of the SAGA complex,YPL254W|ADA1|SUP110|GAN1|SRM12,,GO:0006357|GO:0006366|GO:0045893,3,5,IBA|IDA|IEA|IMP,False,False,False
+HFM1,S000003220,Meiosis specific DNA helicase,YGL251C|MER3|DNA helicase,GO:0003677,,12,6,IBA|IDA|IEA|IMP,True,False,False
+HHF1,S000000213,Histone H4,YBR009C|histone H4,GO:0003677,,6,5,IBA|IDA|IEA|IMP|TAS,True,False,False
+HHF2,S000004975,Histone H4,YNL030W|histone H4,GO:0003677,,5,4,IDA|IEA|IMP|TAS,True,False,False
+HHO1,S000006048,"Histone H1, linker histone with roles in meiosis and sporulation",YPL127C|histone H1,GO:0003677,GO:0006355,6,11,HDA|IBA|IDA|IEA|IGI|IMP,True,False,False
+HHT1,S000000214,Histone H3,YBR010W|BUR5|SIN2|histone H3,GO:0003677,,7,7,HDA|IBA|IDA|IEA|IMP|TAS,True,False,False
+HHT2,S000004976,Histone H3,YNL031C|histone H3,GO:0003677,,7,6,HDA|IDA|IEA|IMP|TAS,True,False,False
+HIR1,S000000104,Subunit of the HIR complex,YBL008W,GO:0003677,GO:0000122|GO:0006351|GO:0006355,4,11,IBA|IDA|IEA|IGI|IMP|IPI,True,False,True
+HIR2,S000005564,Subunit of HIR nucleosome assembly complex,YOR038C|SPT1,GO:0003677,GO:0000122|GO:0006351|GO:0006355,4,11,IBA|IDA|IEA|IGI|IMP|IPI,True,False,True
+HIR3,S000003901,Subunit of the HIR complex,YJR140C|HPC1,GO:0003677,,4,7,IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+HMI1,S000005455,Mitochondrial inner membrane localized ATP-dependent DNA helicase,YOL095C|ATP-dependent 3'-5' DNA helicase,GO:0003677,,14,7,HDA|IBA|IDA|IEA|IMP,True,False,False
+HMLALPHA1,S000000571,Silenced copy of ALPHA1 at HML,YCL066W|ALPHA1|transcriptional co-activator mating type protein alpha,GO:0003677,GO:0006357,4,4,IEA|ISA,True,False,False
+HMLALPHA2,S000000572,Silenced copy of ALPHA2 at HML,YCL067C|ALPHA2|homeodomain mating type protein alpha2,GO:0000981|GO:0001227|GO:0003677,GO:0000122|GO:0006357,7,3,IBA|IEA|ISA,True,False,True
+HMO1,S000002581,Chromatin associated high mobility group (HMG) family member,YDR174W|HSM2,GO:0003677,,10,14,IBA|IDA|IEA|IGI|IMP,True,False,False
+HMRA1,S000000694,Silenced copy of a1 at HMR,YCR097W|YCR097WB,GO:0000981|GO:0003677,GO:0006355|GO:0006357|GO:0045892,5,4,IDA|IEA,True,False,False
+HMRA2,S000000692,Silenced copy of a2 at HMR,YCR096C|A2|homeodomain mating type protein a2,GO:0000981|GO:0003677,GO:0006357,5,2,IBA|IEA|ND,True,False,False
+HMS1,S000005558,bHLH protein with similarity to myc-family transcription factors,YOR032C,GO:0003677|GO:0003700,GO:0006355,4,2,IEA|IGI|ISS|ND,True,False,False
+HMS2,S000003908,Protein with similarity to heat shock transcription factors,YJR147W,GO:0003677|GO:0003700,GO:0006355|GO:0006357,6,3,HDA|IBA|IEA|IGI|ND,True,False,False
+HNT3,S000005784,DNA 5' AMP hydrolase involved in DNA repair,YOR258W|DNA 5'-adenosine monophosphate hydrolase,GO:0003677,,11,8,HDA|IBA|IDA|IEA|IGI|IMP,True,False,False
+HO,S000002386,Site-specific endonuclease,YDL227C,GO:0003677,,10,7,HDA|IDA|IEA|IMP,True,False,False
+HOG1,S000004103,Mitogen-activated protein kinase involved in osmoregulation,YLR113W|SSK3|mitogen-activated protein kinase HOG1,,GO:0006357|GO:0045944,21,31,HDA|IBA|IDA|IEA|IMP|IPI,False,True,False
+HOP1,S000001334,Meiosis-specific protein required for chromosome synapsis,YIL072W,GO:0003677,,4,11,HDA|IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+HOP2,S000003001,Meiosis-specific protein that localizes to chromosomes,YGL033W,GO:0003677,,2,5,IDA|IEA|IMP,True,False,False
+HOS1,S000006272,Class I histone deacetylase (HDAC) family member,YPR068C|histone deacetylase|CST3,,GO:0045944,9,12,IBA|IDA|IEA|IMP|IPI|ISA,False,True,False
+HOS2,S000003162,Histone deacetylase and subunit of Set3 and Rpd3L complexes,YGL194C|RTL1|histone deacetylase HOS2,,GO:0006355|GO:0045944,7,9,HDA|IBA|IDA|IEA|IMP,False,True,False
+HOS3,S000006037,Trichostatin A-insensitive homodimeric histone deacetylase (HDAC),YPL116W|histone deacetylase,,GO:0045944,5,9,HDA|IBA|IDA|IEA|IGI|IMP|IPI,False,True,False
+HOT1,S000004783,Transcription factor for glycerol biosynthetic genes,YMR172W,GO:0000981,GO:0045944,5,10,IBA|IDA|IEA|IGI|IMP,False,True,False
+HPC2,S000000419,Subunit of the HIR complex,YBR215W,GO:0003677,,2,5,HDA|IC|IDA|IEA|IGI|IMP|IPI,True,False,False
+HRQ1,S000002699,3'-5' DNA helicase of the conserved RecQ family,YDR291W|ATP-dependent 3'-5' DNA helicase,GO:0003677,,16,12,HDA|IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+HSF1,S000003041,Trimeric heat shock transcription factor,YGL073W|EXA3|MAS3|stress-responsive transcription factor HSF1,GO:0003677|GO:0003700,GO:0006355|GO:0006357|GO:0045944,7,29,HDA|IBA|IDA|IEA|IMP,True,True,False
+HSL7,S000000337,Protein arginine N-methyltransferase,YBR133C|protein arginine N-methyltransferase,,GO:0006355,9,13,HDA|IBA|IDA|IEA|IMP,False,False,False
+HST4,S000002599,NAD(+)-dependent protein deacetylase,YDR191W|NAD-dependent histone deacetylase HST4,,GO:0000122,5,16,HDA|IBA|IDA|IEA|IGI|IMP,False,False,True
+HTA1,S000002633,Histone H2A,YDR225W|H2A1|SPT11|histone H2A,GO:0003677,GO:0000122,6,7,IBA|IDA|IEA|IMP|TAS,True,False,True
+HTA2,S000000099,Histone H2A,YBL003C|H2A2|histone H2A,GO:0003677,,6,5,IBA|IDA|IEA|IMP|TAS,True,False,False
+HTB1,S000002632,Histone H2B,YDR224C|SPT12|histone H2B,GO:0003677,GO:0000122,6,6,IBA|IDA|IEA|IGI|IMP,True,False,True
+HTB2,S000000098,Histone H2B,YBL002W|histone H2B,GO:0003677,,6,2,IBA|IDA|IEA|TAS,True,False,False
+HTZ1,S000005372,Histone variant H2AZ,YOL012C|H2A.F/Z|H2AZ|HTA3|histone H2AZ,GO:0003677,GO:0006357,6,7,HDA|IBA|IDA|IEA|IGI|IMP,True,False,False
+HYM1,S000001672,Component of the RAM signaling network,YKL189W,,GO:0006355,2,7,IBA|IDA|IEA|IGI|IMP|ND,False,False,False
+ICR1,S000132612,Long intergenic regulatory ncRNA,ICR1,,GO:0006357,1,3,IC|IDA|IGI|IMP|ND,False,False,False
+IES2,S000005159,Protein that associates with the INO80 chromatin remodeling complex,YNL215W,GO:0003677,,2,6,HDA|IBA|IEA|IPI|ND,True,False,False
+IFH1,S000004213,"Coactivator, regulates transcription of ribosomal protein (RP) genes",YLR223C,,GO:0006357,5,4,HDA|IBA|IDA|IEA|IGI|IMP,False,False,False
+IKI3,S000004376,Subunit of Elongator complex,YLR384C|KTI7|TOT1|ELP1|Elongator subunit IKI3,,GO:0006357,2,6,IBA|IDA|IEA|IMP,False,False,False
+IME1,S000003854,Master regulator of meiosis that is active only during meiotic events,YJR094C|transcription factor IME1,,GO:0006357|GO:0045944,1,7,IDA|IEA|IMP|IPI,False,True,False
+IMP2',S000001416,Transcriptional activator involved in maintenance of ion homeostasis,YIL154C|IMP2,,GO:0045893,1,2,HDA|IDA|IEA|IMP,False,False,False
+INO2,S000002530,Transcription factor,YDR123C|DIE1|SCS1,GO:0001228|GO:0003677,GO:0045944,6,5,IDA|IEA|IMP|IPI,True,True,False
+INO4,S000005468,Transcription factor involved in phospholipid synthesis,YOL108C,GO:0001228|GO:0003677,GO:0045944,6,7,IDA|IEA|IMP|IPI,True,True,False
+INO80,S000003118,ATPase and nucleosome spacing factor,YGL150C|chromatin-remodeling ATPase INO80,GO:0003677,GO:0006351|GO:0006366|GO:0045944,11,27,IBA|IDA|IEA|IGI|IMP,True,True,False
+IOC2,S000004085,Subunit of the Isw1b complex,YLR095C,GO:0003677,,4,1,IDA|IEA|IPI,True,False,False
+IOC3,S000001909,Subunit of the Isw1a complex,YFR013W,GO:0003677,,3,2,IC|IDA|IEA|IMP,True,False,False
+IOC4,S000004647,Member of a complex (Isw1b) with Isw1p and Ioc2p,YMR044W,GO:0003677,GO:0006357,4,3,IBA|IDA|IEA|IMP|IPI,True,False,False
+IRC3,S000002740,Double-stranded DNA-dependent helicase of the DExH/D-box family,YDR332W|double-stranded DNA-dependent ATPase,GO:0003677,,12,3,HDA|IBA|IDA|IEA|IMP,True,False,False
+IRC5,S000001934,Putative ATPase containing the DEAD/H helicase-related sequence motif,YFR038W|putative ATPase,GO:0003677,,10,2,HDA|IBA|IEA|IMP|ISS,True,False,False
+ISW1,S000000449,ATPase subunit of imitation-switch (ISWI) class chromatin remodelers,YBR245C|SGN2|chromatin-remodeling ATPase ISW1,GO:0003677,GO:0045944,19,22,HDA|IBA|IDA|IEA|IGI|IMP,True,True,False
+ISW2,S000005831,ATP-dependent DNA translocase involved in chromatin remodeling,YOR304W|DNA translocase,GO:0003677,GO:0045944,17,17,HDA|IBA|IDA|IEA|IGI|IMP,True,True,False
+IXR1,S000001515,Transcriptional repressor that regulates hypoxic genes during normoxia,YKL032C|ORD1|DNA-binding transcription repressor IXR1,GO:0003677,GO:0000122,7,9,IBA|IDA|IEA|IGI|IMP,True,False,True
+IZH2,S000005362,Plasma membrane receptor for plant antifungal osmotin,YOL002C|PHO36|PAQR-type receptor,,GO:0000122,2,6,HDA|IBA|IDA|IEA|IMP|IPI,False,False,True
+JHD1,S000000853,JmjC domain family histone demethylase specific for H3-K36,YER051W|JHDM1|KDM2|[Histone H3]-lysine-36 demethylase,,GO:0006357,9,7,IBA|IDA|IEA|IGI|IMP|ND,False,False,False
+JHD2,S000003880,JmjC domain family histone demethylase,YJR119C|KDM5|histone demethylase,,GO:0000122|GO:0045944,10,15,HDA|IBA|IDA|IEA|IMP,False,True,True
+KAE1,S000001746,Highly conserved ATPase of HSP70/DnaK family,YKR038C|tRNA N6-adenosine threonylcarbamoyltransferase,,GO:0045944,6,11,HDA|IBA|IDA|IEA|IGI|IMP|IPI,False,True,False
+KAR4,S000000560,Transcription factor required for response to pheromones,YCL055W,GO:0003700,,4,9,HDA|IBA|IDA|IEA|IGI|IMP,False,False,False
+KIN28,S000002266,"Ser/Thr protein kinase and subunit of TFIIK, a TFIIH subassembly",YDL108W|TFIIH complex serine/threonine-protein kinase subunit KIN28,,GO:0006366|GO:0045944,17,30,HDA|IBA|IDA|IEA|IMP|IPI,False,True,False
+KTI12,S000001593,Protein that plays a role in modification of tRNA wobble nucleosides,YKL110C|TOT4,,GO:0006357,3,4,IBA|IDA|IEA|IGI|IMP,False,False,False
+LAA2,S000000106,Clathrin adaptor (adaptin) accessory protein,YBL010C,GO:0003677,,2,3,HDA|IEA|IMP|ND,True,False,False
+LAP3,S000005183,Cysteine aminopeptidase with homocysteine-thiolactonase activity,YNL239W|bleomycin hydrolase|BLH1|GAL6|YCP1,GO:0003677,GO:0000122,12,8,HDA|IBA|IDA|IEA|IMP,True,False,True
+LEU3,S000004443,"Zinc-knuckle transcription factor, repressor and activator",YLR451W|leucine-responsive transcriptional regulator LEU3,GO:0000981|GO:0001227|GO:0001228|GO:0003677,GO:0000122|GO:0006355|GO:0045944,11,11,HDA|IBA|IDA|IEA|IMP,True,True,True
+LRP1,S000001123,Nuclear exosome-associated nucleic acid binding protein,YHR081W|RRP47|YC1D,GO:0003677,,8,16,IBA|IDA|IEA|IGI|IMP,True,False,False
+LYS14,S000002441,Transcriptional activator involved in regulating lysine biosynthesis,YDR034C,GO:0000981|GO:0001228|GO:0003677,GO:0006355|GO:0045944,9,8,HDA|IDA|IEA|IMP|ISA,True,True,False
+MAC1,S000004623,Copper-sensing transcription factor,YMR021C|CUA1,GO:0000981|GO:0001228|GO:0003677|GO:0003700,GO:0006355|GO:0045944,13,10,IBA|IDA|IEA|IMP,True,True,False
+MAG2,S000004419,Cytoplasmic protein of unknown function,YLR427W,,GO:0045944,3,2,HDA|IBA|IEA|ND,False,True,False
+MAL13,S000003520,MAL-activator protein,YGR288W|MALR|transcription factor MAL13,GO:0000981|GO:0003677|GO:0003700,GO:0006351|GO:0006355|GO:0006357,12,8,IEA|IMP|ISS,True,False,False
+MAL33,S000000501,MAL-activator protein,YBR297W|MAL3R|MALR|transcription factor MAL33,GO:0000981|GO:0003677,GO:0006351|GO:0006355|GO:0006357,11,6,IEA,True,False,False
+MATALPHA1,S000000636,Transcriptional co-activator that regulates mating-type-specific genes,YCR040W|ALPHA1|transcriptional co-activator mating type protein alpha,GO:0003677,GO:0006357,4,4,IC|IDA|IEA|IMP,True,False,False
+MATALPHA2,S000000635,Homeobox-domain protein,YCR039C|ALPHA2|homeodomain mating type protein alpha2,GO:0000981|GO:0001227|GO:0003677,GO:0000122|GO:0006357,9,3,IBA|IDA|IEA,True,False,True
+MBF1,S000007253,Transcriptional coactivator,YOR298C-A|SUF13|multiprotein-bridging factor 1,GO:0003677,GO:0045944,3,1,HDA|IBA|IC|IDA|IEA,True,True,False
+MBP1,S000002214,Transcription factor,YDL056W|transcription factor MBP1,GO:0001228|GO:0003677,GO:0045944,5,4,HDA|IBA|IDA|IEA|IMP,True,True,False
+MCM1,S000004646,Transcription factor,YMR043W|FUN80|transcription factor MCM1,GO:0000981|GO:0001227|GO:0001228|GO:0003677,GO:0000122|GO:0006357|GO:0045944,33,20,HDA|IBA|IDA|IEA|IMP|IPI,True,True,True
+MCM2,S000000119,Protein involved in DNA replication,YBL023C|MCM DNA helicase complex subunit MCM2,GO:0003677,,23,18,HDA|IBA|IDA|IEA|IMP,True,False,False
+MCM3,S000000758,Protein involved in DNA replication,YEL032W|MCM DNA helicase complex subunit MCM3,GO:0003677,,23,16,HDA|IBA|IDA|IEA|IMP|IPI,True,False,False
+MCM4,S000006223,Essential helicase component of heterohexameric MCM2-7 complexes,YPR019W|CDC54|HCD21|MCM DNA helicase complex subunit MCM4,GO:0003677,,25,19,IBA|IDA|IEA|IGI|IMP,True,False,False
+MCM5,S000004264,Component of the Mcm2-7 hexameric helicase complex,YLR274W|CDC46|BOB1|MCM DNA helicase complex subunit MCM5,GO:0003677,,23,18,IBA|IDA|IEA|IMP|IPI,True,False,False
+MCM6,S000003169,Protein involved in DNA replication,YGL201C|MCM DNA helicase complex subunit MCM6,GO:0003677,,25,15,IBA|IDA|IEA|IMP,True,False,False
+MCM7,S000000406,Component of the Mcm2-7 hexameric helicase complex,YBR202W|CDC47|mini-chromosome maintenance complex protein 7,GO:0003677,,30,25,IBA|IDA|IEA|IGI|IMP,True,False,False
+MEC3,S000004279,DNA damage and meiotic pachytene checkpoint protein,YLR288C|PIP3|PSO9,GO:0003677,,2,13,IBA|IDA|IEA|IGI|IMP,True,False,False
+MED1,S000006274,Subunit of the RNA polymerase II mediator complex,YPR070W,,GO:0000122|GO:0006357|GO:0045944,2,3,IDA|IEA|IMP|ND,False,True,True
+MED11,S000004718,Subunit of the RNA polymerase II mediator complex,YMR112C,,GO:0000122|GO:0006357|GO:0045944,3,4,IDA|IEA|IMP,False,True,True
+MED2,S000002163,Subunit of the RNA polymerase II mediator complex,YDL005C,,GO:0000122|GO:0045944,2,5,IDA|IEA|IMP|IPI,False,True,True
+MED4,S000005700,Subunit of the RNA polymerase II mediator complex,YOR174W,,GO:0006357|GO:0006366,6,3,IBA|IDA|IEA,False,False,False
+MED6,S000001100,Subunit of the RNA polymerase II mediator complex,YHR058C|mediator complex subunit MED6,,GO:0006357|GO:0045944,4,6,IBA|IDA|IEA|IMP,False,True,False
+MED7,S000005495,Subunit of the RNA polymerase II mediator complex,YOL135C|mediator complex subunit MED7,,GO:0000122|GO:0006357|GO:0045944,3,4,IBA|IDA|IEA|IMP|ND,False,True,True
+MED8,S000000397,Subunit of the RNA polymerase II mediator complex,YBR193C,GO:0003677,GO:0000122|GO:0006357|GO:0045944,8,4,IBA|IDA|IEA|IMP|IPI,True,True,True
+MET28,S000001456,bZIP transcriptional activator in the Cbf1p-Met4p-Met28p complex,YIR017C,GO:0001228|GO:0003677|GO:0003700,GO:0006355|GO:0006357|GO:0045944,6,9,HDA|IBA|IDA|IEA|IMP|IPI,True,True,False
+MET31,S000005959,Zinc-finger DNA-binding transcription factor,YPL038W,GO:0000981|GO:0003677,GO:0000122|GO:0006357|GO:0045944,7,8,HDA|IDA|IEA|IGI|IMP|IPI,True,True,True
+MET32,S000002661,Zinc-finger DNA-binding transcription factor,YDR253C,GO:0000981|GO:0003677,GO:0000122|GO:0006357|GO:0045944,9,9,HDA|IDA|IEA|IGI|IMP|IPI,True,True,True
+MET4,S000005047,Leucine-zipper transcriptional activator,YNL103W,GO:0001228|GO:0003677,GO:0006357|GO:0045944,4,9,IBA|IDA|IEA|IMP|IPI,True,True,False
+MFG1,S000002392,Regulator of filamentous growth,YDL233W,,GO:0000122|GO:0045944,2,3,HDA|IBA|IEA|ND,False,True,True
+MGA1,S000003481,Protein similar to heat shock transcription factor,YGR249W,GO:0003677|GO:0003700,GO:0006355|GO:0006357,6,4,IBA|IDA|IEA|IGI|IMP|ND,True,False,False
+MGA2,S000001472,ER membrane protein involved in regulation of OLE1 transcription,YIR033W,,GO:0045944,1,8,HDA|IDA|IEA|IGI|IMP|ND,False,True,False
+MGM101,S000003905,Protein with a role in mitochondrial DNA recombinational repair,YJR144W|MGM9,GO:0003677,,5,12,HDA|IBA|IDA|IEA|IGI|IMP,True,False,False
+MGS1,S000005162,Protein with DNA-dependent ATPase and ssDNA annealing activities,YNL218W|ssDNA-dependent ATPase MGS1,GO:0003677,,13,11,HDA|IBA|IDA|IEA|IGI|IMP,True,False,False
+MGT1,S000002359,DNA repair methyltransferase (6-O-methylguanine-DNA methylase),YDL200C|MGMT|methylated-DNA--protein-cysteine methyltransferase,GO:0003677,,9,7,IC|IDA|IEA|IMP,True,False,False
+MHF1,S000007626,Component of the heterotetrameric MHF histone-fold complex,YOL086W-A,GO:0003677,,4,5,IBA|IDA|IEA|IGI|ND,True,False,False
+MHF2,S000028520,Component of the heterotetrameric MHF histone-fold complex,YDL160C-A,GO:0003677,,3,7,IBA|IDA|IEA|IGI|ND,True,False,False
+MHR1,S000002704,Mitochondrial ribosomal protein of the large subunit,YDR296W|XTC1|mL67,GO:0003677,GO:0006355,10,13,HDA|IBA|IC|IDA|IEA|IGI|IMP|IPI,True,False,False
+MIF2,S000001572,Centromeric CDEIII region binding protein,YKL089W,GO:0003677,,6,10,IBA|IDA|IEA|IGI|IMP,True,False,False
+MIG1,S000003003,Transcription factor involved in glucose repression,YGL035C|SSN1|CAT4|TDS22|transcription factor MIG1,GO:0001227|GO:0003677,GO:0000122|GO:0045944,13,10,HDA|IBA|IDA|IEA|IGI|IMP,True,True,True
+MIG2,S000003177,Zinc finger transcriptional repressor,YGL209W|MLZ1,GO:0001227|GO:0003677,GO:0000122|GO:0045944,7,11,HDA|IBA|IDA|IEA|IGI|IMP,True,True,True
+MIG3,S000000830,Transcriptional regulator,YER028C,GO:0001227|GO:0003677,,9,10,HDA|IBA|IDA|IEA|IGI|IMP,True,False,True
+MIP1,S000005857,Mitochondrial DNA polymerase gamma,YOR330C|DNA-directed DNA polymerase gamma MIP1,GO:0003677,,13,11,HDA|IBA|IDA|IEA|IMP,True,False,False
+MIT1,S000000733,Transcriptional regulator of pseudohyphal growth,YEL007W,GO:0003677,,2,1,HDA|IBA|IEA|ND,True,False,False
+MKS1,S000005020,Pleiotropic negative transcriptional regulator,YNL076W|LYS80,,GO:0000122,1,9,IBA|IDA|IEA|IGI|IMP|IPI|ND,False,False,True
+MLP2,S000001411,Myosin-like protein associated with the nuclear envelope,YIL149C,,GO:0006355,3,12,HDA|IBA|IDA|IEA|IGI|IMP|IPI,False,False,False
+MMS4,S000000302,Subunit of structure-specific Mms4p-Mus81p endonuclease,YBR098W|YBR100W|SLX2,GO:0003677,,9,23,IBA|IDA|IEA|IGI|IMP,True,False,False
+MND1,S000003151,Protein required for recombination and meiotic nuclear division,YGL183C,GO:0003677,,4,6,HDA|IBA|IDA|IEA|IMP,True,False,False
+MOT1,S000006003,Essential protein involved in regulation of transcription,YPL082C|BTAF1|BUR3|LPF4|END10|DNA-binding ATPase,GO:0003677,GO:0006357|GO:0045892,14,7,HDA|IBA|IDA|IEA|IMP|IPI,True,False,False
+MOT3,S000004674,"Transcriptional repressor, activator",YMR070W|ROX7|[MOT3+]|[MOT3],GO:0000981,GO:0000122|GO:0045944,8,11,HDA|IDA|IEA|IMP|IPI,False,True,True
+MPH1,S000001441,3'-5' DNA helicase involved in error-free bypass of DNA lesions,YIR002C|3'-5' DNA helicase,GO:0003677,,16,16,IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+MSH1,S000001162,DNA-binding protein of the mitochondria,YHR120W|mismatch repair ATPase MSH1,GO:0003677,,21,17,HDA|IBA|IDA|IEA|IMP,True,False,False
+MSH2,S000005450,Protein that binds to DNA mismatches,YOL090W|PMS5|mismatch repair ATPase MSH2,GO:0003677,,41,30,HDA|IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+MSH3,S000000688,Mismatch repair protein,YCR092C|mismatch repair protein MSH3,GO:0003677,,26,26,HDA|IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+MSH4,S000001891,Protein involved in meiotic recombination,YFL003C|MutS family protein MSH4,GO:0003677,,20,6,IBA|IDA|IEA|IMP|IPI,True,False,False
+MSH5,S000002313,Protein of the MutS family,YDL154W|MutS family protein MSH5,GO:0003677,,14,10,HDA|IBA|IDA|IEA|IMP|IPI,True,False,False
+MSH6,S000002504,Protein required for mismatch repair in mitosis and meiosis,YDR097C|PMS3|PMS6|mismatch repair ATPase MSH6,GO:0003677,,30,22,HDA|IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+MSN1,S000005476,Transcriptional activator,YOL116W|FUP1|HRB382|MSS10|PHD2,GO:0000981|GO:0003677,GO:0045944,4,9,HDA|IBA|IDA|IEA|IGI|IMP,True,True,False
+MSN2,S000004640,Stress-responsive transcriptional activator,YMR037C|stress-responsive transcriptional activator MSN2,GO:0000981|GO:0003677,GO:0006357|GO:0045944,13,41,HDA|IBA|IDA|IEA|IGI|IMP,True,True,False
+MSN4,S000001545,Stress-responsive transcriptional activator,YKL062W|stress-responsive transcriptional activator MSN4,GO:0000981|GO:0003677,GO:0045944,16,39,IBA|IDA|IEA|IGI|IMP|IPI,True,True,False
+MSS11,S000004774,Transcription factor,YMR164C,,GO:0045944,1,12,IBA|IC|IDA|IEA|IGI|IMP|ND,False,True,False
+MTF1,S000004841,Mitochondrial RNA polymerase specificity factor,YMR228W|RNA polymerase specificity factor,GO:0003677,,8,5,HDA|IBA|IDA|IEA|IMP|IPI,True,False,False
+MUS81,S000002794,Subunit of structure-specific Mms4p-Mus81p endonuclease,YDR386W|SLX3,GO:0003677,,11,20,IBA|IDA|IEA|IGI|IMP,True,False,False
+NAP1,S000001756,Histone chaperone and assembly chaperone for Rps6a/b,YKR048C|histone chaperone NAP1,GO:0003677,,8,12,IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+NCB2,S000002805,Subunit of a heterodimeric NC2 transcription regulator complex,YDR397C|YDR1|negative cofactor 2 transcription regulator complex subunit NCB2,,GO:0000122|GO:0045944,11,16,IBA|IDA|IEA|IGI|IMP|IPI,False,True,True
+NDT80,S000001166,Meiosis-specific transcription factor,YHR124W|transcription factor NDT80,GO:0003677|GO:0003700,GO:0006355|GO:0045944,8,16,HDA|IBA|IDA|IEA|IMP,True,True,False
+NGG1,S000002583,Subunit of chromatin modifying histone acetyltransferase complexes,YDR176W|ADA3|SWI7|histone acetyltransferase NGG1,,GO:0006357|GO:0045893,3,7,IBA|IDA|IEA,False,False,False
+NHP10,S000002160,Non-essential INO80 chromatin remodeling complex subunit,YDL002C|HMO2,GO:0003677,,4,4,HDA|IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+NHP6A,S000006256,High-mobility group (HMG) protein,YPR052C|high-mobility group nucleosome-binding protein,GO:0003677,,8,13,IBA|IC|IDA|IEA|IGI,True,False,False
+NHP6B,S000002157,High-mobility group (HMG) protein,YBR089C-A|YBR090C-A|high-mobility group nucleosome-binding protein,GO:0003677,GO:0006366,4,9,HDA|IBA|IDA|IEA|IGI,True,False,False
+NOT3,S000001300,"Component of the CCR4-NOT core complex, involved in mRNA decapping",YIL038C|CCR4-NOT core subunit NOT3,,GO:0006355,1,8,IBA|IDA|IEA|IMP|IPI,False,False,False
+NOT5,S000006276,"Component of the CCR4-NOT core complex, involved in mRNA decapping",YPR072W|CCR4-NOT core subunit NOT5,,GO:0006355,1,10,IBA|IDA|IEA|IMP|IPI,False,False,False
+NRG1,S000002450,Transcriptional repressor,YDR043C|transcriptional regulator NRG1,GO:0000981|GO:0001227|GO:0003677,GO:0000122|GO:0006357,9,17,IBA|IDA|IEA|IGI|IMP|IPI,True,False,True
+NRG2,S000000270,Transcriptional repressor,YBR066C,GO:0000981|GO:0003677,GO:0000122|GO:0006357,5,8,IBA|IDA|IEA|IGI|IMP,True,False,True
+NSI1,S000002433,RNA polymerase I termination factor,YDR026C|YTT1,GO:0003677|GO:0003700,GO:0006355,4,4,HDA|IBA|IDA|IEA|IMP,True,False,False
+NSR1,S000003391,"Nucleolin, nucleolar protein that binds nuclear localization sequences",YGR159C|SHE5,GO:0003677,,11,5,HDA|IBA|IDA|IEA|IMP|TAS,True,False,False
+NTG1,S000000013,DNA N-glycosylase and apurinic/apyrimidinic (AP) lyase,YAL015C|FUN33|SCR1|ogg2|bifunctional N-glycosylase/AP lyase NTG1,GO:0003677,,16,16,HDA|IBA|IDA|IEA|IMP,True,False,False
+NTG2,S000005403,DNA N-glycosylase and apurinic/apyrimidinic (AP) lyase,YOL043C|SCR2|bifunctional N-glycosylase/AP lyase NTG2,GO:0003677,,19,12,IBA|IDA|IEA,True,False,False
+NUP100,S000001551,FG-nucleoporin component of central core of the nuclear pore complex,YKL068W|NSP100|FG-nucleoporin NUP100|[NUP100+],,GO:0045893,16,17,IBA|IDA|IEA|IGI|IMP|IPI,False,False,False
+NUP120,S000001540,Subunit of the Nup84p subcomplex of the nuclear pore complex (NPC),YKL057C|RAT2,,GO:0000122|GO:0045893|GO:0045944,2,25,IBA|IDA|IEA|IGI|IMP,False,True,True
+NUP133,S000001790,Subunit of Nup84p subcomplex of nuclear pore complex (NPC),YKR082W|RAT3,,GO:0000122|GO:0045893|GO:0045944,3,26,IBA|IDA|IEA|IGI|IMP,False,True,True
+NUP145,S000003060,Essential protein with distinct roles in two nuclear pore subcomplexes,YGL092W|RAT10|nucleocytoplasmic transporter NUP145,,GO:0045893,14,26,IDA|IEA|IGI|IMP|IPI,False,False,False
+NUP157,S000000907,Subunit of the inner ring of the nuclear pore complex (NPC),YER105C,GO:0003677,,5,13,IBA|IC|IDA|IEA|IGI|IMP,True,False,False
+NUP159,S000001377,FG-nucleoporin component of central core of the nuclear pore complex,YIL115C|NUP158|RAT7|FG-nucleoporin NUP159,,GO:0045892,4,23,IBA|IDA|IEA|IGI|IMP|IPI,False,False,False
+NUP42,S000002600,FG-nucleoporin component of central core of the nuclear pore complex,YDR192C|FG-nucleoporin NUP42|RIP1|UIP1,,GO:0045892,16,16,IBA|IDA|IEA|IGI|IMP|IPI,False,False,False
+NUP53,S000004762,FG-nucleoporin component of central core of nuclear pore complex (NPC),YMR153W|FG-nucleoporin NUP53,,GO:0006355|GO:0045893,9,23,IBA|IDA|IEA|IGI|IMP|IPI,False,False,False
+NUP84,S000002274,Subunit of the Nup84p subcomplex of the nuclear pore complex (NPC),YDL116W,,GO:0006355|GO:0045893|GO:0045944,3,23,IBA|IDA|IEA|IGI|IMP,False,True,False
+NUP85,S000003803,Subunit of the Nup84p subcomplex of the nuclear pore complex (NPC),YJR042W|RAT9,,GO:0045893,2,13,IBA|IDA|IEA|IMP,False,False,False
+NUT1,S000003119,Component of the RNA polymerase II mediator complex,YGL151W|MED5|SSX4,,GO:0006357|GO:0006366,2,5,HDA|IBA|IDA|IEA|IMP|ND,False,False,False
+NUT2,S000006372,Subunit of the RNA polymerase II mediator complex,YPR168W|MED10|mediator complex subunit NUT2,,GO:0000122|GO:0006357|GO:0045944,3,6,IBA|IDA|IEA|IGI|IMP|ND,False,True,True
+OAF1,S000000048,Oleate-activated transcription factor,YAL051W|YAF1|oleate-activated transcription factor OAF1,GO:0000981|GO:0001228|GO:0003677,GO:0006355|GO:0045944,14,9,HDA|IBA|IDA|IEA|IGI|IMP|IPI,True,True,False
+OAF3,S000001772,Putative transcriptional repressor with Zn(2)-Cys(6) finger,YKR064W,GO:0000981|GO:0003677,GO:0000122|GO:0006355|GO:0045944,8,4,HDA|IBA|IEA|IMP|ISA,True,True,True
+OPI1,S000001012,Transcriptional regulator of a variety of genes,YHL020C|transcriptional regulator OPI1,GO:0003677,GO:0000122|GO:0006357|GO:0045944,5,10,HDA|IBA|IDA|IEA|IMP|IPI,True,True,True
+ORC1,S000004530,Largest subunit of the origin recognition complex,YML065W|origin recognition complex subunit 1,GO:0003677,,13,10,IBA|IDA|IEA|IGI|IMP,True,False,False
+ORC3,S000003927,Subunit of the origin recognition complex (ORC),YLL004W|origin recognition complex subunit 3,GO:0003677,,6,7,IBA|IDA|IEA|IMP,True,False,False
+ORC4,S000006366,Subunit of the origin recognition complex (ORC),YPR162C|origin recognition complex subunit 4,GO:0003677,,4,6,IBA|IDA|IEA|IMP,True,False,False
+ORC6,S000001160,Subunit of the origin recognition complex (ORC),YHR118C|origin recognition complex subunit 6,GO:0003677,,3,5,IDA|IEA|IMP,True,False,False
+OTU1,S000001850,Deubiquitylation enzyme that binds to the chaperone-ATPase Cdc48p,YFL044C|ubiquitin-specific protease OTU1,,GO:0006355,9,8,HDA|IBA|IDA|IEA|IMP,False,False,False
+PAF1,S000000483,Component of the Paf1p complex involved in transcription elongation,YBR279W,,GO:0000122|GO:0006357,5,37,IBA|IDA|IEA|IGI|IMP|IPI,False,False,True
+PAU8,S000002142,Protein of unknown function,YAL068C|seripauperin PAU8,,GO:0045944,2,3,HMP|IBA|ND,False,True,False
+PCC1,S000028512,Component of the EKC/KEOPS protein complex,YKR095W-A|chromatin DNA-binding EKC/KEOPS complex subunit PCC1,,GO:0045944,1,9,IBA|IDA|IEA|IGI|IMP,False,True,False
+PDC2,S000002488,Transcription factor for thiamine-regulated genes,YDR081C,GO:0003677,GO:0045944,4,6,IBA|IC|IDA|IEA|IGI|IMP,True,True,False
+PDR1,S000002981,Transcription factor that regulates the pleiotropic drug response,YGL013C|AMY1|ANT1|BOR2|CYH3|NRA2|SMR2|TIL1|TPE1|TPE3|drug-responsive transcription factor PDR1,GO:0000981|GO:0001228|GO:0003677,GO:0006351|GO:0006355|GO:0045944,10,9,IDA|IEA|IGI|IMP,True,True,False
+PDR3,S000000101,Transcriptional activator of the pleiotropic drug resistance network,YBL005W|AMY2|TPE2|drug-responsive transcription factor PDR3,GO:0000981|GO:0001228|GO:0003677,GO:0006351|GO:0006355|GO:0045944,11,9,HDA|IBA|IDA|IEA|IGI|IMP,True,True,False
+PDR8,S000004256,Transcription factor,YLR266C,GO:0000981|GO:0003677,GO:0006351|GO:0006355|GO:0045944,10,4,IDA|IEA|IMP|ISA,True,True,False
+PGD1,S000002993,Subunit of the RNA polymerase II mediator complex,YGL025C|HRS1|MED3,,GO:0000122|GO:0006357|GO:0045944,9,4,IDA|IEA|IMP|IPI,False,True,True
+PHD1,S000001526,Transcriptional activator that enhances pseudohyphal growth,YKL043W,GO:0003677|GO:0003700,GO:0045944,7,3,HDA|IBA|IDA|IEA|IMP,True,True,False
+PHO2,S000002264,Homeobox transcription factor,YDL106C|phoB|BAS2|GRF10,GO:0000981|GO:0001228|GO:0003677,GO:0006355|GO:0006357|GO:0045944,16,17,HDA|IBA|IDA|IEA|IGI|IMP,True,True,False
+PHO23,S000005041,Component of the Rpd3L histone deacetylase complex,YNL097C,,GO:0000122|GO:0045944,4,18,HDA|IBA|IDA|IEA|IMP,False,True,True
+PHO4,S000001930,Basic helix-loop-helix (bHLH) transcription factor of the myc-family,YFR034C|phoD|phosphate-sensing transcription factor PHO4,GO:0000981|GO:0003677|GO:0003700,GO:0000122|GO:0006357|GO:0045944,10,10,HDA|IBA|IDA|IEA|IGI|IMP,True,True,True
+PHO80,S000005361,Cyclin,YOL001W|phoR|AGS3|TUP7|VAC5,,GO:0000122,3,10,IBA|IDA|IEA|IGI|IMP|IPI,False,False,True
+PHO85,S000005952,Cyclin-dependent kinase,YPL031C|phoU|LDB15|cyclin-dependent serine/threonine-protein kinase PHO85,,GO:0000122,19,37,HDA|HGI|IBA|IDA|IEA|IGI|IMP|IPI,False,False,True
+PHR1,S000005913,DNA photolyase involved in photoreactivation,YOR386W|deoxyribodipyrimidine photo-lyase PHR1,GO:0003677,,9,5,HDA|IBA|IDA|IEA|TAS,True,False,False
+PIF1,S000004526,"DNA helicase, potent G-quadruplex DNA binder/unwinder",YML061C|TST1|DNA helicase PIF1,GO:0003677,,17,26,HDA|IBA|IC|IDA|IEA|IGI|IMP,True,False,False
+PIM1,S000000118,ATP-dependent Lon protease,YBL022C|ATP-dependent Lon protease PIM1,GO:0003677,,26,19,HDA|IBA|IDA|IEA|IGI|IMP,True,False,False
+PIP2,S000005890,"Autoregulatory, oleate-activated transcription factor",YOR363C|oleate-activated transcription factor PIP2|OAF2,GO:0000981|GO:0001228|GO:0003677,GO:0006355|GO:0045944,12,9,IBA|IDA|IEA|IGI|IMP|IPI,True,True,False
+POB3,S000004534,Subunit of the heterodimeric FACT complex (Spt16p-Pob3p),YML069W|FACT complex subunit POB3,GO:0003677,,4,11,IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+POG1,S000001384,DNA-binding transcriptional activator,YIL122W,,GO:0045944,1,10,HDA|IDA|IEA|IGI|IMP,False,True,False
+POL1,S000005046,Catalytic subunit of the DNA polymerase I alpha-primase complex,YNL102W|CDC17|CRT5|HPR3|DNA-directed DNA polymerase alpha catalytic subunit POL1,GO:0003677,,26,12,HDA|IBA|IC|IDA|IEA|IMP,True,False,False
+POL12,S000000131,B subunit of DNA polymerase alpha-primase complex,YBL035C|DNA-directed DNA polymerase alpha subunit POL12,GO:0003677,,3,9,IBA|IC|IDA|IEA|IGI|IMP|IPI,True,False,False
+POL2,S000005206,Catalytic subunit of DNA polymerase (II) epsilon,YNL262W|DUN2|DNA polymerase epsilon catalytic subunit,GO:0003677,,30,32,HDA|IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+POL3,S000002260,Catalytic subunit of DNA polymerase delta,YDL102W|CDC2|HPR6|TEX1|DNA-directed DNA polymerase delta POL3,GO:0003677,,25,17,IBA|IDA|IEA|IGI|IMP|TAS,True,False,False
+POL30,S000000292,Proliferating cell nuclear antigen (PCNA),YBR088C|PCNA|proliferating cell nuclear antigen,GO:0003677,,8,36,IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+POL31,S000003766,Subunit of DNA polymerase delta (polymerase III),YJR006W|HYS2|HUS2|SDP5|DNA-directed DNA polymerase delta subunit POL31,GO:0003677,,8,12,IBA|IDA|IEA|TAS,True,False,False
+POL4,S000000607,DNA polymerase IV,YCR014C|POLX|DNA-directed DNA polymerase IV,GO:0003677,,13,10,IBA|IC|IDA|IEA|IMP,True,False,False
+POL5,S000000781,Protein involved in 60S assembly and pre-40S AFs recycling,YEL055C|DNA-directed DNA polymerase,GO:0003677,GO:0006355,9,7,HDA|IBA|IDA|IEA|IMP,True,False,False
+PPR1,S000004004,Zinc finger transcription factor,YLR014C,GO:0000981|GO:0003677,GO:0006351|GO:0006355|GO:0045944,13,7,IBA|IC|IDA|IEA|IMP,True,True,False
+PRI2,S000001528,Subunit of DNA primase,YKL045W|DNA primase subunit PRI2,GO:0003677,,9,8,IBA|IC|IDA|IEA|IGI|IMP,True,False,False
+PSO2,S000004745,Nuclease required for DNA single- and double-strand break repair,YMR137C|SNM1|DNA cross-link repair protein PSO2,GO:0003677,,10,16,HDA|IBA|IDA|IEA|IGI|IMP,True,False,False
+PUL4,S000005346,Putative zinc-cluster transcription factor,YNR063W,GO:0000981|GO:0003677,GO:0006351|GO:0006355,11,5,HDA|IBA|IEA|ND,True,False,False
+PUT3,S000001498,Transcriptional activator,YKL015W,GO:0000981|GO:0001228|GO:0003677,GO:0006351|GO:0006355|GO:0045944,13,8,HDA|IC|IDA|IEA|IMP,True,True,False
+PWR1,S000132614,Intergenic regulatory ncRNA,PWR1,,GO:0006357,1,2,IC|IDA|IMP|ND,False,False,False
+PZF1,S000006390,Transcription factor IIIA (TFIIIA),YPR186C|TFC2,GO:0003677,GO:0045944,7,4,IBA|IC|IDA|IEA|IMP,True,True,False
+RAD1,S000005943,Single-stranded DNA endonuclease (with Rad10p),YPL022W|LPB9|ssDNA endodeoxyribonuclease RAD1|RAD12,GO:0003677,,12,16,IBA|IDA|IEA|IMP|IPI,True,False,False
+RAD10,S000004560,Single-stranded DNA endonuclease (with Rad1p),YML095C|DNA repair protein RAD10,GO:0003677,,9,13,IBA|IDA|IEA|IMP|IPI,True,False,False
+RAD14,S000004814,Subunit of Nucleotide Excision Repair Factor 1 (NEF1),YMR201C|DNA repair protein RAD14,GO:0003677,,7,9,IBA|IDA|IEA|IPI,True,False,False
+RAD16,S000000318,Nucleotide excision repair (NER) protein,YBR114W|PSO5|DNA repair protein RAD16,GO:0003677,,12,7,IDA|IEA|IMP,True,False,False
+RAD17,S000005895,Checkpoint protein,YOR368W,GO:0003677,,6,12,IBA|IDA|IEA|IMP|IPI,True,False,False
+RAD18,S000000662,E3 ubiquitin ligase,YCR066W|E3 ubiquitin-protein ligase RAD18,GO:0003677,,11,19,IBA|IDA|IEA|IGI|IMP,True,False,False
+RAD2,S000003490,Single-stranded DNA endonuclease,YGR258C|ssDNA endodeoxyribonuclease RAD2,GO:0003677,GO:0006366,14,8,IBA|IDA|IEA|IGI|IMP,True,False,False
+RAD23,S000000763,Protein with ubiquitin-like N terminus,YEL037C,,GO:0000122,13,12,HDA|IBA|IDA|IEA|IMP|IPI,False,False,True
+RAD26,S000003796,Protein involved in transcription-coupled nucleotide excision repair,YJR035W|DNA-dependent ATPase RAD26,GO:0003677,,10,11,HDA|IBA|IDA|IEA|IGI|IMP,True,False,False
+RAD27,S000001596,"5' to 3' exonuclease, 5' flap endonuclease",YKL113C|ERC11|RTH1|FEN1|multifunctional nuclease RAD27,GO:0003677,,19,16,HDA|IBA|IDA|IEA|IGI|IMP,True,False,False
+RAD3,S000000973,5' to 3' DNA helicase,YER171W|REM1|TFIIH/NER complex ATP-dependent 5'-3' DNA helicase subunit RAD3,GO:0003677,GO:0006366,30,19,IBA|IDA|IEA|IMP,True,False,False
+RAD30,S000002827,DNA polymerase eta,YDR419W|DBH1|DNA-directed DNA polymerase eta,GO:0003677,,10,17,IBA|IDA|IEA|IMP|IPI,True,False,False
+RAD34,S000002722,Protein involved in nucleotide excision repair (NER),YDR314C,GO:0003677,,7,7,HDA|IBA|IEA|IMP|ND,True,False,False
+RAD4,S000000964,Damaged-DNA binding subunit of Nuclear Excision Repair Factor 2,YER162C,GO:0003677,GO:0000122,10,9,IBA|IDA|IEA|IMP,True,False,True
+RAD5,S000004022,DNA helicase/Ubiquitin ligase,YLR032W|REV2|SNM2|DNA helicase RAD5,GO:0003677,,15,16,HDA|IDA|IEA|IGI|IMP,True,False,False
+RAD51,S000000897,Strand exchange protein,YER095W|MUT5|recombinase RAD51,GO:0003677,,26,22,IBA|IDA|IEA|IMP|IPI,True,False,False
+RAD54,S000003131,DNA-dependent ATPase that stimulates strand exchange,YGL163C|XRS1|DNA-dependent ATPase RAD54,GO:0003677,,13,10,HDA|IBA|IDA|IEA|IMP,True,False,False
+RAD55,S000002483,Protein that stimulates strand exchange,YDR076W|putative DNA-dependent ATPase RAD55,GO:0003677,,8,10,IBA|IDA|IEA|IMP|ISS,True,False,False
+RAD57,S000002411,Protein that stimulates strand exchange,YDR004W|putative DNA-dependent ATPase RAD57,GO:0003677,,11,11,IBA|IDA|IEA|IMP|IPI|ISS,True,False,False
+RAD6,S000003026,Ubiquitin-conjugating enzyme (E2),YGL058W|PSO8|UBC2|E2 ubiquitin-conjugating protein RAD6,,GO:0006366,10,39,IBA|IDA|IEA|IGI|IMP|IPI,False,False,False
+RAD9,S000002625,DNA damage-dependent checkpoint protein,YDR217C|chromatin-binding protein RAD9,,GO:0045944,4,21,IBA|IC|IDA|IEA|IGI|IMP,False,True,False
+RAP1,S000005160,Essential DNA-binding transcription regulator that binds many loci,YNL216W|GRF1|TBA1|TUF1|DNA-binding transcription factor RAP1|GRC4,GO:0000981|GO:0003677|GO:0003700,GO:0000122|GO:0006355|GO:0045944,20,19,HDA|IBA|IDA|IEA|IGI|IMP|IPI,True,True,True
+RBA50,S000002935,Protein involved in transcription,YDR527W,,GO:0006366,1,3,HDA|IBA|IEA|IMP|ND,False,False,False
+RCO1,S000004680,Essential component of the Rpd3S histone deacetylase complex,YMR075W,,GO:0045944,2,10,HDA|IBA|IDA|IEA|IGI|IMP|ND,False,True,False
+RDH54,S000000277,DNA-dependent ATPase,YBR073W|TID1|DNA-dependent ATPase RDH54,GO:0003677,,16,17,IBA|IC|IDA|IEA|IMP,True,False,False
+RDR1,S000005907,Transcriptional repressor involved in regulating multidrug resistance,YOR380W,GO:0000981|GO:0003677|GO:0003700,GO:0006351|GO:0006355|GO:0006357,12,6,HDA|IBA|IC|IEA|IMP,True,False,False
+RDS1,S000000703,Putative zinc cluster transcription factor,YCR106W,GO:0000981|GO:0003677,GO:0006355|GO:0045944,8,4,HDA|IBA|IEA|IMP|ND,True,True,False
+RDS2,S000006054,Transcription factor involved in regulating gluconeogenesis,YPL133C,GO:0000981|GO:0001228|GO:0003677,GO:0006355|GO:0045944,10,8,HDA|IBA|IC|IDA|IEA|IMP,True,True,False
+REB1,S000000253,RNA polymerase I enhancer binding protein,YBR049C|GRF2|DNA-binding protein REB1|EBF1,GO:0003677|GO:0003700,GO:0006355|GO:0006357,5,6,IBA|IDA|IEA|IMP|TAS,True,False,False
+RET1,S000005733,Second-largest subunit of RNA polymerase III,YOR207C|PDS2|RPC2|RPC128|C128|DNA-directed RNA polymerase III core subunit RET1,GO:0003677,GO:0006351,28,13,IBA|IDA|IEA|IGI,True,False,False
+REV1,S000005873,Deoxycytidyl transferase,YOR346W|deoxycytidyl transferase,GO:0003677,,12,16,HDA|IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+REV3,S000006088,Catalytic subunit of DNA polymerase zeta,YPL167C|PSO1|DNA-directed DNA polymerase,GO:0003677,,19,13,IBA|IDA|IEA|IGI,True,False,False
+RFA1,S000000065,Subunit of heterotrimeric Replication Protein A (RPA),YAR007C|BUF2|FUN3|RPA1|replication factor A subunit protein RFA1|RPA70,GO:0003677,,11,25,HDA|IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+RFA2,S000005256,Subunit of heterotrimeric Replication Protein A (RPA),YNL312W|BUF1|RPA2|RPA32,GO:0003677,,7,22,IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+RFA3,S000003709,Subunit of heterotrimeric Replication Protein A (RPA),YJL173C|RPA3|RPA14,GO:0003677,,4,21,IDA|IEA|IGI|IMP|IPI,True,False,False
+RFC1,S000005743,Subunit of heteropentameric Replication factor C (RF-C),YOR217W|CDC44|replication factor C subunit 1,GO:0003677,,11,13,IBA|IDA|IEA|IGI|IMP,True,False,False
+RFC2,S000003829,Subunit of heteropentameric Replication factor C (RF-C),YJR068W|replication factor C subunit 2,GO:0003677,,8,9,IBA|IDA|IEA|IMP|IPI|TAS,True,False,False
+RFC3,S000005234,Subunit of heteropentameric Replication factor C (RF-C),YNL290W|replication factor C subunit 3,GO:0003677,,9,7,HDA|IBA|IDA|IEA|IPI|TAS,True,False,False
+RFC4,S000005454,Subunit of heteropentameric Replication factor C (RF-C),YOL094C|replication factor C subunit 4,GO:0003677,,8,7,IBA|IDA|IEA|IPI,True,False,False
+RFC5,S000000291,Subunit of heteropentameric Replication factor C (RF-C),YBR087W|replication factor C subunit 5,GO:0003677,,7,7,IBA|IDA|IEA|IMP|IPI,True,False,False
+RFM1,S000005805,Component of the Sum1p-Rfm1p-Hst1p complex,YOR279C,,GO:0000122,2,2,IEA|IGI|IMP|IPI,False,False,True
+RFX1,S000004166,Major transcriptional repressor of DNA-damage-regulated genes,YLR176C|CRT1,GO:0000981|GO:0003677|GO:0003700,GO:0000122|GO:0006355|GO:0006357|GO:0045944,7,7,HDA|IBA|IDA|IEA|IGI|IMP,True,True,True
+RGM1,S000004794,Putative zinc finger DNA binding transcription factor,YMR182C,GO:0000981|GO:0003677,GO:0006357|GO:0045944,5,3,IBA|IDA|IEA|IMP|ISS,True,True,False
+RGR1,S000004061,Subunit of the RNA polymerase II mediator complex,YLR071C|MED14,,GO:0000122|GO:0006357|GO:0045944,4,4,IBA|IDA|IEA|IMP|IPI,False,True,True
+RGT1,S000001521,Glucose-responsive transcription factor,YKL038W,GO:0000981|GO:0001228|GO:0003677,GO:0000122|GO:0006355|GO:0045944,11,7,IC|IDA|IEA|IGI,True,True,True
+RIM1,S000007222,ssDNA-binding protein essential for mitochondrial genome maintenance,YCR028C-A,GO:0003677,,5,7,HDA|IBA|IDA|IEA|IMP|ISS,True,False,False
+RIM101,S000001019,Cys2His2 zinc-finger transcriptional repressor,YHL027W|RIM1|alkaline-responsive transcriptional regulator RIM101,GO:0001227|GO:0003677,GO:0000122|GO:0045944,5,11,IBA|IDA|IEA|IGI|IMP,True,True,True
+RIM15,S000001861,Protein kinase involved in cell proliferation in response to nutrients,YFL033C|TAK1|protein kinase RIM15,,GO:0045944,22,39,HDA|IBA|IDA|IEA|IGI|IMP,False,True,False
+RLM1,S000006010,MADS-box transcription factor,YPL089C,GO:0000981|GO:0003677,GO:0006357|GO:0045944,11,12,IBA|IDA|IEA|IMP,True,True,False
+RME1,S000003276,Zinc finger protein involved in control of meiosis,YGR044C|CSP1,GO:0000981|GO:0003677,GO:0000122|GO:0045944,4,10,HDA|IDA|IEA|IMP,True,True,True
+RMI1,S000005945,Subunit of the RecQ (Sgs1p) - Topo III (Top3p) complex,YPL024W|NCE4,GO:0003677,,4,28,HDA|IDA|IEA|IGI|IMP|IPI,True,False,False
+ROF1,S000001220,Putative transcription factor containing a WOPR domain,YHR177W,GO:0003677,GO:0045944,2,1,IBA|IC|IDA|ISS,True,True,False
+ROX1,S000006269,Heme-dependent repressor of hypoxic genes,YPR065W|REO1,GO:0000981|GO:0001227|GO:0003677,GO:0000122|GO:0006357,10,19,IBA|IC|IDA|IEA|IGI|IMP,True,False,True
+ROX3,S000000189,Subunit of the RNA polymerase II mediator complex,YBL093C|MED19|NUT3|SSN7|SSX2|RMR1,,GO:0000122|GO:0006357|GO:0045944,3,6,IBA|IDA|IEA|IMP,False,True,True
+RPA12,S000003824,RNA polymerase I subunit A12.2,YJR063W|RRN4|A12.2|DNA-directed RNA polymerase I core subunit RPA12,,GO:0000122|GO:0006351,7,15,IBA|IDA|IEA|IGI|IMP|IPI,False,False,True
+RPA135,S000006214,RNA polymerase I second largest subunit A135,YPR010C|A135|RPA2|RRN2|SRP3|DNA-directed RNA polymerase I core subunit RPA135,GO:0003677,GO:0006351,27,13,IBA|IDA|IEA|IGI,True,False,False
+RPA190,S000005868,RNA polymerase I largest subunit A190,YOR341W|A190|RRN1|DNA-directed RNA polymerase I core subunit RPA190,GO:0003677,GO:0006351,23,11,IBA|IDA|IEA|IGI|IMP,True,False,False
+RPA43,S000005867,RNA polymerase I subunit A43,YOR340C|A43|DNA-directed RNA polymerase I subunit RPA43,,GO:0006351,3,4,IBA|IDA|IEA|IGI,False,False,False
+RPA49,S000005192,RNA polymerase I subunit A49,YNL248C|A49|DNA-directed RNA polymerase I subunit RPA49,GO:0003677,GO:0006351,6,13,HMP|IBA|IDA|IEA|IGI|IMP,True,False,False
+RPB10,S000005736,RNA polymerase subunit ABC10-beta,YOR210W|ABC10-beta|DNA-directed RNA polymerase core subunit RPB10,GO:0003677,GO:0006351|GO:0006366,14,14,IBA|IC|IDA|IEA|IGI|IMP,True,False,False
+RPB11,S000005365,RNA polymerase II subunit B12.5,YOL005C|B12.5|DNA-directed RNA polymerase II core subunit RPB11,GO:0003677,GO:0006351|GO:0006366,9,7,IBA|IDA|IEA|IMP,True,False,False
+RPB2,S000005677,RNA polymerase II second largest subunit B150,YOR151C|B150|RPB150|RPO22|SIT2|SOH2|DNA-directed RNA polymerase II core subunit RPB2,GO:0003677,GO:0006351|GO:0006366,31,13,HDA|IBA|IDA|IEA|IMP,True,False,False
+RPB3,S000001283,RNA polymerase II third largest subunit B44,YIL021W|B44|DNA-directed RNA polymerase II core subunit RPB3,GO:0003677,GO:0006351|GO:0006366,11,7,IBA|IDA|IEA|IMP,True,False,False
+RPB4,S000003676,RNA polymerase II subunit B32,YJL140W|CTF15|B32|DNA-directed RNA polymerase II subunit RPB4,,GO:0006366,10,15,IBA|IDA|IEA|IMP|IPI,False,False,False
+RPB5,S000000358,RNA polymerase subunit ABC27,YBR154C|ABC27|DNA-directed RNA polymerase core subunit RPB5,GO:0003677,GO:0006351|GO:0006366,15,13,IBA|IDA|IEA|IGI|IMP,True,False,False
+RPB7,S000002812,RNA polymerase II subunit B16,YDR404C|B16|DNA-directed RNA polymerase II subunit RPB7,,GO:0006351|GO:0006366,12,11,IBA|IDA|IEA|IGI|IMP|IPI,False,False,False
+RPB8,S000005750,RNA polymerase subunit ABC14.5,YOR224C|ABC14.5|DNA-directed RNA polymerase core subunit RPB8,GO:0003677,GO:0006351|GO:0006366,6,9,IBA|IDA|IEA|IGI|IPI,True,False,False
+RPB9,S000003038,RNA polymerase II subunit B12.6,YGL070C|SHI|SSU73|B12.6|DNA-directed RNA polymerase II core subunit RPB9,,GO:0006351|GO:0006366,6,16,IBA|IDA|IEA|IGI|IMP,False,False,False
+RPC10,S000001185,"RNA polymerase subunit ABC10-alpha, found in RNA pol I, II, and III",YHR143W-A|RPB12|ABC10-alpha|DNA-directed RNA polymerase core subunit RPC10,GO:0003677,GO:0006351|GO:0006366,11,9,HDA|IBA|IDA|IEA|IGI|IMP,True,False,False
+RPC11,S000002452,RNA polymerase III subunit C11,YDR045C|C11|DNA-directed RNA polymerase III core subunit RPC11,,GO:0006351,8,8,IBA|IDA|IEA|IMP,False,False,False
+RPC19,S000005057,RNA polymerase subunit AC19,YNL113W|AC19|DNA-directed RNA polymerase core subunit RPC19,GO:0003677,GO:0006351,8,6,IBA|IDA|IEA,True,False,False
+RPC25,S000001627,RNA polymerase III subunit C25,YKL144C|YKL1|C25|DNA-directed RNA polymerase III subunit RPC25,GO:0003677,GO:0006351,5,7,IBA|IDA|IEA|IMP,True,False,False
+RPC31,S000005095,RNA polymerase III subunit C31,YNL151C|ACP2|RPC8|C31|DNA-directed RNA polymerase III subunit C31,GO:0003677,,5,4,IBA|IDA|IEA|IMP,True,False,False
+RPC37,S000001733,RNA polymerase III subunit C37,YKR025W|C37|DNA-directed RNA polymerase III subunit C37,,GO:0006351,2,2,IBA|IDA|IEA,False,False,False
+RPC40,S000006314,RNA polymerase subunit AC40,YPR110C|RPC5|DNA-directed RNA polymerase core subunit RPC40,GO:0003677,GO:0006351,14,8,IBA|IDA|IEA|IMP,True,False,False
+RPC53,S000002309,RNA polymerase III subunit C53,YDL150W|RPC4|C53|DNA-directed RNA polymerase III subunit C53,GO:0003677,,3,3,IBA|IDA|IEA|IMP,True,False,False
+RPC82,S000006394,RNA polymerase III subunit C82,YPR190C|RPC80|RPC3|DNA-directed RNA polymerase III subunit C82,GO:0003677,GO:0006351,4,3,IBA|IDA|IEA|IMP,True,False,False
+RPD3,S000005274,"Histone deacetylase, component of both the Rpd3S and Rpd3L complexes",YNL330C|MOF6|REC3|SDI2|SDS6|histone deacetylase RPD3,,GO:0000122|GO:0045944,14,60,HDA|IBA|IDA|IEA|IGI|IMP|IPI,False,True,True
+RPH1,S000000971,JmjC domain-containing histone demethylase,YER169W|KDM4,GO:0001227|GO:0003677,GO:0000122,17,27,HDA|IBA|IC|IDA|IEA|IGI|IMP,True,False,True
+RPI1,S000001381,"Transcription factor, allelic differences between S288C and Sigma1278b",YIL119C,GO:0003677,GO:0045944,2,5,IDA|IEA|IGI|IMP,True,True,False
+RPM2,S000004556,Protein subunit of mitochondrial RNase P,YML091C|ribonuclease P,,GO:0045944,5,15,HDA|IDA|IEA|IGI|IMP|IPI,False,True,False
+RPN4,S000002178,Transcription factor that stimulates expression of proteasome genes,YDL020C|SON1|UFD5|stress-regulated transcription factor RPN4,GO:0001228|GO:0003677,GO:0000122|GO:0045944,3,23,HDA|HMP|IDA|IEA|IGI|IMP,True,True,True
+RPO21,S000002299,RNA polymerase II largest subunit B220,YDL140C|RPB1|RPB220|SUA8|B220|DNA-directed RNA polymerase II core subunit RPO21|SIT1,GO:0003677,GO:0006351|GO:0006366,28,12,HDA|IBA|IDA|IEA|IMP,True,False,False
+RPO26,S000006391,RNA polymerase subunit ABC23,YPR187W|ABC23|RPB6|DNA-directed RNA polymerase core subunit RPO26,GO:0003677,GO:0006351|GO:0006366,17,12,IBA|IDA|IEA|IMP,True,False,False
+RPO31,S000005642,RNA polymerase III largest subunit C160,YOR116C|C160|RPC1|RPC160|DNA-directed RNA polymerase III core subunit RPO31,GO:0003677,GO:0006351,19,7,IBA|IDA|IEA,True,False,False
+RPO41,S000001858,Mitochondrial RNA polymerase,YFL036W|DNA-directed RNA polymerase,GO:0003677,GO:0006351,12,6,HDA|IBA|IDA|IEA|IMP,True,False,False
+RQT4,S000001731,Subunit of ribosome-associated quality control trigger complex (RQT),YKR023W,,GO:0006355|GO:0045893,3,3,HDA|IBA|IEA|ND,False,False,False
+RRM3,S000001073,DNA helicase involved in rDNA replication and Ty1 transposition,YHR031C|RTT104|DNA helicase,GO:0003677,,12,17,IBA|IDA|IEA|IGI|IMP,True,False,False
+RRN7,S000003562,Component of the core factor (CF) rDNA transcription factor complex,YJL025W,GO:0003677,,10,5,IBA|IC|IDA|IEA|IMP|IPI,True,False,False
+RRP14,S000001565,"Essential protein, constituent of 66S pre-ribosomal particles",YKL082C|ribosome biosynthesis protein RRP14,GO:0003677,,3,7,IBA|IDA|IEA|IMP|ND,True,False,False
+RSC3,S000002711,Component of the RSC chromatin remodeling complex,YDR303C,GO:0000981|GO:0003677,GO:0006355|GO:0006357,8,10,HDA|IDA|IEA|IGI|IMP,True,False,False
+RSC30,S000001098,Component of the RSC chromatin remodeling complex,YHR056C,GO:0000981|GO:0003677,GO:0006355|GO:0006357,6,9,IDA|IEA|IMP,True,False,False
+RSC58,S000004023,Component of the RSC chromatin remodeling complex,YLR033W,,GO:0006357,0,5,IBA|IDA|IEA,False,False,False
+RSC6,S000000648,Component of the RSC chromatin remodeling complex,YCR052W,GO:0001228,GO:0006357|GO:0045944,1,7,IBA|IDA|IEA,False,True,False
+RSC8,S000001933,Component of the RSC chromatin remodeling complex,YFR037C|SWH3,GO:0003677,GO:0045893,5,7,HDA|IBA|IDA|IEA|IMP,True,False,False
+RSC9,S000004596,Component of the RSC chromatin remodeling complex,YML127W,GO:0003677,GO:0006355|GO:0006357,2,11,IBA|IDA|IEA|IMP,True,False,False
+RSF1,S000004632,Protein required for respiratory growth,YMR030W,,GO:0006366,1,4,IDA|IEA|IMP|ND,False,False,False
+RSF2,S000003888,Zinc-finger protein,YJR127C|ZMS1,GO:0000981|GO:0003677|GO:0003700,GO:0006351|GO:0006355|GO:0006357,8,3,HDA|IBA|IEA|IMP|ISS,True,False,False
+RSP5,S000000927,NEDD4 family E3 ubiquitin ligase,YER125W|MDP1|MUT2|NPI1|UBY1|SMM1|NEDD4 family E3 ubiquitin-protein ligase|HPG1,,GO:0045944,17,74,HDA|IBA|IDA|IEA|IGI|IMP|IPI,False,True,False
+RTF1,S000003213,Subunit of RNAPII-associated chromatin remodeling Paf1 complex,YGL244W|CSL3,GO:0003677,GO:0000122|GO:0006357,5,30,IBA|IDA|IEA|IGI|IMP|IPI,True,False,True
+RTG1,S000005428,Transcription factor (bHLH) involved in interorganelle communication,YOL067C,GO:0000981|GO:0003677,GO:0006357|GO:0045944,9,7,IBA|IDA|IEA|IMP,True,True,False
+RTG2,S000003221,Sensor of mitochondrial dysfunction,YGL252C,,GO:0006357|GO:0045944,1,11,IBA|IDA|IGI|IMP,False,True,False
+RTG3,S000000199,bHLH/Zip transcription factor for retrograde (RTG) and TOR pathways,YBL103C,GO:0000981|GO:0003677,GO:0006357|GO:0045944,9,10,HDA|IBA|IDA|IEA|IMP|IPI,True,True,False
+RTR1,S000000941,Dual specificity protein phosphatase,YER139C|RNA polymerase II subunit B1 CTD phosphatase RTR1,,GO:0006366,10,10,HDA|IBA|IDA|IEA|IGI|IMP|IPI,False,False,False
+RTS1,S000005540,B-type regulatory subunit of protein phosphatase 2A (PP2A),YOR014W|SCS1|protein phosphatase 2A regulatory subunit RTS1,GO:0003677,,3,15,HDA|IDA|IEA|IGI|IMP,True,False,False
+RTS2,S000005603,Basic zinc-finger protein,YOR077W|YOR29-28,GO:0003677,,5,1,HDA|IEA|ND,True,False,False
+RTT103,S000002697,Protein involved in transcription termination by RNA polymerase II,YDR289C,GO:0003677,,4,7,IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+RTT106,S000005150,Histone chaperone,YNL206C,GO:0003677,GO:0000122,13,18,HDA|IBA|IDA|IEA|IGI|IMP|IPI,True,False,True
+RTT109,S000003925,Histone acetyltransferase,YLL002W|KIM2|REM50|KAT11|H3 histone acetyltransferase RTT109,,GO:0006355,12,24,HDA|IBA|IDA|IEA|IGI|IMP,False,False,False
+RVB1,S000002598,"ATP-dependent DNA helicase, also known as pontin",YDR190C|TIP49A|TIH1|TIP49|RuvB family ATP-dependent DNA helicase pontin,,GO:0006357,12,14,HDA|IBA|IDA|IEA|IMP|IPI,False,False,False
+RVB2,S000006156,"ATP-dependent DNA helicase, also known as reptin",YPL235W|TIP49B|TIP48|TIH2|RuvB family ATP-dependent DNA helicase reptin,,GO:0006357,13,17,HDA|IBA|IDA|IEA|IMP|IPI,False,False,False
+RXT2,S000000299,Component of the histone deacetylase Rpd3L complex,YBR095C|RAF60,,GO:0000122,1,16,HDA|IBA|IDA|IEA|IMP,False,False,True
+SAE2,S000003143,Endonuclease required for telomere elongation,YGL175C|COM1|ssDNA endodeoxyribonuclease SAE2,GO:0003677,,8,17,HDA|IDA|IEA|IGI|IMP,True,False,False
+SAP30,S000004876,Component of Rpd3L histone deacetylase complex,YMR263W,,GO:0006355|GO:0045944,2,15,HDA|IBA|IDA|IEA|IMP,False,True,False
+SAS2,S000004734,Histone acetyltransferase (HAT) catalytic subunit of the SAS complex,YMR127C|KAT8|histone acetyltransferase,,GO:0006355|GO:0045892|GO:0045944,10,10,IBA|IC|IDA|IEA|IMP|IPI,False,True,False
+SAS3,S000000148,Histone acetyltransferase catalytic subunit of NuA3 complex,YBL052C|KAT6|histone acetyltransferase,,GO:0006355|GO:0045892|GO:0045944,10,10,IBA|IDA|IEA|IMP,False,True,False
+SAS5,S000005739,"Subunit of the SAS complex (Sas2p, Sas4p, Sas5p)",YOR213C,,GO:0006355,2,4,IC|IDA|IEA|IPI,False,False,False
+SDD2,S000004678,Protein with homology to human PDCD5,YMR074C,GO:0003677,,3,1,HDA|IBA|IEA|IMP|ND,True,False,False
+SDD4,S000006226,"Putative transcription factor, as suggested by computational analysis",YPR022C,GO:0000981|GO:0003677,GO:0006351|GO:0006357,6,3,HDA|IBA|IEA|ND,True,False,False
+SDH5,S000005432,Protein required for flavinylation of Sdh1p,YOL071W|EMI5|succinate dehydrogenase assembly factor SDH5,,GO:0045944,0,11,HDA|HMP|IBA|IDA|IEA|IMP|IPI,False,True,False
+SDS3,S000001346,Component of the Rpd3L histone deacetylase complex,YIL084C,,GO:0000122|GO:0045944,2,19,HDA|IBA|IDA|IEA|IMP,False,True,True
+SEC13,S000004198,Structural component of 3 complexes,YLR208W|ANU3|GTPase-activating protein SEC13,,GO:0045893,6,18,HDA|IBA|IDA|IEA|IMP,False,False,False
+SEF1,S000000162,Putative transcription factor,YBL066C,GO:0000981|GO:0003677,GO:0006351|GO:0006355|GO:0006357,11,7,IBA|IEA|ND,True,False,False
+SET1,S000001161,"Histone methyltransferase, subunit of the COMPASS (Set1C) complex",YHR119W|YTX1|KMT2|histone methyltransferase SET1,,GO:0000122|GO:0045944,14,29,IDA|IEA|IGI|IMP|IPI,False,True,True
+SET2,S000003704,Histone methyltransferase with a role in transcriptional elongation,YJL168C|EZL1|KMT3|histone methyltransferase SET2,,GO:0006355,9,21,IBA|IDA|IEA|IGI|IMP,False,False,False
+SET3,S000001737,Defining member of the SET3 histone deacetylase complex,YKR029C|histone-binding protein SET3,,GO:0006355,2,6,HDA|IDA|IEA|IMP,False,False,False
+SFH1,S000004313,Component of the RSC chromatin remodeling complex,YLR321C,,GO:0006357,1,13,IBA|IDA|IEA|IGI|IMP,False,False,False
+SFL1,S000005666,Transcriptional repressor and activator,YOR140W,GO:0000981|GO:0003677|GO:0003700,GO:0000122|GO:0006355|GO:0006357|GO:0045944,15,22,IBA|IDA|IEA|IGI|IMP|IPI,True,True,True
+SFP1,S000004395,Regulates transcription of ribosomal protein and biogenesis genes,YLR403W|[ISP(+)]|[ISP+]|zinc-coordinating transcription factor SFP1,GO:0003677,GO:0045944,2,9,HDA|IBA|IDA|IEA|IGI|IMP,True,True,False
+SGF11,S000005968,Integral subunit of SAGA histone acetyltransferase complex,YPL047W|SAGA histone acetyltransferase complex subunit SGF11,,GO:0006357|GO:0045893,4,6,HDA|IDA|IEA|IMP,False,False,False
+SGF29,S000000516,"Component of the HAT/Core module of the SAGA, SLIK, and ADA complexes",YCL010C,,GO:0045944,2,9,IBA|IDA|IEA|IMP|IPI,False,True,False
+SGF73,S000003034,Subunit of DUBm module of SAGA and SLIK,YGL066W|SCA7|deubiquitination module subunit SGF73,,GO:0006357,6,13,IBA|IDA|IEA|IGI|IMP|IPI,False,False,False
+SIF2,S000000307,WD40 repeat-containing subunit of Set3C histone deacetylase complex,YBR103W|EMB1,,GO:0006355|GO:0006357|GO:0045892,2,10,HDA|IBA|IDA|IEA|IMP|IPI|ND,False,False,False
+SIN3,S000005364,Component of both the Rpd3S and Rpd3L histone deacetylase complexes,YOL004W|CPE1|GAM2|RPD1|SDI1|SDS16|UME4|transcriptional regulator SIN3,,GO:0000122|GO:0006355|GO:0045944,5,29,HDA|IBA|IDA|IEA|IGI|IMP|IPI,False,True,True
+SIN4,S000005180,Subunit of the RNA polymerase II mediator complex,YNL236W|MED16|BEL2|GAL22|SDI3|SSF5|SSN4|TSF3|RYE1|SSX3,,GO:0000122|GO:0045944,1,6,IDA|IEA|IGI|IMP,False,True,True
+SIP3,S000005201,Putative sterol transfer protein,YNL257C|LAM3,,GO:0045944,2,3,HDA|IBA|IDA|IEA|IMP,False,True,False
+SIP4,S000003625,C6 zinc cluster transcriptional activator,YJL089W,GO:0000981|GO:0001228|GO:0003677,GO:0006355|GO:0045944,13,10,HDA|IBA|IDA|IEA|IGI|IMP|IPI,True,True,False
+SIR3,S000004434,Silencing protein,YLR442C|CMT1|MAR2|STE8|chromatin-silencing protein SIR3,GO:0003677,,8,12,HDA|IDA|IEA|IGI|IMP,True,False,False
+SIR4,S000002635,SIR protein involved in assembly of silent chromatin domains,YDR227W|ASD1|STE9|UTH2|chromatin-silencing protein SIR4,GO:0003677,,6,14,IDA|IEA|IGI|IMP,True,False,False
+SIS1,S000004952,Type II HSP40 co-chaperone that interacts with the HSP70 protein Ssa1p,YNL007C|type II HSP40 co-chaperone SIS1,GO:0003677,,6,13,IBA|IDA|IEA|IMP,True,False,False
+SKI2,S000004390,Ski complex component and putative RNA helicase,YLR398C|SKI complex RNA helicase subunit SKI2,GO:0003677,,13,12,HDA|IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+SKM1,S000005473,Member of the PAK family of serine/threonine protein kinases,YOL113W|putative serine/threonine protein kinase SKM1,,GO:0000122,15,15,HDA|IBA|IDA|IEA|IGI|IMP|ISS,False,False,True
+SKN7,S000001249,Nuclear response regulator and transcription factor,YHR206W|BRY1|POS9|kinase-regulated stress-responsive transcription factor SKN7,GO:0001228|GO:0003677|GO:0003700,GO:0006355|GO:0006357|GO:0045944,15,14,HDA|IBA|IDA|IEA|IMP,True,True,False
+SKO1,S000005111,Basic leucine zipper transcription factor of the ATF/CREB family,YNL167C|ACR1,GO:0000981|GO:0001227|GO:0001228|GO:0003677|GO:0003700,GO:0000122|GO:0006355|GO:0006357|GO:0045944,30,17,IBA|IDA|IEA|IGI|IMP,True,True,True
+SKP1,S000002736,Evolutionarily conserved kinetochore protein,YDR328C|CBF3D|MGO1|SCF ubiquitin ligase subunit SKP1,GO:0003677,,6,31,IBA|IDA|IEA|IGI|IMP|IPI|TAS,True,False,False
+SKS1,S000005947,Putative serine/threonine protein kinase,YPL026C|SHA3|putative serine/threonine protein kinase SKS1,,GO:0045944,14,10,HDA|IBA|IDA|IEA|IGI|IMP|ISS,False,True,False
+SMC1,S000001886,Subunit of the multiprotein cohesin complex,YFL008W|CHL10|cohesin subunit SMC1,GO:0003677,,10,10,HDA|IBA|IDA|IEA|IGI|IMP,True,False,False
+SMI1,S000003461,Protein involved in the regulation of cell wall synthesis,YGR229C|KNR4,GO:0003677,,2,9,HDA|IBA|IDA|IEA|IGI|IMP|ND,True,False,False
+SMP1,S000000386,MADS-box transcription factor involved in osmotic stress response,YBR182C,GO:0000981|GO:0003677|GO:0003700,GO:0006357|GO:0045944,13,5,HDA|IBA|IC|IDA|IEA|IGI|IMP,True,True,False
+SNF11,S000002480,Subunit of the SWI/SNF chromatin remodeling complex,YDR073W,,GO:0045944,0,1,IDA|IEA|IMP,False,True,False
+SNF12,S000005306,73 kDa subunit of the SWI/SNF chromatin remodeling complex,YNR023W|SWP73,GO:0001228,GO:0006357|GO:0045944,1,7,IBA|IDA|IEA|IGI|IMP,False,True,False
+SNF2,S000005816,Catalytic subunit of the SWI/SNF chromatin remodeling complex,YOR290C|GAM1|HAF1|SWI2|TYE3|SWI/SNF catalytic subunit SNF2,GO:0003677,GO:0006355|GO:0045944,21,26,HDA|IBA|IDA|IEA|IGI|IMP|IPI,True,True,False
+SNF4,S000003083,Activating gamma subunit of the AMP-activated Snf1p kinase complex,YGL115W|CAT3|SCI1|AMP-activated serine/threonine-protein kinase regulatory subunit SNF4,,GO:0006357,12,15,HDA|IBA|IDA|IEA|IGI|IMP|IPI,False,False,False
+SNF5,S000000493,Subunit of the SWI/SNF chromatin remodeling complex,YBR289W|HAF4|SWI10|TYE4,,GO:0006357|GO:0045944,5,12,IBA|IDA|IEA|IGI|IMP|IPI,False,True,False
+SNF6,S000001017,Subunit of the SWI/SNF chromatin remodeling complex,YHL025W,,GO:0045944,1,10,IDA|IEA|IGI|IMP|IPI,False,True,False
+SNT1,S000000629,Set3C histone deacetylase scaffold,YCR033W|[ESI+],GO:0003677,GO:0000122|GO:0006355,5,4,HDA|IBA|IDA|IEA|IMP|ND,True,False,True
+SOH1,S000003095,Subunit of the RNA polymerase II mediator complex,YGL127C|MED31|mediator complex subunit SOH1,,GO:0006355|GO:0006357|GO:0006366,3,7,HDA|IBA|IDA|IEA|IMP|IPI|ND,False,False,False
+SOK2,S000004618,Nuclear protein that negatively regulates pseudohyphal differentiation,YMR016C,GO:0003677|GO:0003700,GO:0045944,5,3,HDA|IBA|IDA|IEA|IMP|ISS,True,True,False
+SPN1,S000006337,Protein involved in RNA polymerase II transcription,YPR133C|IWS1,,GO:0006357,4,14,IBA|IC|IEA|IGI|IMP|IPI,False,False,False
+SPO11,S000001014,Meiosis-specific protein required for meiotic recombination,YHL022C|DNA topoisomerase (ATP-hydrolyzing),GO:0003677,,14,10,IBA|IDA|IEA|IGI|IMP,True,False,False
+SPP1,S000006059,Subunit of COMPASS (Set1C),YPL138C|SAF41|CPS40,,GO:0006355|GO:0045893,7,10,IBA|IDA|IEA|IMP|IPI,False,False,False
+SPT10,S000003663,Histone H3 acetylase with a role in transcriptional regulation,YJL127C|CRE1|SUD1,,GO:0000122,8,19,HDA|IBA|IC|IDA|IEA|IGI|IMP|ISS,False,False,True
+SPT15,S000000950,TATA-binding protein (TBP),YER148W|BTF1|TBP|TBP1|TATA-binding protein,GO:0003677,,21,8,IBA|IC|IDA|IEA|IMP|IPI,True,False,False
+SPT2,S000000963,Protein involved in negative regulation of transcription,YER161C|EXA1|SIN1,GO:0003677,GO:0000122,3,13,IDA|IEA|IGI|IMP,True,False,True
+SPT20,S000005508,Subunit of the SAGA transcriptional regulatory complex,YOL148C|ADA5,,GO:0006357,3,4,IBA|IDA|IEA|IMP,False,False,False
+SPT21,S000004791,Protein with a role in transcriptional silencing,YMR179W,,GO:0006357,1,8,HDA|IBA|IEA|IGI|IMP|ND,False,False,False
+SPT23,S000001503,ER membrane protein involved in regulation of OLE1 transcription,YKL020C,,GO:0045944,1,4,HDA|IDA|IGI|IMP|ND,False,True,False
+SPT3,S000002800,Subunit of the SAGA and SAGA-like transcriptional regulatory complexes,YDR392W|transcriptional regulator SPT3,,GO:0006355|GO:0006366,4,8,IBA|IDA|IEA|IMP,False,False,False
+SPT4,S000003295,Spt4p/5p (DSIF) transcription elongation factor complex subunit,YGR063C|transcription elongation factor SPT4,,GO:0006355,9,21,IBA|IC|IDA|IEA|IGI|IMP|IPI,False,False,False
+SPT5,S000004470,Spt4p/5p (DSIF) transcription elongation factor complex subunit,YML010W|transcription elongation factor SPT5,GO:0003677,GO:0006355|GO:0006357,17,19,HDA|IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+SPT6,S000003348,Nucleosome remodeling protein,YGR116W|CRE2|SSN20|chromatin-remodeling histone chaperone SPT6,GO:0003677,GO:0000122|GO:0045944,9,31,HDA|IBA|IDA|IEA|IGI|IMP,True,True,True
+SPT7,S000000285,Subunit of the SAGA transcriptional regulatory complex,YBR081C|GIT2|SAGA histone acetyltransferase complex subunit SPT7,,GO:0006357,4,8,HDA|IBA|IDA|IEA|IMP,False,False,False
+SPT8,S000004045,Subunit of the SAGA transcriptional regulatory complex,YLR055C|SAGA complex subunit SPT8,,GO:0000122|GO:0006357|GO:0045944,5,7,HDA|IBA|IDA|IEA|IMP,False,True,True
+SRB2,S000001083,Subunit of the RNA polymerase II mediator complex,YHR041C|MED20|HRS2,,GO:0006357|GO:0045944,7,7,IBA|IDA|IEA|IGI|IMP,False,True,False
+SRB4,S000000824,Subunit of the RNA polymerase II mediator complex,YER022W|MED17,,GO:0006357|GO:0045944,9,5,IBA|IDA|IEA|IMP|IPI,False,True,False
+SRB5,S000003336,Subunit of the RNA polymerase II mediator complex,YGR104C|MED18,,GO:0006357|GO:0045944,7,7,IBA|IDA|IEA|IMP,False,True,False
+SRB6,S000000457,Subunit of the RNA polymerase II mediator complex,YBR253W|MED22,,GO:0006357|GO:0045944,3,3,IDA|IEA|ND,False,True,False
+SRB7,S000002716,Subunit of the RNA polymerase II mediator complex,YDR308C|MED21|SSX1,,GO:0000122|GO:0006357|GO:0045944,5,3,IBA|IDA|IEA|IMP|IPI,False,True,True
+SRB8,S000000677,Subunit of the RNA polymerase II mediator complex,YCR081W|GIG1|NUT6|SSN5|MED12|YCR080W,,GO:0000122|GO:0006357|GO:0045944,3,4,IDA|IEA|IMP,False,True,True
+SRD1,S000000611,Protein involved in the processing of pre-rRNA to mature rRNA,YCR018C,GO:0003677,GO:0006355,6,4,HDA|IEA|IGI|ND,True,False,False
+SRG1,S000029010,Non-protein-coding RNA that regulates the transcription of SER3,SRG1,,GO:0045892,1,3,IC|IEA|IEP|IMP|ND,False,False,False
+SRS2,S000003628,DNA helicase and DNA-dependent ATPase,YJL092W|HPR5|RADH|RADH1|DNA helicase SRS2,GO:0003677,,17,13,IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+SSL1,S000003995,Subunit of the core form of RNA polymerase transcription factor TFIIH,YLR005W|TFIIH/NER complex subunit SSL1,,GO:0006351|GO:0006357|GO:0006366,3,12,IBA|IDA|IEA|IMP,False,False,False
+SSL2,S000001405,Component of RNA polymerase transcription factor TFIIH holoenzyme,YIL143C|LOM3|RAD25|TFIIH/NER complex ATPase/helicase subunit SSL2,GO:0003677,GO:0006366,14,17,IBA|IDA|IEA|IMP,True,False,False
+SSN2,S000002851,Subunit of the RNA polymerase II mediator complex,YDR443C|RYE3|MED13|NUT8|SCA1|SRB9|UME2|SSX5,,GO:0000122|GO:0006357|GO:0045944,5,5,IBA|IDA|IEA|IMP,False,True,True
+SSN3,S000005963,Component of the RNA polymerase II mediator complex,YPL042C|CDK8|RYE5|cyclin-dependent serine/threonine protein kinase SSN3|GIG2|NUT7|SRB10|UME5|SSX7|URR1,,GO:0000122,18,18,HDA|IBA|IDA|IEA|IGI|IMP|IPI|ISS,False,False,True
+SSN8,S000004970,Cyclin-like component of RNA polymerase II holoenzyme,YNL025C|GIG3|NUT9|CycC|RYE2|SRB11|UME3|CNC1|cyclin-dependent protein serine/threonine kinase regulator SSN8,,GO:0000122|GO:0006357|GO:0045944,9,8,IBA|IDA|IEA|IMP,False,True,True
+STB1,S000005253,Protein with role in regulation of MBF-specific transcription at Start,YNL309W,,GO:0045944,3,4,HDA|IDA|IEA|IGI|IMP|IPI,False,True,False
+STB3,S000002576,Ribosomal RNA processing element (RRPE)-binding protein,YDR169C,GO:0001228,,5,2,HDA|IBA|IDA|IEA|IMP,False,True,False
+STB4,S000004621,Putative transcription factor,YMR019W,GO:0000981|GO:0003677,GO:0006351|GO:0006355|GO:0006357,10,5,HDA|IEA|ISS|ND,True,False,False
+STB5,S000001221,Transcription factor,YHR178W,GO:0000981|GO:0003677|GO:0003700,GO:0006351|GO:0006355|GO:0045944,13,7,HDA|IBA|IC|IDA|IEA|IMP,True,True,False
+STD1,S000005573,Protein involved in control of glucose-regulated gene expression,YOR047C|MSN3|SFS3,,GO:0006357,1,9,IDA|IEA|IGI|IMP,False,False,False
+STE12,S000001126,Transcription factor that is activated by a MAPK signaling cascade,YHR084W|homeodomain family transcription factor STE12,GO:0003677|GO:0003700,GO:0006355,4,12,IBA|IDA|IEA|IMP,True,False,False
+STE20,S000000999,Cdc42p-activated signal transducing kinase,YHL007C|mitogen-activated protein kinase kinase kinase kinase STE20,,GO:0000122,19,39,HDA|HMP|IBA|IDA|IEA|IGI|IMP|IPI,False,False,True
+STH1,S000001388,ATPase component of the RSC chromatin remodeling complex,YIL126W|NPS1|RSC chromatin remodeling complex ATPase subunit STH1,GO:0003677,GO:0045944,15,18,IBA|IDA|IEA|IGI|IMP,True,True,False
+STM1,S000004140,Protein required for optimal translation under nutrient stress,YLR150W|MPT4,GO:0003677,,5,6,HDA|IDA|IEA|IGI|IMP,True,False,False
+STP1,S000002871,Transcription factor,YDR463W|BAP1|SSY2,GO:0000981|GO:0001228|GO:0003677,GO:0006357|GO:0045893|GO:0045944,9,15,IBA|IDA|IEA|IGI|IMP,True,True,False
+STP2,S000001048,Transcription factor,YHR006W,GO:0000981|GO:0001228|GO:0003677,GO:0006357|GO:0045944,9,12,IBA|IDA|IEA|IGI|IMP,True,True,False
+STP3,S000004367,Zinc-finger protein of unknown function,YLR375W,,GO:0006357,4,2,HDA|IBA|IDA|IEA|ND,False,False,False
+STP4,S000002206,Protein containing a Kruppel-type zinc-finger domain,YDL048C,,GO:0006357,3,2,HDA|IBA|IEA|ND,False,False,False
+SUA5,S000003137,Protein involved in threonylcarbamoyl adenosine biosynthesis,YGL169W|threonylcarbamoyladenylate synthase,GO:0003677,,11,8,HDA|IBA|IDA|IEA|IMP,True,False,False
+SUB1,S000004642,Transcriptional regulator,YMR039C|TSP1|chromatin-binding transcription coactivator SUB1,GO:0003677,GO:0006355,7,19,HDA|IBA|IDA|IEA|IGI|IMP|ISS,True,False,False
+SUM1,S000002718,Transcriptional repressor that regulates middle-sporulation genes,YDR310C,GO:0001227|GO:0003677,GO:0000122,6,12,HDA|IDA|IEA|IGI|IMP|IPI,True,False,True
+SUS1,S000028510,Component of both the SAGA histone acetylase and TREX-2 complexes,YBR111W-A,,GO:0006357|GO:0045893|GO:0045944,5,22,IBA|IDA|IEA|IMP,False,True,False
+SUT1,S000003130,Zn(II)2Cys6 family transcription factor,YGL162W,GO:0000981,GO:0000122|GO:0006355|GO:0045944,6,5,HDA|IDA|IEA|IGI|IMP|IPI,False,True,True
+SUT2,S000006213,Zn2Cys6 family transcription factor,YPR009W,,GO:0000122|GO:0045944,2,4,HDA|IDA|IEA|IGI|IMP|ISS,False,True,True
+SWC4,S000003234,Component of the Swr1p complex that incorporates Htz1p into chromatin,YGR002C|EAF2|GOD1,,GO:0000122,2,16,HDA|IBA|IDA|IEA|IMP|IPI,False,False,True
+SWD1,S000000064,Subunit of the COMPASS (Set1C) complex,YAR003W|CPS50|SAF49|COMPASS subunit protein SWD1|FUN16,,GO:0006355,4,10,IDA|IEA|IMP|IPI,False,False,False
+SWI1,S000005937,Subunit of the SWI/SNF chromatin remodeling complex,YPL016W|ADR6|GAM3|LPA1|[SWI+]|[SWI(+)],GO:0003677,GO:0006357|GO:0045944,9,9,IBA|IDA|IEA|IGI|IMP|IPI,True,True,False
+SWI3,S000003712,Subunit of the SWI/SNF chromatin remodeling complex,YJL176C|HAF2|TYE2,GO:0003677,GO:0045893|GO:0045944,8,7,IBA|IDA|IEA|IMP|IPI,True,True,False
+SWI4,S000000913,DNA binding component of the SBF complex (Swi4p-Swi6p),YER111C|ART1|SBF complex DNA-binding subunit SWI4,GO:0001228|GO:0003677,,6,5,HDA|IBA|IDA|IEA|IMP|IPI,True,True,False
+SWI5,S000002553,Transcription factor that recruits Mediator and Swi/Snf complexes,YDR146C|DNA-binding transcription factor SWI5,GO:0000981|GO:0003677,GO:0006357,10,5,HDA|IBA|IDA|IEA|IMP|IPI,True,False,False
+SWI6,S000004172,Transcription cofactor,YLR182W|PSL8|SDS11|transcriptional regulator SWI6,GO:0003677,GO:0045944,5,6,IBA|IDA|IEA|IMP|IPI,True,True,False
+SWP82,S000001845,Member of the SWI/SNF chromatin remodeling complex,YFL049W,,GO:0045944,0,2,HDA|IC|IDA|IEA,False,True,False
+SWR1,S000002742,Swi2/Snf2-related ATPase,YDR334W|chromatin-remodeling protein SWR1,GO:0003677,,11,9,HDA|IBA|IDA|IEA|IMP,True,False,False
+TAF1,S000003506,"TFIID subunit, involved in RNA pol II transcription initiation",YGR274C|TAF145|TAF130|TafII130|TafII145|KAT4|histone acetyltransferase,,GO:0006366,15,10,IBA|IC|IDA|IEA|IMP,False,False,False
+TAF10,S000002574,Subunit (145 kDa) of TFIID and SAGA complexes,YDR167W|TAF25|TAF23|TafII25,,GO:0006366,4,7,IC|IDA|IEA|IMP,False,False,False
+TAF11,S000004477,TFIID subunit (40 kDa),YML015C|TAF40|TafII40|TATA-binding protein-associated factor TAF11,,GO:0006366|GO:0045893,6,7,IBA|IC|IDA|IEA|IMP,False,False,False
+TAF12,S000002552,Subunit (61/68 kDa) of TFIID and SAGA complexes,YDR145W|TAF61|TAF68|TafII68|TafII61,GO:0003677,GO:0006366,11,12,IBA|IC|IDA|IEA|IMP|IPI,True,False,False
+TAF13,S000004564,TFIID subunit (19 kDa),YML098W|TAF19|FUN81|TafII19,,GO:0006366,3,6,HDA|IBA|IC|IDA|IEA|IMP,False,False,False
+TAF14,S000006050,"Subunit of TFIID, TFIIF, INO80, SWI/SNF, and NuA3 complexes",YPL129W|ANC1|TafII30|SWP29|TAF30|TFG3|TATA-binding protein-associated factor TAF14,,GO:0006355|GO:0006366,3,13,IC|IDA|IEA|IPI,False,False,False
+TAF2,S000000638,TFIID subunit (150 kDa),YCR042C|TSM1|TAF150|TafII150,,GO:0006366,6,4,IBA|IC|IDA|IEA,False,False,False
+TAF3,S000005932,TFIID subunit (47 kDa),YPL011C|TAF47|TafII47,,GO:0006366,3,3,IC|IDA|IEA,False,False,False
+TAF4,S000004607,TFIID subunit (48 kDa),YMR005W|MPT1|TAF48|TSG2|TafII48,GO:0003677,GO:0006366,6,5,IBA|IC|IDA|IEA|IPI,True,False,False
+TAF5,S000000402,Subunit (90 kDa) of TFIID and SAGA complexes,YBR198C|TAF90|TafII90|chromatin modification protein,,GO:0006355|GO:0006366,4,8,IBA|IC|IDA|IEA|IMP,False,False,False
+TAF6,S000003080,Subunit (60 kDa) of TFIID and SAGA complexes,YGL112C|TAF60|TafII60|TATA-binding protein-associated factor TAF6,,GO:0006366|GO:0045944,10,12,IBA|IC|IDA|IEA|IMP|IPI,False,True,False
+TAF7,S000004840,TFIID subunit (67 kDa),YMR227C|TAF67|TafII67|TATA-binding protein-associated factor TAF7,,GO:0006366,3,5,HDA|IBA|IC|IDA|IEA|IMP,False,False,False
+TAF8,S000004582,TFIID subunit (65 kDa),YML114C|TAF65|TafII65,,GO:0006366,1,3,HDA|IC|IDA|IEA,False,False,False
+TAF9,S000004849,Subunit (17 kDa) of TFIID and SAGA complexes,YMR236W|TAF17|TafII17|chromatin modification protein,,GO:0006366|GO:0045944,7,10,IBA|IC|IDA|IEA|IMP,False,True,False
+TAH11,S000003807,DNA replication licensing factor,YJR046W|CDT1|SID2,GO:0003677,,2,5,IDA|IEA|IMP,True,False,False
+TBF1,S000006049,Telobox-containing general regulatory factor,YPL128C|LPI16,GO:0000981|GO:0003677,GO:0006357,8,8,HDA|IBA|IDA|IEA|IGI|IMP,True,False,False
+TBS1,S000000354,Protein of unknown function,YBR150C,GO:0000981|GO:0003677,GO:0006351|GO:0006355|GO:0006357,9,5,HDA|IEA|ND,True,False,False
+TDA9,S000004546,Transcription factor that regulates acetate production,YML081W|AAF1,GO:0000981|GO:0003677,GO:0006357,8,2,HDA|IBA|IDA|IEA|IMP,True,False,False
+TEA1,S000005864,Ty1 enhancer activator involved in Ty enhancer-mediated transcription,YOR337W,GO:0000981|GO:0003677,GO:0006351|GO:0006355|GO:0006357,10,5,HDA|IDA|IEA,True,False,False
+TEC1,S000000287,Transcription factor targeting filamentation genes and Ty1 expression,YBR083W|ROC1,GO:0000981|GO:0001228|GO:0003677|GO:0003700,GO:0006355|GO:0006357,9,9,HDA|IBA|IDA|IEA|IGI|IMP,True,True,False
+TEL2,S000003331,"Subunit of the ASTRA complex, involved in chromatin remodeling",YGR099W,GO:0003677,,4,5,HDA|IBA|IDA|IEA|IMP,True,False,False
+TEN1,S000004000,Protein that regulates telomeric length,YLR010C,,GO:0006357,3,7,IDA|IEA|IGI|IMP|IPI,False,False,False
+TFA1,S000001511,TFIIE large subunit,YKL028W|transcription factor TFIIE subunit TFA1,,GO:0006366,5,9,HDA|IBA|IDA|IEA|IGI|IMP|IPI,False,False,False
+TFA2,S000001770,TFIIE small subunit,YKR062W|transcription factor TFIIE subunit TFA2,GO:0003677,GO:0006366,4,7,IBA|IDA|IEA|IGI|IPI,True,False,False
+TFB1,S000002719,Subunit of TFIIH and nucleotide excision repair factor 3 complexes,YDR311W|TFIIH/NER complex subunit TFB1,,GO:0006351|GO:0006366,2,13,IBA|IDA|IEA|IMP,False,False,False
+TFB2,S000006043,Subunit of TFIIH and nucleotide excision repair factor 3 complexes,YPL122C|TFIIH/NER complex subunit TFB2,,GO:0006366,3,11,IBA|IDA|IEA|IMP|IPI,False,False,False
+TFB3,S000002868,Subunit of TFIIH and nucleotide excision repair factor 3 complexes,YDR460W|RIG2|TFIIH/NER complex subunit TFB3,,GO:0006357|GO:0006366,3,9,IBA|IC|IDA|IEA|IMP,False,False,False
+TFB4,S000006260,Subunit of TFIIH complex,YPR056W|TFIIH/NER complex subunit TFB4,,GO:0006355|GO:0006366,2,10,IBA|IC|IDA|IEA|IMP|IPI,False,False,False
+TFB5,S000007603,Component of RNA polymerase II general transcription factor TFIIH,YDR079C-A|TFIIH complex subunit TFB5,,GO:0006366,1,12,HDA|IBA|IC|IDA|IEA|IMP|IPI,False,False,False
+TFC1,S000000327,Subunit of RNA polymerase III transcription initiation factor complex,YBR123C|tau 95|transcription factor TFIIIC subunit TFC1,GO:0003677,,5,5,IBA|IDA|IEA|IMP,True,False,False
+TFC3,S000000001,Subunit of RNA polymerase III transcription initiation factor complex,YAL001C|FUN24|TSV115|tau 138|transcription factor TFIIIC subunit TFC3,GO:0003677,,6,9,HDA|IBA|IDA|IEA|IMP,True,False,False
+TFC4,S000003279,Subunit of RNA polymerase III transcription initiation factor complex,YGR047C|PCF1|tau 131|transcription factor TFIIIC subunit TFC4,GO:0003677,,5,7,HDA|IBA|IDA|IEA|IMP,True,False,False
+TFC6,S000002770,Subunit of RNA polymerase III transcription initiation factor complex,YDR362C|tau 91|transcription factor TFIIIC subunit TFC6,GO:0003677,,5,7,IBA|IDA|IEA|IGI|ISA,True,False,False
+TFC7,S000005636,RNA pol III transcription initiation factor complex (TFIIIC) subunit,YOR110W|tau 55|transcription factor TFIIIC subunit TFC7,GO:0003677,,8,7,IDA|IEA|IMP,True,False,False
+TFC8,S000005928,Subunit of RNA polymerase III transcription initiation factor complex,YPL007C|tau 60|transcription factor TFIIIC subunit TFC8,GO:0003677,,5,8,IDA|IEA|IGI|IMP,True,False,False
+TFG1,S000003418,TFIIF (Transcription Factor II) largest subunit,YGR186W|SSU71|RAP74|transcription factor IIF subunit TFG1,GO:0003677,GO:0045944,6,25,IBA|IC|IDA|IEA|IGI|IMP,True,True,False
+TFG2,S000003237,TFIIF (Transcription Factor II) middle subunit,YGR005C|transcription factor IIF subunit TFG2,GO:0003677,GO:0006366,4,11,IBA|IC|IDA|IEA|IMP,True,False,False
+THI2,S000000444,Transcriptional activator of thiamine biosynthetic genes,YBR240C|PHO6|phoF,GO:0000981|GO:0003677,GO:0006355|GO:0045944,7,5,IDA|IEA|IMP,True,True,False
+THI3,S000002238,Regulatory protein that binds Pdc2p and Thi2p transcription factors,YDL080C|KID1|branched-chain-2-oxoacid decarboxylase THI3,,GO:0045944,10,7,HDA|IBA|IDA|IEA|IMP|IPI,False,True,False
+TOA1,S000005720,TFIIA large subunit,YOR194C|transcription initiation factor IIA large subunit,,GO:0006355|GO:0006366,5,7,IBA|IDA|IEA|IGI,False,False,False
+TOD6,S000000150,PAC motif binding protein involved in rRNA and ribosome biogenesis,YBL054W|PBF1,GO:0003677,GO:0006357,3,1,HDA|IDA|IEA|IMP,True,False,False
+TOF1,S000005217,Subunit of a replication-pausing checkpoint complex,YNL273W,GO:0003677,,2,24,IBA|IDA|IEA|IGI|IMP|ND,True,False,False
+TOG1,S000000986,Transcriptional activator of oleate genes,YER184C,GO:0000981|GO:0003677|GO:0003700,GO:0006351|GO:0006355|GO:0045944,28,4,HDA|IC|IDA|IEA|IMP,True,True,False
+TOP1,S000005366,Topoisomerase I,YOL006C|MAK1|MAK17|DNA topoisomerase 1,GO:0003677,GO:0006357,29,25,IBA|IDA|IEA|IGI|IMP|IPI,True,False,False
+TOP2,S000005032,Topoisomerase II,YNL088W|TOR3|TRF3|DNA topoisomerase 2,GO:0003677,,29,18,HDA|IBA|IDA|IEA|IGI|IMP,True,False,False
+TOP3,S000004224,DNA Topoisomerase III,YLR234W|EDR1|DNA topoisomerase 3,GO:0003677,,16,11,IBA|IC|IDA|IEA|IGI|IMP|IPI,True,False,False
+TOS8,S000003064,Homeodomain-containing protein and putative transcription factor,YGL096W,GO:0000981|GO:0003677,GO:0006355|GO:0006357,7,3,IBA|IDA|IEA|ND,True,False,False
+TRA1,S000001141,Subunit of SAGA and NuA4 histone acetyltransferase complexes,YHR099W|histone acetyltransferase TRA1,,GO:0006355|GO:0045944,2,8,HDA|IBA|IDA|IEA|IMP,False,True,False
+TRI1,S000004846,Non-essential sumoylated protein of unknown function,YMR233W,GO:0001228,GO:0006357|GO:0045944,2,3,HDA|IBA|IEA|ND,False,True,False
+TUP1,S000000680,"General repressor of transcription, forms complex with Cyc8p",YCR084C|AAR1|AER2|AMM1|CRT4|CYC9|FLK1|ROX4|SFL2|UMR7|chromatin-silencing transcriptional regulator TUP1,,GO:0000122|GO:0006357|GO:0045944,8,21,IDA|IEA|IMP|IPI,False,True,True
+TYE7,S000005871,Serine-rich protein that contains a bHLH DNA binding motif,YOR344C|SGC1,GO:0003677|GO:0003700,GO:0006355,5,4,HDA|IDA|IEA|IGI|IMP,True,False,False
+UAF30,S000005821,Subunit of UAF (upstream activation factor) complex,YOR295W,GO:0001228,GO:0006357|GO:0045944,3,5,IBA|IDA|IEA|IMP,False,True,False
+UGA3,S000002329,Transcriptional activator for GABA-dependent induction of GABA genes,YDL170W,GO:0000981|GO:0001228|GO:0003677,GO:0006355|GO:0045944,10,6,IDA|IEA|IGI|IMP,True,True,False
+ULP2,S000001293,Peptidase that deconjugates Smt3/SUMO-1 peptides from proteins,YIL031W|SMT4|SUMO protease ULP2,,GO:0006355,8,9,IDA|IEA|IMP,False,False,False
+UME1,S000006060,Component of both the Rpd3S and Rpd3L histone deacetylase complexes,YPL139C|WTM3,,GO:0045944,1,8,HDA|IDA|IEA|IMP,False,True,False
+UME6,S000002615,Rpd3L histone deacetylase complex subunit,YDR207C|CAR80|NIM2|RIM16|DNA-binding transcriptional regulator UME6,GO:0000981|GO:0001227|GO:0003677,GO:0000122|GO:0006355|GO:0045944,17,18,HDA|IDA|IEA|IMP|IPI,True,True,True
+UPC2,S000002621,Sterol regulatory element binding protein,YDR213W|MOX4,GO:0000981|GO:0001228|GO:0003677,GO:0006355|GO:0006357|GO:0045944,10,10,HDA|IBA|IC|IDA|IEA|IGI|IMP,True,True,False
+URC2,S000002928,Putative Zn(II)2Cys6 motif containing transcription factor,YDR520C|RRT4,GO:0000981|GO:0003677,GO:0006355|GO:0006357,8,6,HDA|IEA|ISS,True,False,False
+URE2,S000005173,Nitrogen catabolite repression transcriptional regulator,YNL229C|[URE3]|glutathione peroxidase,,GO:0045892,5,12,IDA|IEA|IGI|IMP|IPI,False,False,False
+USV1,S000006151,Putative transcription factor containing a C2H2 zinc finger,YPL230W|NSF1,GO:0000981|GO:0003677,GO:0006357,6,3,HDA|IBA|IDA|IEA|IMP,True,False,False
+VHR1,S000001318,Transcriptional activator,YIL056W,GO:0000981|GO:0003677,GO:0045944,4,3,HDA|IDA|IEA|IMP,True,True,False
+VHR2,S000000866,Non-essential nuclear protein,YER064C,GO:0003677,GO:0006355,2,1,HDA|IEA|IMP|ND,True,False,False
+VID22,S000004365,Glycosylated integral membrane protein localized to plasma membrane,YLR373C,GO:0003677,GO:0006357,3,3,HDA|IBA|IDA|IEA|IMP|ND,True,False,False
+VID28,S000001279,"GID Complex subunit, serves as adaptor for regulatory subunit Vid24p",YIL017C|YIL017W|GID5|glucose-induced degradation complex subunit VID28,,GO:0045944,1,7,HDA|HMP|IBA|IDA|IEA|IMP|ND,False,True,False
+VMA1,S000002344,Subunit A of the V1 peripheral membrane domain of V-ATPase,YDL185W|CLS8|TFP1|H(+)-transporting V1 sector ATPase subunit A,GO:0003677,,17,18,HDA|IBA|IDA|IEA|IMP,True,False,False
+VPS72,S000002893,Htz1p-binding component of the SWR1 complex,YDR485C|SWC2,,GO:0006355,1,10,HDA|IBA|IDA|IEA|IMP|IPI,False,False,False
+WAR1,S000004541,Homodimeric Zn2Cys6 zinc finger transcription factor,YML076C,GO:0000981|GO:0003677|GO:0003700,GO:0006355,10,4,HDA|IBA|IC|IDA|IEA|IMP,True,False,False
+WTM1,S000005756,Transcriptional modulator,YOR230W|transcriptional modulator,,GO:0045944,3,13,HDA|IDA|IEA|IGI|IMP|IPI,False,True,False
+WTM2,S000005755,Transcriptional modulator,YOR229W|transcriptional modulator,GO:0000981,GO:0045944,5,12,IDA|IEA|IGI|IMP|IPI,False,True,False
+XBP1,S000001363,Transcriptional repressor,YIL101C,GO:0000981|GO:0003677|GO:0003700,GO:0000122,7,14,HDA|IBA|IDA|IEA|IMP,True,False,True
+XRS2,S000002777,FHA domain-containing component of the Mre11 complex,YDR369C,GO:0003677,,6,15,IDA|IEA|IGI|IMP|IPI,True,False,False
+YAF9,S000005051,Subunit of NuA4 histone H4 acetyltransferase and SWR1 complexes,YNL107W|YEATS domain-containing protein YAF9,,GO:0006355,1,8,HDA|IDA|IEA|IMP|IPI,False,False,False
+YAK1,S000003677,Serine-threonine protein kinase,YJL141C|serine/threonine protein kinase YAK1,,GO:0045944,20,21,HDA|IBA|IDA|IEA|IGI|IMP,False,True,False
+YAP1,S000004466,Basic leucine zipper (bZIP) transcription factor,YML007W|PAR1|SNQ3|PDR4|DNA-binding transcription factor YAP1,GO:0003677|GO:0003700,GO:0006355,3,8,HDA|HMP|IDA|IEA|IMP,True,False,False
+YAP3,S000001001,Basic leucine zipper (bZIP) transcription factor,YHL009C,GO:0003677|GO:0003700,GO:0006355|GO:0006357,4,2,HDA|IC|IDA|IEA,True,False,False
+YAP5,S000001457,Basic leucine zipper (bZIP) iron-sensing transcription factor,YIR018W,GO:0000981|GO:0003677|GO:0003700,GO:0000122|GO:0006355|GO:0045944,3,6,IDA|IEA|IMP,True,True,True
+YAP6,S000002667,Basic leucine zipper (bZIP) transcription factor,YDR259C|HAL7,GO:0000981|GO:0003677|GO:0003700,GO:0000122|GO:0006355|GO:0045944,6,5,HDA|IDA|IEA|IMP|IPI,True,True,True
+YAP7,S000005388,Transcriptional repressor of nitric oxide oxidase,YOL028C,GO:0003677|GO:0003700,GO:0006355|GO:0045944,3,3,IC|IDA|IEA|ISS,True,True,False
+YAR009C,S000000067,Retrotransposon TYA Gag and TYB Pol genes,YAR009C|YARCTyB1-1|truncated gag-pol fusion protein,GO:0003677,,20,13,HDA|IDA|IEA|ISS,True,False,False
+YBL005W-B,S000002147,Retrotransposon TYA Gag and TYB Pol genes,YBL005W-B|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YBL100W-B,S000002149,Retrotransposon TYA Gag and TYB Pol genes,YBL100W-B|YBL101W-B|TY2B_B|gag-pol fusion protein,GO:0003677,,25,13,IDA|IEA|ISS,True,False,False
+YBR012W-B,S000002155,Retrotransposon TYA Gag and TYB Pol genes,YBR012W-B|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YCL019W,S000000524,Retrotransposon TYA Gag and TYB Pol genes,YCL019W|gag-pol fusion protein,GO:0003677,,25,13,IDA|IEA|ISS,True,False,False
+YCR087C-A,S000007223,Putative protein of unknown function,YCR087C-A,GO:0003677,GO:0000122,4,3,HDA|IBA|IEA|ND,True,False,True
+YDR034C-D,S000007345,Retrotransposon TYA Gag and TYB Pol genes,YDR034C-D|gag-pol fusion protein,GO:0003677,,25,13,IDA|IEA|ISS,True,False,False
+YDR098C-B,S000007391,Retrotransposon TYA Gag and TYB Pol genes,YDR098C-B|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YDR210C-D,S000007410,Retrotransposon TYA Gag and TYB Pol genes,YDR210C-D|YDR210W-D|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YDR210W-B,S000007393,Retrotransposon TYA Gag and TYB Pol genes,YDR210W-B|gag-pol fusion protein,GO:0003677,,25,13,IDA|IEA|ISS,True,False,False
+YDR261C-D,S000007395,Retrotransposon TYA Gag and TYB Pol genes,YDR261C-D|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YDR261W-B,S000007397,Retrotransposon TYA Gag and TYB Pol genes,YDR261W-B|gag-pol fusion protein,GO:0003677,,25,13,IDA|IEA|ISS,True,False,False
+YDR316W-B,S000007399,Retrotransposon TYA Gag and TYB Pol genes,YDR316W-B|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YDR365W-B,S000007401,Retrotransposon TYA Gag and TYB Pol genes,YDR365W-B|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YER138C,S000000940,Retrotransposon TYA Gag and TYB Pol genes,YER138C|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YER160C,S000000962,Retrotransposon TYA Gag and TYB Pol genes,YER160C|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YFL002W-A,S000002962,Retrotransposon TYA Gag and TYB Pol genes,YFL002W-A|gag-pol fusion protein,GO:0003677,,25,13,IDA|IEA|ISS,True,False,False
+YGR027W-B,S000007406,Retrotransposon TYA Gag and TYB Pol genes,YGR027W-B|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YGR038C-B,S000007408,Retrotransposon TYA Gag and TYB Pol genes,YGR038C-B|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YGR067C,S000003299,Putative protein of unknown function,YGR067C,GO:0000981|GO:0003677,GO:0006357,6,2,HDA|IBA|IEA|ND,True,False,False
+YGR109W-A,S000007346,Retrotransposon TYA Gag gene co-transcribed with TYB Pol,YGR109W-A|gag protein,GO:0003677,,7,1,IDA|IEA|IMP,True,False,False
+YGR109W-B,S000007347,Retrotransposon TYA Gag and TYB Pol genes,YGR109W-B|gag-pol fusion protein,GO:0003677,,28,12,IDA|IEA|ISS,True,False,False
+YGR122W,S000003354,Protein that may be involved in pH regulation,YGR122W,,GO:0000122,1,3,HDA|IMP|ND,False,False,True
+YGR161C-D,S000007368,Retrotransposon TYA Gag and TYB Pol genes,YGR161C-D|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YGR161W-B,S000007370,Retrotransposon TYA Gag and TYB Pol genes,YGR161W-B|gag-pol fusion protein,GO:0003677,,25,13,IDA|IEA|ISS,True,False,False
+YHL009W-B,S000007372,Retrotransposon TYA Gag and TYB Pol genes,YHL009W-B|gag-pol fusion protein,GO:0003677,,24,13,IDA|IEA|ISS,True,False,False
+YHM2,S000004854,Citrate and oxoglutarate carrier protein,YMR241W,GO:0003677,,5,7,HDA|IBA|IDA|IEA|IGI|IMP,True,False,False
+YHP1,S000002859,Homeobox transcriptional repressor,YDR451C,GO:0000981|GO:0003677,GO:0000122|GO:0006355|GO:0006357,9,6,IBA|IDA|IEA|IGI|IMP,True,False,True
+YHR214C-B,S000003534,Retrotransposon TYA Gag and TYB Pol genes,YHR214C-B|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YIL082W-A,S000003537,Retrotransposon TYA Gag and TYB Pol genes,YIL082W-A|gag-pol fusion protein,GO:0003677,,28,12,IDA|IEA|ISS,True,False,False
+YJL113W,S000003649,Retrotransposon TYA Gag and TYB Pol genes,YJL113W|gag-pol fusion protein,GO:0003677,,24,13,HDA|IDA|IEA|ISS,True,False,False
+YJL206C,S000003741,Putative protein of unknown function,YJL206C,GO:0000981|GO:0003677,GO:0006351|GO:0006355|GO:0045944,9,5,IBA|IEA|ND,True,True,False
+YJR027W,S000003788,Retrotransposon TYA Gag and TYB Pol genes,YJR027W|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YJR029W,S000003790,Retrotransposon TYA Gag and TYB Pol genes,YJR029W|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YKL222C,S000001705,Protein of unknown function,YKL222C,GO:0000981|GO:0003677,GO:0006351|GO:0006355|GO:0006357,9,5,HDA|IDA|IEA|ND,True,False,False
+YKU70,S000004897,Subunit of the telomeric Ku complex (Yku70p-Yku80p),YMR284W|HDF1|NES24|KU70|ATP-dependent DNA helicase YKU70,GO:0003677,,15,30,IBA|IDA|IEA|IGI|IMP,True,False,False
+YKU80,S000004712,Subunit of telomeric Ku complex (Yku70p-Yku80p),YMR106C|HDF2|ATP-dependent DNA helicase YKU80,GO:0003677,,17,24,IBA|IDA|IEA|IGI|IMP,True,False,False
+YLL054C,S000003977,Putative protein of unknown function with similarity to Pip2p,YLL054C,GO:0000981|GO:0003677,GO:0006355|GO:0045944,9,4,HDA|IBA|IEA|ISA|ND,True,True,False
+YLR035C-A,S000007225,Retrotransposon TYA Gag and TYB Pol genes,YLR035C-A|gag-pol fusion protein,GO:0003677,,22,13,IDA|IEA|ISS,True,False,False
+YLR157C-B,S000007374,Retrotransposon TYA Gag and TYB Pol genes,YLR157C-B|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YLR227W-B,S000007376,Retrotransposon TYA Gag and TYB Pol genes,YLR227W-B|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YLR278C,S000004268,Zinc-cluster protein,YLR278C,GO:0000981|GO:0003677,GO:0006351|GO:0006355|GO:0045944,10,5,HDA|IBA|IEA|ND,True,True,False
+YLR410W-B,S000007380,Retrotransposon TYA Gag and TYB Pol genes,YLR410W-B|gag-pol fusion protein,GO:0003677,,25,13,IDA|IEA|ISS,True,False,False
+YML039W,S000004503,Retrotransposon TYA Gag and TYB Pol genes,YML039W|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YML045W,S000004508,Retrotransposon TYA Gag and TYB Pol genes,YML045W|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YMR045C,S000004648,Retrotransposon TYA Gag and TYB Pol genes,YMR045C|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YMR050C,S000004653,Retrotransposon TYA Gag and TYB Pol genes,YMR050C|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YMR114C,S000004720,Protein of unknown function,YMR114C|putative peptide hydrolase,GO:0003677,,5,5,HDA|IEA|ND,True,False,False
+YNL054W-B,S000007385,TyB Gag-Pol protein,YNL054W-B|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YNL284C-B,S000007387,Retrotransposon TYA Gag and TYB Pol genes,YNL284C-B|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YOL103W-B,S000007350,Retrotransposon TYA Gag and TYB Pol genes,YOL103W-B|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YOR142W-B,S000007352,Retrotransposon TYA Gag and TYB Pol genes,YOR142W-B|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YOR192C-B,S000007354,Retrotransposon TYA Gag and TYB Pol genes,YOR192C-B|gag-pol fusion protein,GO:0003677,,25,13,IDA|IEA|ISS,True,False,False
+YOR338W,S000005865,Putative protein of unknown function,YOR338W,,GO:0006357|GO:0045944,3,5,HMP|IBA|ND,False,True,False
+YOR343W-B,S000007356,Retrotransposon TYA Gag and TYB Pol genes,YOR343W-B|YOR343C-B|gag-pol fusion protein,GO:0003677,,25,13,IDA|IEA|ISS,True,False,False
+YOX1,S000004489,Homeobox transcriptional repressor,YML027W,GO:0000981|GO:0003677,GO:0006355|GO:0006357,10,7,HDA|IBA|IDA|IEA|IGI|IMP,True,False,False
+YPL060C-A,S000007388,TyA Gag protein,YPL060C-A|gag-pol fusion protein,GO:0003677,,18,10,IEA,True,False,False
+YPL257W-B,S000007358,Retrotransposon TYA Gag and TYB Pol genes,YPL257W-B|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YPR015C,S000006219,Putative zinc finger transcription factor,YPR015C,GO:0000981,GO:0006357,3,2,IBA|IEA|ND,False,False,False
+YPR137C-B,S000007360,Retrotransposon TYA Gag and TYB Pol genes,YPR137C-B|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YPR158C-D,S000007362,Retrotransposon TYA Gag and TYB Pol genes,YPR158C-D|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YPR158W-B,S000007364,Retrotransposon TYA Gag and TYB Pol genes,YPR158W-B|gag-pol fusion protein,GO:0003677,,26,14,IDA|IEA|ISS,True,False,False
+YPR196W,S000006400,Putative maltose-responsive transcription factor,YPR196W|putative maltose-responsive transcription factor,GO:0000981|GO:0003677,GO:0006355|GO:0006357,10,5,HDA|IEA|ISA|ND,True,False,False
+YRA2,S000001697,Member of the REF (RNA and export factor binding proteins) family,YKL214C,GO:0003677,,5,2,IDA|IEA|IMP,True,False,False
+YRM1,S000005698,Zinc finger transcription factor involved in multidrug resistance,YOR172W,GO:0000981|GO:0003677,GO:0006355|GO:0006357,7,4,HDA|IDA|IEA|IMP,True,False,False
+YRR1,S000005688,Zn2-Cys6 zinc-finger transcription factor,YOR162C|PDR2,GO:0000981|GO:0003677,GO:0006355|GO:0045944,11,8,HDA|IC|IDA|IEA|IGI|IMP,True,True,False
+YTA7,S000003502,Chromatin-binding ATPase that regulates histone gene expression,YGR270W,,GO:0000122|GO:0045944,14,8,HDA|IBA|IDA|IEA|IMP,False,True,True
+ZAP1,S000003592,Zinc-regulated transcription factor,YJL056C|ZRG10,GO:0000981|GO:0003677,GO:0006357|GO:0045944,11,8,IBA|IDA|IEA|IMP,True,True,False
+ZIP2,S000003218,Meiosis-specific protein,YGL249W,GO:0003677,,3,7,HDA|IDA|IEA|IMP,True,False,False
+ZNF1,S000001842,Zinc cluster transcription factor that regulates respiratory growth,YFL052W|DNA-binding domain containing protein,GO:0000981|GO:0001228|GO:0003677,GO:0006355,11,4,IC|IDA|IEA|IMP,True,True,False
+ZUO1,S000003517,Ribosome-associated chaperone,YGR285C|zuotin,GO:0003677,,4,7,HDA|IDA|IEA|IMP,True,False,False
