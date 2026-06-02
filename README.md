@@ -46,7 +46,7 @@ This project:
 TF binding sites (also called *cis-regulatory elements* or *TFBS*) are short DNA sequences in **gene promoter regions**. A TF protein binds its TFBS via a DNA-binding domain (GO:0003677, GO:0000981) and either activates or represses transcription of the downstream gene. When a TF gene duplicates, the question is whether the new copy retains the same TFBS in its targets' promoters — that retention probability is **πᵢ**.
 
 ### Which transcription factor regulates which gene?
-Inferred from shared GO Biological Process terms: if a TF and a gene share a process annotation, the TF is a candidate regulator. The 127 YEASTRACT-curated TFs are mapped to 6,446 target genes across 120,000+ GO annotations.
+Inferred from shared GO Biological Process terms: if a TF and a gene share a process annotation, the TF is a candidate regulator. 179 TFs (union of JASPAR 2024 and YEASTRACT) are mapped to 6,446 target genes across 120,000+ GO annotations.
 
 ### What is the inheritance probability vector?
 Estimated three ways — see [Estimation Methods](#estimation-methods) below.
@@ -113,7 +113,9 @@ All data lives in `sgd_yeast_data/sgd_yeast_data/`:
 
 | File | Rows | Contents |
 |------|------|----------|
-| `sgd_transcription_factors.csv` | 732 (127 YEASTRACT-curated used) | TF names, GO terms, evidence codes, activator/repressor flags |
+| `jaspar_yeast_tfbs_2024.csv` | 177 | JASPAR 2024 yeast TFs: PFMs, consensus sequences, IC scores, TF class/family |
+| `jaspar_yeast_pfm_long.csv` | 5,708 | Long-format PFM table: one row per (TF, position, nucleotide) |
+| `sgd_transcription_factors.csv` | 732 (179 used — union of JASPAR ∪ YEASTRACT) | TF names, GO terms, evidence codes, activator/repressor flags |
 | `sgd_go_annotations_full.csv` | ~120,000 | GO annotations for all 6,446 yeast genes |
 | `sgd_tf_go_annotations.csv` | ~1,942 | GO annotations specifically for TFs |
 | `sgd_chromosome_lengths.csv` | 16 | Chromosome lengths (12.07 Mb total genome) |
@@ -133,9 +135,10 @@ sgd_yeast_data/
 │   ├── gene_families.py        GO-based family grouping, m/n/d parameters
 │   ├── inheritance_estimator.py  Three π estimation methods + significance test
 │   ├── consensus_loader.py     YEASTRACT TF↔consensus sequences (127 TFs)
+│   ├── jaspar_loader.py        JASPAR 2024 PFMs, IC scores, π adjustment factors
 │   └── __init__.py
 ├── sgd_yeast_data/             Raw CSV data files
-├── app.py                      Streamlit frontend (5 tabs)
+├── app.py                      Streamlit frontend (6 tabs)
 ├── main.py                     Command-line interface
 ├── requirements.txt
 └── README.md
@@ -159,12 +162,13 @@ Requirements: `streamlit`, `pandas`, `numpy`, `scipy`, `plotly`
 python -m streamlit run app.py
 ```
 
-Opens in your browser at `http://localhost:8501`. Five tabs:
+Opens in your browser at `http://localhost:8501`. Six tabs:
 
 | Tab | What it shows |
 |-----|---------------|
+| **Introduction** | Plain-language guide to the model, the biology, and how to navigate the app |
 | **Overview** | Dataset summary, key theorems, binding site explanation, chromosome lengths |
-| **TF Explorer** | Browse and filter all 127 YEASTRACT TFs; binding site info; regulatory targets per TF |
+| **TF Explorer** | Browse and filter all 179 TFs (JASPAR ∪ YEASTRACT); JASPAR PFM heatmap; binding site info; regulatory targets |
 | **Gene Families** | Family size distribution, Pólya urn parameters (m, n, d), Dirichlet simulation |
 | **π Estimator** | Select k families, estimate π⃗ with any of the three methods, sensitivity plot |
 | **Motif Significance** | Full significance test: Z-scores, p-values, null model distributions |

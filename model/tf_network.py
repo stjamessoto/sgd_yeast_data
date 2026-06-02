@@ -33,6 +33,10 @@ from .consensus_loader import (
     get_pi_consensus_factor,
     load_tf_consensus_stats,
 )
+from .jaspar_loader import (
+    get_jaspar_info,
+    get_pi_jaspar_factor,
+)
 
 # GO terms that confirm DNA-binding / TF activity
 BINDING_GO_TERMS = {
@@ -139,39 +143,70 @@ def describe_binding_sites(tf_name: str) -> dict:
 
     is_specific = "GO:0000981" in func_terms or "GO:0003700" in func_terms
 
-    # Enrich with YEASTRACT consensus binding sequences
+    # JASPAR PFM data (primary binding site source)
+    jaspar = get_jaspar_info(row["gene_name"])
+    has_jaspar = bool(jaspar)
+    pi_jaspar = get_pi_jaspar_factor(row["gene_name"])
+
+    # YEASTRACT consensus sequences (secondary / fallback)
     consensus_df = get_consensus_for_tf(row["gene_name"])
     has_consensus = not consensus_df.empty
     consensus_sequences = consensus_df["consensus"].tolist() if has_consensus else []
-    pi_factor = get_pi_consensus_factor(row["gene_name"])
+    pi_consensus = get_pi_consensus_factor(row["gene_name"])
+
+    # Combined π factor: JASPAR takes priority; fall back to YEASTRACT
+    pi_factor = pi_jaspar if has_jaspar else pi_consensus
+
+    # Binding description: use JASPAR consensus if available
+    jaspar_consensus = jaspar.get("consensus_sequence", "")
+    binding_note = (
+        f"JASPAR PFM: consensus {jaspar_consensus!r}, "
+        f"motif width {jaspar.get('motif_width')} bp, "
+        f"IC = {jaspar.get('information_content', 0):.2f} bits "
+        f"({jaspar.get('data_type', 'unknown')} data)."
+        if has_jaspar
+        else (
+            f"YEASTRACT: {len(consensus_sequences)} consensus sequence(s)"
+            f" (e.g. {consensus_sequences[0]!r})."
+            if consensus_sequences
+            else "No binding sequence data found."
+        )
+    )
 
     return {
-        "gene_name": row["gene_name"],
-        "full_name": row["full_name"],
-        "binding_go_terms": binding_hits,
+        "gene_name":            row["gene_name"],
+        "full_name":            row["full_name"],
+        "binding_go_terms":     binding_hits,
         "binding_description": (
             "Binds sequence-specifically to promoter DNA of target genes via "
             "transcription-factor binding sites (TFBS / cis-regulatory elements)."
-            if is_specific
-            else "Binds DNA through general DNA-binding domain."
+            if is_specific else "Binds DNA through general DNA-binding domain."
         ),
-        "target_dna_type": dna_type,
+        "target_dna_type":      dna_type,
         "is_sequence_specific": is_specific,
-        "is_activator": bool(row["is_activator"]),
-        "is_repressor": bool(row["is_repressor"]),
-        "evidence_score": float(row["evidence_score"]),
-        # YEASTRACT consensus data
-        "has_yeastract_consensus": has_consensus,
-        "n_consensus_sequences": len(consensus_sequences),
-        "consensus_sequences": consensus_sequences[:20],   # first 20 for display
-        "consensus_sequences_all": consensus_sequences,
-        "pi_consensus_factor": pi_factor,
-        "consensus_binding_note": (
-            f"Binds {len(consensus_sequences)} known consensus sequence(s) from YEASTRACT "
-            f"(e.g. {consensus_sequences[0]!r})."
-            if consensus_sequences
-            else "No consensus sequence found in YEASTRACT database."
-        ),
+        "is_activator":         bool(row["is_activator"]),
+        "is_repressor":         bool(row["is_repressor"]),
+        "evidence_score":       float(row["evidence_score"]),
+        # JASPAR PFM data
+        "has_jaspar":               has_jaspar,
+        "jaspar_matrix_id":         jaspar.get("matrix_id", ""),
+        "jaspar_tf_class":          jaspar.get("tf_class", ""),
+        "jaspar_tf_family":         jaspar.get("tf_family", ""),
+        "jaspar_data_type":         jaspar.get("data_type", ""),
+        "jaspar_consensus":         jaspar_consensus,
+        "jaspar_motif_width":       jaspar.get("motif_width", 0),
+        "jaspar_ic_bits":           jaspar.get("information_content", 0.0),
+        "jaspar_url":               jaspar.get("jaspar_url", ""),
+        "pi_jaspar_factor":         pi_jaspar,
+        # YEASTRACT consensus (supplementary)
+        "has_yeastract_consensus":  has_consensus,
+        "n_consensus_sequences":    len(consensus_sequences),
+        "consensus_sequences":      consensus_sequences[:20],
+        "consensus_sequences_all":  consensus_sequences,
+        "pi_consensus_factor":      pi_consensus,
+        # Combined
+        "pi_factor":                pi_factor,
+        "binding_note":             binding_note,
     }
 
 

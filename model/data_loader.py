@@ -60,9 +60,11 @@ def _parse_bool(val) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# YEASTRACT-curated TF list (127 TFs, SGD gene notation)
+# TF filter — union of JASPAR 2024 and YEASTRACT curated lists
+# Using the union maximises coverage: 179 TFs present in the SGD CSV.
 # ---------------------------------------------------------------------------
 
+# YEASTRACT curated list (127 TFs)
 YEASTRACT_TFS_SGD: set[str] = {
     "SMP1","ERT1","KAR4","HCM1","RDS1","UGA3","PHO2","MBP1",
     "RPN4","LYS14","NRG1","GIS1","INO2","SWI5","UME6","UPC2",
@@ -81,6 +83,20 @@ YEASTRACT_TFS_SGD: set[str] = {
     "RLM1","GCR1","MET31","HAA1","ROX1","ARR1","OAF1","RTG3",
     "HAP3","PDR3","REB1","NRG2","TEC1","SIP4","ZAP1",
 }
+
+def _load_jaspar_tf_set() -> set[str]:
+    try:
+        p = DATA_DIR / "jaspar_yeast_tfbs_2024.csv"
+        df = pd.read_csv(p, usecols=["name"], dtype=str)
+        return set(df["name"].str.upper().dropna().tolist())
+    except Exception:
+        return set()
+
+# JASPAR 2024 (177 TFs) — loaded from CSV
+JASPAR_TFS_SGD: set[str] = _load_jaspar_tf_set()
+
+# Union: 189 unique TFs; 179 present in the SGD CSV
+COMBINED_TFS_SGD: set[str] = JASPAR_TFS_SGD | YEASTRACT_TFS_SGD
 
 
 # ---------------------------------------------------------------------------
@@ -133,8 +149,8 @@ def load_transcription_factors() -> pd.DataFrame:
             lambda s: [x.strip() for x in s.split("|") if x.strip()] if s else []
         )
 
-    # Filter to the 127 YEASTRACT-curated TFs
-    df = df[df["gene_name"].str.upper().isin(YEASTRACT_TFS_SGD)]
+    # Filter to union of JASPAR 2024 + YEASTRACT (179 TFs present in SGD CSV)
+    df = df[df["gene_name"].str.upper().isin(COMBINED_TFS_SGD)]
 
     return df.reset_index(drop=True)
 

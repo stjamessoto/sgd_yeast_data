@@ -2,6 +2,7 @@
 app.py — Streamlit frontend for the Scruse et al. (2024) inheritance probability model.
 
 Tabs:
+  0. Introduction   — plain-language guide: what the model does and how to navigate the app
   1. Overview       — dataset summary & paper overview
   2. TF Explorer    — browse TFs, binding sites, consensus sequences, regulatory targets
   3. Gene Families  — family size distribution and Pólya urn parameters
@@ -44,6 +45,12 @@ from model.consensus_loader import (
     load_tf_consensus_stats,
     get_consensus_for_tf,
     list_yeastract_tfs,
+)
+from model.jaspar_loader import (
+    load_jaspar_tfbs,
+    jaspar_summary,
+    get_jaspar_info,
+    get_jaspar_pfm,
 )
 from model.gene_families import (
     build_tf_families,
@@ -220,8 +227,10 @@ with tab0:
     st.markdown("""
     This app implements a mathematical model for studying **how gene regulatory networks
     (GRNs) evolve after gene duplication** in brewer's yeast (*Saccharomyces cerevisiae*).
-    It uses 127 curated transcription factors from [YEASTRACT](https://www.yeastract.com/)
-    matched against gene annotations from the
+    It draws on **179 transcription factors** from three curated sources:
+    [JASPAR 2024](https://jaspar.elixir.no/) (177 TFs with experimentally validated
+    position frequency matrices), [YEASTRACT](https://www.yeastract.com/) (127 curated TFs
+    with consensus binding sequences), and gene annotations from the
     [Saccharomyces Genome Database (SGD)](https://www.yeastgenome.org/).
     """)
 
@@ -272,36 +281,74 @@ with tab0:
 
     st.divider()
     st.subheader("🗂️ How to Use This App")
+    st.caption("Work through the tabs left to right for the full analysis pipeline.")
 
-    steps = [
-        ("📊 Overview", "Dataset summary and key theorem equations. See live metric counts for the 126 YEASTRACT TFs and the GO annotation database."),
-        ("🔬 TF Explorer", "Browse all 126 YEASTRACT transcription factors. Select any TF to see its DNA binding consensus sequences, binding site description, and which genes it likely regulates."),
-        ("👨‍👩‍👧 Gene Families", "Genes are grouped into families by shared GO Biological Process terms. This tab shows family size distributions and the Pólya urn parameters m (families) and n (total TFs)."),
-        ("🎲 π Estimator", "Select k gene families to form a motif and estimate the inheritance probability vector π⃗. Four methods: evidence-based, MLE, SNP divergence, and YEASTRACT consensus-adjusted."),
-        ("🧪 Motif Significance", "Run a full significance test: compare the observed motif count against the Full and Partial Duplication null models. Get Z-scores, p-values, and a plain-language interpretation."),
-    ]
-    for icon_name, desc in steps:
-        st.markdown(f"""
-<div class="intro-card">
-<h4>{icon_name}</h4>
-{desc}
-</div>""", unsafe_allow_html=True)
+    row1_c1, row1_c2 = st.columns(2)
+    with row1_c1:
+        with st.container(border=True):
+            st.markdown("**📊 Overview**")
+            st.markdown(
+                "Dataset summary and key theorem equations. Live metric counts "
+                "for JASPAR TFs, GO annotations, and JASPAR binding site statistics."
+            )
+    with row1_c2:
+        with st.container(border=True):
+            st.markdown("**🔬 TF Explorer**")
+            st.markdown(
+                "Browse all JASPAR-validated transcription factors. Select any TF "
+                "to see its JASPAR PFM (consensus, IC, motif width), YEASTRACT "
+                "sequences, and regulatory targets."
+            )
+
+    row2_c1, row2_c2 = st.columns(2)
+    with row2_c1:
+        with st.container(border=True):
+            st.markdown("**👨‍👩‍👧 Gene Families**")
+            st.markdown(
+                "Genes grouped into families by shared GO Biological Process terms. "
+                "Shows family size distributions and Pólya urn parameters m and n."
+            )
+    with row2_c2:
+        with st.container(border=True):
+            st.markdown("**🎲 π Estimator**")
+            st.markdown(
+                "Select k families to form a motif and estimate the inheritance "
+                "probability vector π⃗ using four methods: evidence-based, MLE, "
+                "SNP divergence, and YEASTRACT consensus-adjusted."
+            )
+
+    with st.container(border=True):
+        st.markdown("**🧪 Motif Significance**")
+        st.markdown(
+            "Run a full significance test: compare the observed motif count against "
+            "the Full and Partial Duplication null models. Outputs Z-scores, p-values, "
+            "and a plain-language interpretation of the result."
+        )
 
     st.divider()
     st.subheader("📚 Data Sources")
-    src_c1, src_c2 = st.columns(2)
+    _js = jaspar_summary()
+    src_c1, src_c2, src_c3 = st.columns(3)
     with src_c1:
-        st.markdown("""
-        **YEASTRACT** *(yeastract.com)*
-        - 127 curated *S. cerevisiae* transcription factors
-        - Experimentally verified consensus DNA binding sequences
-        - Source for TF names and binding site characterisation
+        st.markdown(f"""
+        **JASPAR 2024** *(jaspar.elixir.no)*
+        - **{_js['n_jaspar_tfs']} TFs** with experimentally validated PFMs
+        - {_js['n_chip_based']} ChIP-based · {_js['n_pbm_based']} PBM-based
+        - Mean motif width: {_js['mean_motif_width']} bp · mean IC: {_js['mean_ic_bits']} bits
+        - Primary source for TFBS binding sequences and π adjustment
         """)
     with src_c2:
         st.markdown("""
-        **SGD — Saccharomyces Genome Database** *(yeastgenome.org)*
+        **YEASTRACT** *(yeastract.com)*
+        - 127 curated *S. cerevisiae* transcription factors
+        - IUPAC consensus sequences for 115 TFs also in JASPAR
+        - Supplementary binding sequence reference
+        """)
+    with src_c3:
+        st.markdown("""
+        **SGD** *(yeastgenome.org)*
         - GO annotations for 6,446 genes (~120,000 records)
-        - TF evidence codes (IDA, IMP, IEA, …) used to weight π priors
+        - TF evidence codes (IDA, IMP, IEA, …) for π priors
         - Chromosome lengths, gene IDs, synonyms
         """)
 
@@ -333,14 +380,15 @@ with tab1:
     """)
 
     st.divider()
+    _js_sum = jaspar_summary()
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("TFs", summary["n_tfs"])
-    c2.metric("DNA-binding TFs", summary["n_dna_binding_tfs"])
-    c3.metric("Activators", summary["n_activators"])
-    c4.metric("Repressors", summary["n_repressors"])
+    c1.metric("JASPAR TFs", _js_sum["n_jaspar_tfs"])
+    c2.metric("Mean IC (bits)", _js_sum["mean_ic_bits"])
+    c3.metric("Mean motif width (bp)", _js_sum["mean_motif_width"])
+    c4.metric("ChIP-based PFMs", _js_sum["n_chip_based"])
 
     c5, c6, c7, c8 = st.columns(4)
-    c5.metric("Genes w/ GO annot.", f"{summary['n_unique_genes_go']:,}")
+    c5.metric("TFs in SGD (JASPAR ∪ YEASTRACT)", summary["n_tfs"])
     c6.metric("GO records", f"{summary['n_go_annotations']:,}")
     c7.metric("Chromosomes", summary["n_chromosomes"])
     c8.metric("Genome", f"{summary['genome_size_mb']} Mb")
@@ -492,55 +540,76 @@ with tab2:
             col_a, col_b = st.columns(2)
             with col_a:
                 st.markdown(f"**{binding_info['gene_name']}** — {binding_info['full_name']}")
-                st.markdown(f"Role: `{'Activator' if binding_info['is_activator'] else ''}{'/' if binding_info['is_activator'] and binding_info['is_repressor'] else ''}{'Repressor' if binding_info['is_repressor'] else ''}`")
+                role = "/".join(filter(None, [
+                    "Activator" if binding_info["is_activator"] else "",
+                    "Repressor" if binding_info["is_repressor"] else "",
+                ])) or "Unknown"
+                st.markdown(f"Role: `{role}`")
                 st.markdown(f"Evidence score: **{binding_info['evidence_score']:.3f}**")
-                st.markdown(f"Sequence-specific binding: **{'Yes' if binding_info['is_sequence_specific'] else 'No'}**")
-                if binding_info.get("has_yeastract_consensus"):
+                st.markdown(f"Sequence-specific: **{'Yes' if binding_info['is_sequence_specific'] else 'No'}**")
+                st.markdown(f"**π factor:** {binding_info['pi_factor']:.4f}")
+
+                if binding_info["has_jaspar"]:
                     st.markdown(
-                        f"YEASTRACT consensus sequences: **{binding_info['n_consensus_sequences']}**  "
-                        f"(pi factor: {binding_info['pi_consensus_factor']:.4f})"
+                        f"**JASPAR** `{binding_info['jaspar_matrix_id']}` · "
+                        f"consensus `{binding_info['jaspar_consensus']}` · "
+                        f"{binding_info['jaspar_motif_width']} bp · "
+                        f"IC {binding_info['jaspar_ic_bits']:.2f} bits  \n"
+                        f"Class: {binding_info['jaspar_tf_class'] or '—'}  \n"
+                        f"Family: {binding_info['jaspar_tf_family'] or '—'}  \n"
+                        f"Data: {binding_info['jaspar_data_type'] or '—'}  \n"
+                        f"[View on JASPAR]({binding_info['jaspar_url']})"
                     )
+                if binding_info["has_yeastract_consensus"]:
+                    st.caption(
+                        f"YEASTRACT: {binding_info['n_consensus_sequences']} "
+                        f"consensus sequences (π factor {binding_info['pi_consensus_factor']:.4f})"
+                    )
+
             with col_b:
-                st.markdown(f"**What do the binding sites bind?**")
+                st.markdown("**What do the binding sites bind?**")
                 st.info(binding_info["binding_description"])
                 st.markdown(f"**DNA target type:** {binding_info['target_dna_type']}")
                 if binding_info["binding_go_terms"]:
                     for goid, label in binding_info["binding_go_terms"].items():
                         st.markdown(f"- `{goid}` — {label}")
-                if binding_info.get("has_yeastract_consensus"):
-                    st.markdown(binding_info["consensus_binding_note"])
+                st.markdown(f"_{binding_info['binding_note']}_")
 
-            # YEASTRACT consensus sequences block
+            # JASPAR PFM heatmap
+            if binding_info["has_jaspar"]:
+                st.markdown("**JASPAR Position Frequency Matrix**")
+                pfm_df = get_jaspar_pfm(tf_choice)
+                if not pfm_df.empty:
+                    pfm_wide = pfm_df.pivot(index="nucleotide", columns="position", values="count").fillna(0)
+                    fig_pfm = px.imshow(
+                        pfm_wide,
+                        labels={"x": "Position", "y": "Nucleotide", "color": "Count"},
+                        color_continuous_scale="Blues",
+                        title=f"{tf_choice} PFM — {binding_info['jaspar_matrix_id']}",
+                        aspect="auto",
+                    )
+                    fig_pfm.update_layout(height=220, margin=dict(t=40, b=10))
+                    st.plotly_chart(fig_pfm, use_container_width=True)
+
+            # YEASTRACT consensus table (collapsed by default)
             if binding_info.get("has_yeastract_consensus"):
-                st.markdown("**YEASTRACT Consensus Binding Sequences** *(source: yeastract.com)*")
-                cons_df = get_consensus_for_tf(tf_choice)
-                c_left, c_right = st.columns([3, 2])
-                with c_left:
+                with st.expander("YEASTRACT Consensus Sequences"):
+                    cons_df = get_consensus_for_tf(tf_choice)
                     st.dataframe(
                         cons_df[["consensus", "length", "ambiguity_fraction", "specificity_score"]].rename(
                             columns={"ambiguity_fraction": "IUPAC ambiguity", "specificity_score": "specificity"}
                         ),
                         use_container_width=True,
-                        height=min(350, 38 + 35 * len(cons_df)),
+                        height=min(300, 38 + 35 * len(cons_df)),
                     )
-                with c_right:
-                    fig_amb = px.scatter(
-                        cons_df, x="length", y="ambiguity_fraction",
-                        title=f"{tf_choice} consensus: length vs ambiguity",
-                        labels={"length": "Sequence length", "ambiguity_fraction": "IUPAC ambiguity fraction"},
-                        color="ambiguity_fraction", color_continuous_scale="RdYlGn_r",
-                    )
-                    fig_amb.update_layout(height=300, showlegend=False, margin=dict(t=40, b=10))
-                    st.plotly_chart(fig_amb, use_container_width=True)
-            else:
-                st.caption(f"No YEASTRACT consensus data found for {tf_choice}.")
 
     st.divider()
 
     # --- Regulatory network preview ---
     st.subheader("TF → Target Regulatory Network")
     st.caption(
-        "Targets are inferred from shared GO Biological Process terms. "
+        "Targets are inferred from shared GO Biological Process terms, "
+        "with TF binding characterised by JASPAR 2024 PFMs. "
         "This is the regulatory edge set underlying subnetwork motif instances."
     )
 
