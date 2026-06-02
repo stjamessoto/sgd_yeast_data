@@ -156,7 +156,7 @@ Requirements: `streamlit`, `pandas`, `numpy`, `scipy`, `plotly`
 ## Running the Frontend
 
 ```bash
-streamlit run app.py
+python -m streamlit run app.py
 ```
 
 Opens in your browser at `http://localhost:8501`. Five tabs:
