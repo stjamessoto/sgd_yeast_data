@@ -60,6 +60,30 @@ def _parse_bool(val) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# YEASTRACT-curated TF list (127 TFs, SGD gene notation)
+# ---------------------------------------------------------------------------
+
+YEASTRACT_TFS_SGD: set[str] = {
+    "SMP1","ERT1","KAR4","HCM1","RDS1","UGA3","PHO2","MBP1",
+    "RPN4","LYS14","NRG1","GIS1","INO2","SWI5","UME6","UPC2",
+    "ADR1","MET32","SUM1","CAD1","STP1","GCN4","MIG3","GLN3",
+    "ACA1","MOT2","FLO8","SWI4","COM2","RPH1","ZNF1","HAC1",
+    "GAT1","PHO4","FZF1","HAP2","MIG2","CUP2","SUT1","HSF1",
+    "AFT1","MIG1","PDR1","RME1","RIM101","YAP3","STP2","STE12",
+    "NDT80","ROF1","STB5","SKN7","FKH1","XBP1","CST6","YAP5",
+    "DAL81","GZF3","GSM1","CBF1","IME1","ASH1","ABF1","HAP4",
+    "MSN4","RGT1","IXR1","PUT3","DAL80","BAS1","PPR1","CHA4",
+    "ACE2","RFX1","ECM22","HAP1","PDR8","LEU3","ARG81","TDA9",
+    "WAR1","YAP1","STB4","MAC1","MSN2","ARG80","MCM1","MOT3",
+    "MSS11","HOT1","CAT8","DAL82","RAP1","GCR2","SKO1","MET4",
+    "FKH2","CRZ1","INO4","RTG1","CIN5","AZF1","SFL1","YRR1",
+    "TEA1","TYE7","HAP5","PIP2","GAL4","USV1","AFT2","RDS2",
+    "RLM1","GCR1","MET31","HAA1","ROX1","ARR1","OAF1","RTG3",
+    "HAP3","PDR3","REB1","NRG2","TEC1","SIP4","ZAP1",
+}
+
+
+# ---------------------------------------------------------------------------
 # Loaders
 # ---------------------------------------------------------------------------
 
@@ -108,6 +132,9 @@ def load_transcription_factors() -> pd.DataFrame:
         df[list_col] = df[col].apply(
             lambda s: [x.strip() for x in s.split("|") if x.strip()] if s else []
         )
+
+    # Filter to the 127 YEASTRACT-curated TFs
+    df = df[df["gene_name"].str.upper().isin(YEASTRACT_TFS_SGD)]
 
     return df.reset_index(drop=True)
 

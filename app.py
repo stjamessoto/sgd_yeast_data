@@ -90,12 +90,49 @@ st.markdown("""
 <style>
 .metric-card {background:#f0f2f6;border-radius:8px;padding:12px 16px;margin:4px;}
 .highlight {color:#d62728;font-weight:600;}
-.theorem-box {background:#eaf4fb;border-left:4px solid #1f77b4;
-              padding:10px 14px;border-radius:4px;margin:8px 0;}
+
+/* Theorem boxes — light card with dark equation area */
+.theorem-box {
+    background: #f5f8ff;
+    border-left: 4px solid #2563eb;
+    border: 1px solid #c7d9ff;
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin: 10px 0;
+    color: #1e293b;
+}
+.theorem-box b {
+    color: #1d4ed8;
+    font-size: 1.02em;
+    display: block;
+    margin-bottom: 6px;
+}
+.theorem-box pre {
+    background: #1e293b;
+    color: #93c5fd;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin: 8px 0 4px 0;
+    font-size: 0.83em;
+    white-space: pre-wrap;
+    word-break: break-all;
+    line-height: 1.5;
+}
+
 .result-box {background:#e8f5e9;border-left:4px solid #2ca02c;
              padding:10px 14px;border-radius:4px;margin:8px 0;}
 .warn-box   {background:#fff3e0;border-left:4px solid #ff7f0e;
              padding:10px 14px;border-radius:4px;margin:8px 0;}
+
+/* Intro tab cards */
+.intro-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 8px 0;
+}
+.intro-card h4 { margin: 0 0 6px 0; color: #1d4ed8; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -161,13 +198,118 @@ with st.sidebar:
 # Tabs
 # ---------------------------------------------------------------------------
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab0, tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    "📘 Introduction",
     "📊 Overview",
     "🔬 TF Explorer",
     "👨‍👩‍👧 Gene Families",
     "🎲 π Estimator",
     "🧪 Motif Significance",
 ])
+
+
+# ══════════════════════════════════════════════════════════════════════
+# TAB 0: Introduction
+# ══════════════════════════════════════════════════════════════════════
+
+with tab0:
+    st.header("Welcome — What This App Does")
+    st.markdown(
+        "_Scruse, Arnold & Robinson (2024) · arXiv:2405.03148v1 · University of Georgia_"
+    )
+    st.markdown("""
+    This app implements a mathematical model for studying **how gene regulatory networks
+    (GRNs) evolve after gene duplication** in brewer's yeast (*Saccharomyces cerevisiae*).
+    It uses 127 curated transcription factors from [YEASTRACT](https://www.yeastract.com/)
+    matched against gene annotations from the
+    [Saccharomyces Genome Database (SGD)](https://www.yeastgenome.org/).
+    """)
+
+    st.divider()
+    st.subheader("🧬 The Biological Question")
+    st.markdown("""
+    Genes duplicate. When they do, the new copy inherits DNA — but does it also inherit
+    its **regulatory connections**? A transcription factor (TF) controls a gene by binding
+    a short sequence in its promoter called a **binding site** (TFBS). After duplication:
+
+    - The **original gene** keeps its TF binding sites.
+    - The **new copy** may or may not retain those same binding sites.
+
+    The probability that a regulatory link is retained is called **π (pi)** —
+    the *inheritance probability*. This model estimates π from real yeast data and
+    tests whether observed regulatory patterns are more (or less) common than expected
+    by chance under a duplication model.
+    """)
+
+    st.divider()
+    st.subheader("📐 The Mathematical Model")
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.markdown("""
+        **Subnetwork motif** — a pattern of TFs from *k* different gene families
+        all co-regulating the same target. The model counts how many such patterns
+        exist in the GRN and asks: *is this count surprising?*
+
+        **Full Duplication (π = 1)** — every duplication perfectly copies all
+        regulatory links. Expected motif count grows as **Θ(nᵏ)**.
+
+        **Partial Duplication (0 ≤ π ≤ 1)** — each link is independently
+        inherited with probability π. Expected count grows as **Θ(n^π̂)**
+        where π̂ = Σπᵢ is the total inheritance probability.
+        """)
+    with col_b:
+        st.markdown("""
+        **Why it matters** — if the observed motif count is much higher than the
+        Partial Duplication expectation, it suggests **positive selection** for
+        that regulatory wiring (it is being actively maintained). If lower, it
+        suggests the pattern is being lost or avoided.
+
+        **Pólya urn connection** — the gene duplication process is mathematically
+        equivalent to drawing balls from a Pólya urn. Family size proportions
+        converge to a Dirichlet distribution, giving the model its exact
+        probabilistic grounding.
+        """)
+
+    st.divider()
+    st.subheader("🗂️ How to Use This App")
+
+    steps = [
+        ("📊 Overview", "Dataset summary and key theorem equations. See live metric counts for the 126 YEASTRACT TFs and the GO annotation database."),
+        ("🔬 TF Explorer", "Browse all 126 YEASTRACT transcription factors. Select any TF to see its DNA binding consensus sequences, binding site description, and which genes it likely regulates."),
+        ("👨‍👩‍👧 Gene Families", "Genes are grouped into families by shared GO Biological Process terms. This tab shows family size distributions and the Pólya urn parameters m (families) and n (total TFs)."),
+        ("🎲 π Estimator", "Select k gene families to form a motif and estimate the inheritance probability vector π⃗. Four methods: evidence-based, MLE, SNP divergence, and YEASTRACT consensus-adjusted."),
+        ("🧪 Motif Significance", "Run a full significance test: compare the observed motif count against the Full and Partial Duplication null models. Get Z-scores, p-values, and a plain-language interpretation."),
+    ]
+    for icon_name, desc in steps:
+        st.markdown(f"""
+<div class="intro-card">
+<h4>{icon_name}</h4>
+{desc}
+</div>""", unsafe_allow_html=True)
+
+    st.divider()
+    st.subheader("📚 Data Sources")
+    src_c1, src_c2 = st.columns(2)
+    with src_c1:
+        st.markdown("""
+        **YEASTRACT** *(yeastract.com)*
+        - 127 curated *S. cerevisiae* transcription factors
+        - Experimentally verified consensus DNA binding sequences
+        - Source for TF names and binding site characterisation
+        """)
+    with src_c2:
+        st.markdown("""
+        **SGD — Saccharomyces Genome Database** *(yeastgenome.org)*
+        - GO annotations for 6,446 genes (~120,000 records)
+        - TF evidence codes (IDA, IMP, IEA, …) used to weight π priors
+        - Chromosome lengths, gene IDs, synonyms
+        """)
+
+    st.info(
+        "💡 **Start here**, then move through the tabs left to right — "
+        "Overview → TF Explorer → Gene Families → π Estimator → Motif Significance.",
+        icon="💡",
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════
