@@ -314,7 +314,7 @@ with tab0:
             st.markdown("**🎲 π Estimator**")
             st.markdown(
                 "Select k families to form a motif and estimate the inheritance "
-                "probability vector π⃗ using four methods: evidence-based, MLE, "
+                "probability vector $\\vec{\\pi}$ using four methods: evidence-based, MLE, "
                 "SNP divergence, and YEASTRACT consensus-adjusted."
             )
 
@@ -375,7 +375,7 @@ with tab1:
 
     - **Identify** transcription factors (TFs) and their regulatory targets in the
       *S. cerevisiae* GRN from SGD data.
-    - **Estimate** the per-family inheritance probability vector **π⃗ = (π₁, …, πₖ)**
+    - **Estimate** the per-family inheritance probability vector **$\\vec{\\pi}$ = (π₁, …, πₖ)**
       using three data-driven methods.
     - **Test significance** of subnetwork motifs against the Partial Duplication null model.
     """)
@@ -401,7 +401,7 @@ with tab1:
     with col_l:
         st.markdown("""
 <div class="theorem-box">
-<b>Theorem 1 — Full Duplication (π⃗ = 1)</b><br>
+<b>Theorem 1 — Full Duplication ($\\vec{\\pi}$ = 1)</b><br>
 <pre>E[|M(n)|; k, m, n] = Γ(n+k)Γ(m) / [Γ(n)Γ(m+k)]</pre>
 Growth rate: Θ(nᵏ) — degree equals motif size k.
 </div>
@@ -409,7 +409,7 @@ Growth rate: Θ(nᵏ) — degree equals motif size k.
 <div class="theorem-box">
 <b>Theorem 4 — Partial Duplication</b><br>
 <pre>E[|M(n)|; m,n,π⃗,k] = Γ(π̂+n)Γ(m) / [Γ(π̂+m)Γ(n)]</pre>
-Depends on π⃗ only through π̂ = Σπᵢ.<br>
+Depends on $\\vec{\\pi}$ only through π̂ = Σπᵢ.<br>
 Growth rate: Θ(n^π̂) — exponent <i>equals</i> total inheritance probability.
 </div>
 """, unsafe_allow_html=True)
@@ -781,7 +781,7 @@ Family proportions cᵢ/n converge almost surely to a **Dirichlet(1,…,1)** dis
 with tab4:
     st.header("🎲 Inheritance Probability Estimator")
     st.markdown("""
-Estimate **π⃗ = (π₁, …, πₖ)** — the per-family probability that regulatory
+Estimate **$\\vec{\\pi}$ = (π₁, …, πₖ)** — the per-family probability that regulatory
 links are inherited through gene duplication.
 """)
 
@@ -831,7 +831,7 @@ links are inherited through gene duplication.
     )
 
     st.divider()
-    st.subheader("Step 2 — Estimate π⃗")
+    st.subheader("Step 2 — Estimate $\\vec{\\pi}$")
 
     # Method selection
     method4 = st.radio(
@@ -965,7 +965,7 @@ links are inherited through gene duplication.
         fig_pi = px.bar(
             x=[f"Family {i+1}\n({g[:12]})" for i, g in enumerate(gene_names4)],
             y=pi_vec4,
-            title="π⃗ — Per-family Inheritance Probability",
+            title="Per-family Inheritance Probability (πᵢ)",
             labels={"x": "Gene family", "y": "πᵢ"},
             color=pi_vec4, color_continuous_scale="RdYlGn",
             range_color=[0, 1],
@@ -1072,7 +1072,7 @@ in the GRN relative to the gene duplication null model (Scruse et al. Sections 4
             pi_res5 = estimate_pi_from_snp(gene_names5)
             pi_vec5 = pi_res5["pi_vec"]
         else:
-            st.markdown("**Manual π⃗ entry:**")
+            st.markdown("**Manual $\\vec{\\pi}$ entry:**")
             pi_vec5 = []
             pi_cols = st.columns(k5)
             for i, col in enumerate(pi_cols):
@@ -1191,7 +1191,7 @@ in the GRN relative to the gene duplication null model (Scruse et al. Sections 4
                 "The estimator is **inferential, not predictive**. It characterises the *current* "
                 "state of the yeast GRN — how much of its regulatory structure is consistent with "
                 "inherited duplication links — rather than forecasting the outcome of a specific "
-                "future duplication event. The estimated π⃗ can be interpreted as: "
+                "future duplication event. The estimated $\\vec{\\pi}$ can be interpreted as: "
                 "*given the observed network, what inheritance rate would a duplication model need "
                 "to produce networks like this one?* "
                 "To see forward projections under continued duplication, switch to the "
@@ -1209,10 +1209,10 @@ in the GRN relative to the gene duplication null model (Scruse et al. Sections 4
 |---|---|---|
 | **Question asked** | What is π now? | What will the network look like later? |
 | **Direction** | Backward — fits π to the *current* observed network | Forward — projects *future* motif counts given π |
-| **Output** | π⃗ values and sensitivity curves | Growth trajectories and target-count queries |
+| **Output** | $\\vec{\\pi}$ values and sensitivity curves | Growth trajectories and target-count queries |
 | **Use case** | Characterise the current GRN | Forecast evolutionary outcomes under duplication |
 
-This tab takes the π⃗ you estimate from real data and uses it to project how the
+This tab takes the $\\vec{\\pi}$ you estimate from real data and uses it to project how the
 expected number of regulatory motifs will grow as the yeast genome expands through
 further gene duplication events.
 
@@ -1223,7 +1223,7 @@ further gene duplication events.
 
         st.info(
             "**Forward projection** under the Partial Duplication model (Theorem 4). "
-            "Assumes π⃗ remains stable and that each duplication event adds one TF "
+            "Assumes $\\vec{\\pi}$ remains stable and that each duplication event adds one TF "
             "to the network (n increases by 1 per event). "
             "The Inferential Test tab tells you *where you are*; this tab tells you *where you're going*.",
             icon="🔮",
@@ -1267,7 +1267,7 @@ further gene duplication events.
             pi_res_p = estimate_pi_from_mle(float(obs_full_p), m_p, n_p, gene_names_p)
             pi_vec_p = pi_res_p["pi_vec"]
         else:
-            st.markdown("**Manual π⃗ entry:**")
+            st.markdown("**Manual $\\vec{\\pi}$ entry:**")
             pi_vec_p = []
             pcols = st.columns(k_p)
             for i, col in enumerate(pcols):
@@ -1539,7 +1539,7 @@ duplication events), derived analytically in Scruse et al.:
 
 - **Partial Duplication** (Theorem 4):
   `E[|M(n)|; m, n, π⃗, k] = Γ(π̂+n)Γ(m) / [Γ(π̂+m)Γ(n)]`
-  Depends on π⃗ only through π̂ = Σπᵢ; grows as Θ(n^π̂).
+  Depends on $\\vec{\\pi}$ only through π̂ = Σπᵢ; grows as Θ(n^π̂).
 
 These expectations form the **null model** against which an observed motif count is tested.
         """)
@@ -1561,7 +1561,7 @@ conditioned on the family having size *s*. It satisfies the recurrence
     with st.expander("Full Duplication"):
         st.markdown("""
 The inheritance mode in which **every regulatory link is perfectly copied** at each
-duplication step — i.e., the inheritance probability vector π⃗ = (1, 1, …, 1).
+duplication step — i.e., the inheritance probability vector $\\vec{\\pi}$ = (1, 1, …, 1).
 
 Under Full Duplication, the set of motif instances at stage *n* equals the full
 Cartesian product of the relevant gene families:
@@ -1572,7 +1572,7 @@ significantly *above* the Full Duplication expectation, it strongly suggests act
 selection. If it is *below*, regulatory links are being lost faster than the neutral
 duplication rate.
 
-**Full Duplication is a special case of Partial Duplication** with π⃗ = 1⃗.
+**Full Duplication is a special case of Partial Duplication** with $\\vec{\\pi}$ = $\\vec{1}$.
         """)
 
     with st.expander("Gene Duplication"):
@@ -1602,7 +1602,7 @@ Model parameters:
 - **cᵢ** = size of the i-th family (number of TFs in it)
 - **n** = Σcᵢ = total number of TFs across all families
 
-The family composition vector **c⃗ = (c₁, …, cₘ)** is a composition of *n* into *m* parts.
+The family composition vector **$\\vec{c}$ = (c₁, …, cₘ)** is a composition of *n* into *m* parts.
         """)
 
     with st.expander("GRN — Genetic Regulatory Network"):
@@ -1632,9 +1632,9 @@ is inherited in family *i* at any given duplication step.
 - **π = 0**: No inheritance — regulatory links are never passed to duplicate copies.
 - **0 < π < 1**: Partial Duplication — stochastic inheritance.
 
-The vector **π⃗ = (π₁, …, πₖ)** characterises the inheritance behaviour of a motif M
+The vector **$\\vec{\\pi}$ = (π₁, …, πₖ)** characterises the inheritance behaviour of a motif M
 across its *k* gene families. The model shows (Theorem 4) that the expected motif count
-depends on π⃗ only through the scalar **π̂ = Σπᵢ**.
+depends on $\\vec{\\pi}$ only through the scalar **π̂ = Σπᵢ**.
 
 In this app, π is estimated from SGD evidence codes, MLE on observed counts, SNP
 divergence proxies, or YEASTRACT consensus binding data.
@@ -1713,7 +1713,7 @@ The Scruse et al. formulas are expressed in terms of *n*, so the model output
     with st.expander("Partial Duplication"):
         st.markdown(r"""
 The general inheritance model in which **regulatory links are inherited stochastically**
-at each duplication step, controlled by the vector π⃗ = (π₁, …, πₖ).
+at each duplication step, controlled by the vector $\vec{\pi}$ = (π₁, …, πₖ).
 
 At each step, if a gene in family *i* is duplicated (1 ≤ i ≤ k), each existing motif
 instance that includes that gene produces a new instance with probability πᵢ.
@@ -1722,10 +1722,10 @@ Key result (**Theorem 4**):
 
 `E[|M(n)|; m, n, π⃗, k] = Γ(π̂+n)Γ(m) / [Γ(π̂+m)Γ(n)]`
 
-where π̂ = π₁ + … + πₖ. The expected count depends on π⃗ only through the scalar π̂,
+where π̂ = π₁ + … + πₖ. The expected count depends on $\vec{\pi}$ only through the scalar π̂,
 which determines the polynomial growth rate Θ(n^π̂).
 
-Full Duplication (π⃗ = 1⃗, π̂ = k) is a special case.
+Full Duplication ($\vec{\pi}$ = $\vec{1}$, π̂ = k) is a special case.
         """)
 
     with st.expander("PFM — Position Frequency Matrix"):
@@ -1823,7 +1823,7 @@ The **variance** needed for the Z-score is computed from:
 A **subnetwork motif M** is a gene-family-specific substructure in a GRN,
 characterised by:
 - **k gene families** (the families whose members participate in the motif)
-- An **inheritance probability vector π⃗ = (π₁, …, πₖ)** (one πᵢ per family)
+- An **inheritance probability vector $\\vec{\\pi}$ = (π₁, …, πₖ)** (one πᵢ per family)
 
 An **instance** of M is a specific k-tuple of genes (a₁, …, aₖ) where aᵢ belongs
 to family *i*, all co-participating in the regulatory pattern.
