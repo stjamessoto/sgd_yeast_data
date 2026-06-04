@@ -138,7 +138,7 @@ sgd_yeast_data/
 │   ├── jaspar_loader.py        JASPAR 2024 PFMs, IC scores, π adjustment factors
 │   └── __init__.py
 ├── sgd_yeast_data/             Raw CSV data files
-├── app.py                      Streamlit frontend (6 tabs)
+├── app.py                      Streamlit frontend (7 tabs)
 ├── main.py                     Command-line interface
 ├── requirements.txt
 └── README.md
@@ -162,7 +162,7 @@ Requirements: `streamlit`, `pandas`, `numpy`, `scipy`, `plotly`
 python -m streamlit run app.py
 ```
 
-Opens in your browser at `http://localhost:8501`. Six tabs:
+Opens in your browser at `http://localhost:8501`. Seven tabs:
 
 | Tab | What it shows |
 |-----|---------------|
@@ -172,6 +172,7 @@ Opens in your browser at `http://localhost:8501`. Six tabs:
 | **Gene Families** | Family size distribution, Pólya urn parameters (m, n, d), Dirichlet simulation |
 | **π Estimator** | Select k families, estimate π⃗ with any of the three methods, sensitivity plot |
 | **Motif Significance** | Full significance test: Z-scores, p-values, null model distributions |
+| **Glossary & References** | Definitions of every model term and citations for the three primary papers |
 
 ---
 
@@ -267,8 +268,22 @@ python main.py significance --k 2 --strategy largest
 
 ---
 
-## Reference
+## References
 
-Scruse, A., Arnold, J., & Robinson, R. (2024).
+**[1]** Scruse, A., Arnold, J., & Robinson, R. (2024).
 *Counting Subnetworks Under Gene Duplication in Genetic Regulatory Networks.*
-arXiv:2405.03148v1.
+arXiv:2405.03148v1. https://arxiv.org/abs/2405.03148
+— *Primary paper. Introduces the gene duplication and inheritance model, subnetwork motifs,
+and derives exact moments for Full and Partial Duplication.*
+
+**[2]** Harbison, C. T., Gordon, D. B., Lee, T. I., et al. (2004).
+*Transcriptional regulatory code of a eukaryotic genome.*
+Nature, 431, 99–104. https://doi.org/10.1038/nature02800
+— *Genome-wide map of yeast transcriptional regulatory elements. Source for the TF binding
+site interactions that define regulatory edges in this app.*
+
+**[3]** Ren, B., Robert, F., Wyrick, J. J., et al. (2000).
+*Genome-Wide Location and Function of DNA Binding Proteins.*
+Science, 290, 2306–2309. https://doi.org/10.1126/science.290.5500.2306
+— *Introduced the ChIP-chip method for genome-wide protein–DNA interaction mapping.
+Foundational methodology for the experimental TF binding data used here.*

@@ -205,13 +205,14 @@ with st.sidebar:
 # Tabs
 # ---------------------------------------------------------------------------
 
-tab0, tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab0, tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📘 Introduction",
     "📊 Overview",
     "🔬 TF Explorer",
     "👨‍👩‍👧 Gene Families",
     "🎲 π Estimator",
     "🧪 Motif Significance",
+    "📖 Glossary & References",
 ])
 
 
@@ -1404,3 +1405,468 @@ further gene duplication events.
                     f"Try increasing Δn or lowering the target.",
                     icon="⚠️",
                 )
+
+
+# ══════════════════════════════════════════════════════════════════════
+# TAB 6: Glossary & References
+# ══════════════════════════════════════════════════════════════════════
+
+with tab6:
+    st.header("📖 Glossary & References")
+    st.markdown(
+        "Definitions of key terms used throughout the app, and the primary papers "
+        "that underpin this model."
+    )
+
+    # ── References ────────────────────────────────────────────────────
+    st.subheader("📚 Primary References")
+
+    with st.container(border=True):
+        st.markdown("#### 1. Scruse, Arnold & Robinson (2024) — *The Model Paper*")
+        st.markdown("""
+**Counting Subnetworks Under Gene Duplication in Genetic Regulatory Networks**
+Ashley Scruse, Jonathan Arnold, Robert Robinson
+*arXiv:2405.03148v1 [q-bio.MN] · University of Georgia · 6 May 2024*
+
+This is the primary theoretical paper implemented in this app. It introduces the
+gene duplication and inheritance model, defines **subnetwork motifs**, and derives
+the exact moments (mean and variance) for their count under both Full and Partial
+Duplication via combinatorial probability and generating functions.
+        """)
+        st.link_button("View on arXiv (arXiv:2405.03148)", "https://arxiv.org/abs/2405.03148")
+
+    with st.container(border=True):
+        st.markdown("#### 2. Harbison et al. (2004) — *Yeast Transcriptional Regulatory Code*")
+        st.markdown("""
+**Transcriptional regulatory code of a eukaryotic genome**
+Christopher T. Harbison, D. Benjamin Gordon, Tong Ihn Lee, et al.
+*Nature 431, 99–104 · 2 September 2004 · doi:10.1038/nature02800*
+
+Constructed an initial genome-wide map of the yeast transcriptional regulatory code by
+identifying DNA sequence elements bound by 203 transcription factors under multiple
+conditions. Used genome-wide location analysis (ChIP-chip), phylogenetically conserved
+sequences, and prior knowledge to produce a compendium of sequence motifs for
+102 regulators. This paper is a key empirical source for the **transcription factor binding
+site** data used to characterise regulatory edges (TF → target gene) in this app.
+        """)
+        st.link_button("View paper (doi:10.1038/nature02800)", "https://doi.org/10.1038/nature02800")
+
+    with st.container(border=True):
+        st.markdown("#### 3. Ren et al. (2000) — *Genome-Wide Location Analysis*")
+        st.markdown("""
+**Genome-Wide Location and Function of DNA Binding Proteins**
+Bing Ren, François Robert, John J. Wyrick, et al.
+*Science 290, 2306–2309 · 22 December 2000 · doi:10.1126/science.290.5500.2306*
+
+Introduced the **genome-wide location analysis** (ChIP-chip) method — combining
+chromatin immunoprecipitation with DNA microarray hybridisation — to monitor protein-DNA
+interactions across the entire yeast genome. Applied the method to the transcriptional
+activators **Gal4** and **Ste12**, revealing direct regulatory targets and coordinated
+pathway control. This methodology underlies the experimental data from which TF binding
+interactions in this app are ultimately derived.
+        """)
+        st.link_button("View paper (doi:10.1126/science.290.5500.2306)", "https://doi.org/10.1126/science.290.5500.2306")
+
+    st.divider()
+
+    # ── Glossary ──────────────────────────────────────────────────────
+    st.subheader("🔤 Glossary of Terms")
+    st.caption("Alphabetically ordered. Click any section to expand.")
+
+    with st.expander("Binary Inheritance"):
+        st.markdown("""
+A specific **refinement of Partial Duplication** (Definition 1, Scruse et al.) in which,
+when a gene *b* in family *i* is duplicated, all subnetwork motif instances that share *b*
+either all inherit the new instance or none do — with probability πᵢ.
+
+Binary Inheritance is chosen as the working model because it is tractable and, by
+**Theorem 5**, gives the **maximum second moment** of |M(n)| over all refinements
+of Partial Duplication. This makes the variance and significance bounds conservative.
+        """)
+
+    with st.expander("Binding Site / TFBS (Transcription Factor Binding Site)"):
+        st.markdown("""
+A short DNA sequence motif — typically 6–20 bp — located in the **promoter region**
+of a gene (usually 100–500 bp upstream of the coding sequence). A transcription factor
+(TF) recognises and binds its cognate TFBS sequence via a DNA-binding domain.
+
+- Binding **activates** or **represses** transcription of the downstream gene.
+- TFBS sequences are represented compactly as **Position Frequency Matrices (PFMs)**
+  in databases such as **JASPAR**.
+- In the Scruse et al. framework, the TF → target regulatory edge is the unit whose
+  **inheritance probability πᵢ** the model estimates.
+        """)
+
+    with st.expander("Composition (of n into m parts)"):
+        st.markdown("""
+A way of writing a positive integer *n* as an ordered sum of *m* positive integers:
+*n* = c₁ + c₂ + ⋯ + cₘ, where each cᵢ ≥ 1.
+
+In this model, **cᵢ is the size of the i-th gene family** after duplication.
+**Proposition 1** (Scruse et al.) proves that after *n − m* duplications starting from
+*m* singletons, all C(n−1, m−1) compositions are **equally likely**.
+
+This uniform distribution is the probabilistic foundation of the entire model.
+        """)
+
+    with st.expander("Evidence Code (SGD)"):
+        st.markdown("""
+A structured vocabulary tag assigned by the **Saccharomyces Genome Database (SGD)**
+to each gene-function annotation, indicating how the annotation was determined.
+
+Common codes used in this app:
+
+| Code | Method | π weight |
+|------|--------|---------|
+| **IDA** | Inferred from Direct Assay | 0.90 |
+| **IMP** | Inferred from Mutant Phenotype | 0.82 |
+| **IPI** | Inferred from Physical Interaction | 0.68 |
+| **HDA** | High-throughput Direct Assay | 0.55 |
+| **IEA** | Inferred from Electronic Annotation | 0.30 |
+
+The **evidence score** in this app is the mean weight across all codes for a TF,
+used as a prior for the inheritance probability π.
+        """)
+
+    with st.expander("Expected Motif Count  E[|M(n)|]"):
+        st.markdown(r"""
+The **expected number of subnetwork motif instances** at stage *n* (i.e., after *d = n − m*
+duplication events), derived analytically in Scruse et al.:
+
+- **Full Duplication** (Theorem 1):
+  `E[|M(n)|; k, m, n] = Γ(n+k)Γ(m) / [Γ(n)Γ(m+k)]`
+  Grows as Θ(nᵏ).
+
+- **Partial Duplication** (Theorem 4):
+  `E[|M(n)|; m, n, π⃗, k] = Γ(π̂+n)Γ(m) / [Γ(π̂+m)Γ(n)]`
+  Depends on π⃗ only through π̂ = Σπᵢ; grows as Θ(n^π̂).
+
+These expectations form the **null model** against which an observed motif count is tested.
+        """)
+
+    with st.expander("f(p, s) — Single-gene motif expectation"):
+        st.markdown(r"""
+Defined in **Lemma 4** (Scruse et al.):
+
+`f(p, s) = Γ(p + s) / [Γ(s) Γ(p + 1)]`
+
+- *p* = inheritance probability for that gene family
+- *s* = current size of the gene family
+
+`f(p, s)` is the expected number of instances of a **single-gene subnetwork motif**
+conditioned on the family having size *s*. It satisfies the recurrence
+`f(p, s+1) = f(p, s) × (p+s)/s`, which drives the induction in Theorem 3.
+        """)
+
+    with st.expander("Full Duplication"):
+        st.markdown("""
+The inheritance mode in which **every regulatory link is perfectly copied** at each
+duplication step — i.e., the inheritance probability vector π⃗ = (1, 1, …, 1).
+
+Under Full Duplication, the set of motif instances at stage *n* equals the full
+Cartesian product of the relevant gene families:
+M(n) = X¹ₘ,ₙ × … × Xᵏₘ,ₙ
+
+Full Duplication is the **upper-bound null model**: if an observed motif count is
+significantly *above* the Full Duplication expectation, it strongly suggests active
+selection. If it is *below*, regulatory links are being lost faster than the neutral
+duplication rate.
+
+**Full Duplication is a special case of Partial Duplication** with π⃗ = 1⃗.
+        """)
+
+    with st.expander("Gene Duplication"):
+        st.markdown("""
+A fundamental evolutionary mechanism in which a segment of DNA containing a gene
+is copied, producing two copies in the genome. The new copy (**paralog**) initially
+shares the same sequence and regulatory connections as the original.
+
+Over time the two copies may:
+- **Subfunctionalise** — divide the original gene's functions between them.
+- **Neofunctionalise** — one copy acquires a new function.
+- **Pseudogenise** — one copy accumulates mutations and becomes non-functional.
+
+This model focuses on how **regulatory connections** (not just sequence) are inherited
+through duplication, which is less studied than sequence duplication.
+        """)
+
+    with st.expander("Gene Family"):
+        st.markdown("""
+In this app, a gene family is the set of transcription factors that share a common
+**GO Biological Process** term. This operationalises the gene family concept from
+Scruse et al.: all TFs in the same family are assumed to share a common ancestor
+and are therefore related by duplication.
+
+Model parameters:
+- **m** = number of distinct gene families
+- **cᵢ** = size of the i-th family (number of TFs in it)
+- **n** = Σcᵢ = total number of TFs across all families
+
+The family composition vector **c⃗ = (c₁, …, cₘ)** is a composition of *n* into *m* parts.
+        """)
+
+    with st.expander("GRN — Genetic Regulatory Network"):
+        st.markdown("""
+A **Genetic Regulatory Network (GRN)** is a collection of genes and their molecular
+products (proteins, RNAs) that interact to control the expression of one another,
+governing a specific cellular function or state.
+
+In the context of this app:
+- **Nodes** = transcription factor genes and their target genes
+- **Edges** = regulatory relationships (TF binds promoter → activates/represses target)
+- The **yeast GRN** is inferred from JASPAR PFM data, YEASTRACT consensus sequences,
+  and SGD GO annotations for *Saccharomyces cerevisiae*
+
+GRNs are characterised by recurring structural patterns called **network motifs** (or,
+in this framework, **subnetwork motifs**) that reflect the evolutionary history of the
+network.
+        """)
+
+    with st.expander("Inheritance Probability  π (pi)"):
+        st.markdown("""
+The probability that a **regulatory link is retained** when the gene it connects to is
+duplicated. Formally, πᵢ is the probability that a new instance of subnetwork motif M
+is inherited in family *i* at any given duplication step.
+
+- **π = 1**: Full Duplication — every link is always inherited.
+- **π = 0**: No inheritance — regulatory links are never passed to duplicate copies.
+- **0 < π < 1**: Partial Duplication — stochastic inheritance.
+
+The vector **π⃗ = (π₁, …, πₖ)** characterises the inheritance behaviour of a motif M
+across its *k* gene families. The model shows (Theorem 4) that the expected motif count
+depends on π⃗ only through the scalar **π̂ = Σπᵢ**.
+
+In this app, π is estimated from SGD evidence codes, MLE on observed counts, SNP
+divergence proxies, or YEASTRACT consensus binding data.
+        """)
+
+    with st.expander("JASPAR"):
+        st.markdown("""
+**JASPAR** (jaspar.elixir.no) is the open-access database of **transcription factor
+binding profiles** (Position Frequency Matrices). It stores experimentally validated
+PFMs representing the sequence preferences of TF DNA-binding domains.
+
+Key statistics used in this app (JASPAR 2024):
+- 177 *S. cerevisiae* TFs with PFMs
+- ChIP-based and PBM-based experimental methods
+- Mean motif width ~10 bp; mean information content ~12 bits
+
+JASPAR PFMs are used to adjust the inheritance probability prior: TFs with high-IC,
+narrow motifs have more specific binding and are expected to be harder to disrupt
+by duplication (higher πᵢ).
+        """)
+
+    with st.expander("k — Motif Size"):
+        st.markdown("""
+The number of **distinct gene families** involved in a subnetwork motif M.
+
+- A **k = 1** motif involves one gene family (a single TF family whose members all
+  regulate a shared target).
+- A **k = 2** motif involves two families (two distinct TF families co-regulating
+  a target).
+- Higher *k* motifs are rarer but more informative about correlated regulatory evolution.
+
+The expected count E[|M(n)|] grows as **Θ(nᵏ)** under Full Duplication and
+**Θ(n^π̂)** under Partial Duplication — the motif size determines the polynomial
+growth rate.
+        """)
+
+    with st.expander("m — Number of Gene Families"):
+        st.markdown("""
+The number of distinct **gene families** in the model. Denoted *m*, it is the
+number of parts in the composition of *n*.
+
+In the gene duplication process, the model starts with *m* singleton genes (one per
+family) and grows to *n* total genes through *d = n − m* duplication events.
+
+Proposition 1 shows that given *m* and *n*, all C(n−1, m−1) compositions of *n* into
+*m* parts are equally likely — the key uniformity result underlying the exact formulas.
+        """)
+
+    with st.expander("Network Motif vs Subnetwork Motif"):
+        st.markdown("""
+| Concept | Network Motif | Subnetwork Motif |
+|---------|---------------|-----------------|
+| **Definition** | Patterns of interconnection that recur more often in a complex network than in a random network (Milo et al. 2002) | Gene-family-specific substructures — instances must involve specific labelled gene families |
+| **Specificity** | Isomorphic subgraphs (family labels ignored) | Family-labelled subgraphs (family identity matters) |
+| **Evolutionary info** | Does not incorporate evolutionary history | Incorporates inheritance probabilities π from duplication history |
+| **Statistical test** | Compared to randomised networks | Compared to duplication-model null (this app) |
+
+In Figure 1 of Scruse et al.: subgraphs A, B, C, D are the same **network motif**
+(3-node, isomorphic) but four different **subnetwork motifs** because the coloured
+gene families differ.
+        """)
+
+    with st.expander("n — Total Gene Count / Stage"):
+        st.markdown("""
+The total number of genes (or TFs) in the model at a given point in the duplication
+process. Also called the **stage** of the duplication process.
+
+- Starts at *n = m* (one gene per family, no duplications yet).
+- Each duplication event increments *n* by 1.
+- After *d* duplications: *n = m + d*.
+
+The Scruse et al. formulas are expressed in terms of *n*, so the model output
+(expected motif count) is a function of genome size.
+        """)
+
+    with st.expander("Partial Duplication"):
+        st.markdown(r"""
+The general inheritance model in which **regulatory links are inherited stochastically**
+at each duplication step, controlled by the vector π⃗ = (π₁, …, πₖ).
+
+At each step, if a gene in family *i* is duplicated (1 ≤ i ≤ k), each existing motif
+instance that includes that gene produces a new instance with probability πᵢ.
+
+Key result (**Theorem 4**):
+
+`E[|M(n)|; m, n, π⃗, k] = Γ(π̂+n)Γ(m) / [Γ(π̂+m)Γ(n)]`
+
+where π̂ = π₁ + … + πₖ. The expected count depends on π⃗ only through the scalar π̂,
+which determines the polynomial growth rate Θ(n^π̂).
+
+Full Duplication (π⃗ = 1⃗, π̂ = k) is a special case.
+        """)
+
+    with st.expander("PFM — Position Frequency Matrix"):
+        st.markdown("""
+A matrix representation of a **transcription factor binding site** motif. Rows
+correspond to the four nucleotides (A, C, G, T); columns to positions in the motif.
+Each entry gives the count (or frequency) of that nucleotide at that position across
+all experimentally observed binding instances.
+
+From a PFM one can compute:
+- **Consensus sequence** — most frequent nucleotide at each position
+- **Information content (IC, bits)** — how conserved each position is (max = 2 bits)
+- **Position Weight Matrix (PWM)** — log-likelihood scores for sequence scanning
+
+Higher IC indicates a more specific, conserved binding sequence, which in this model
+correlates with a higher inheritance probability prior (the binding sequence is harder
+to disrupt by mutation after duplication).
+        """)
+
+    with st.expander("π̂ (pi-hat) — Total Inheritance Probability"):
+        st.markdown(r"""
+The scalar sum of the inheritance probability vector:
+
+**π̂ = π₁ + π₂ + ⋯ + πₖ**
+
+This single number fully determines the expected motif count under Partial Duplication
+(Theorem 4). It ranges from 0 (no inheritance) to *k* (Full Duplication).
+
+The growth rate of E[|M(n)|] with respect to *n* is exactly **n^π̂**, so:
+- π̂ < 1: sub-linear growth (motif count grows slower than genome)
+- π̂ = 1: linear growth
+- π̂ = k: polynomial growth of degree k (Full Duplication)
+
+The **π̂ Sensitivity Analysis** chart on the π Estimator tab shows E[|M(n)|] as a
+function of π̂ for fixed *m*, *n*, and *k*.
+        """)
+
+    with st.expander("Pólya Urn Model"):
+        st.markdown(r"""
+A classical probability model for reinforcement processes. An urn contains balls of
+different colours; at each step, one ball is drawn at random, and a new ball of the
+same colour is added.
+
+**Connection to gene duplication (Section 7.1 / Theorem 8):**
+
+The gene duplication process is equivalent to a Pólya urn where:
+- **Urn** = the genome
+- **Balls** = genes
+- **Colours** = gene families
+
+**Theorem 8** gives the exact probability:
+
+`P[X⃗ = t⃗ | s⃗] = C(n−m; t₁,…,tω) × (m−1)! / (n−1)! × Π(sⱼ+tⱼ−1)! / (sⱼ−1)!`
+
+Family proportions cᵢ/n converge almost surely to a **Dirichlet(1,…,1)** distribution
+as n → ∞, giving the model its exact probabilistic grounding. This also connects it to
+the Kriz multi-urn model for disease spread.
+        """)
+
+    with st.expander("SGD — Saccharomyces Genome Database"):
+        st.markdown("""
+The **Saccharomyces Genome Database** (yeastgenome.org) is the primary curated
+knowledgebase for the biology of the budding yeast *Saccharomyces cerevisiae*.
+
+Data used in this app from SGD:
+- **GO annotations** (~120,000 records) for gene function, process, and component
+- **TF annotations** with evidence codes (IDA, IMP, IEA, …)
+- **Chromosome lengths** (16 chromosomes, ~12 Mb genome)
+- **Gene IDs, names, and synonyms**
+        """)
+
+    with st.expander("Significance Test (Z-score / p-value)"):
+        st.markdown("""
+The **significance test** in this app asks: is the observed subnetwork motif count
+|M(n)| consistent with the null model (Full or Partial Duplication), or is it
+significantly over- or under-represented?
+
+**Z-score:**
+`Z = (observed − expected) / std_dev`
+
+- Z > 0: motif is more common than the null predicts (**over-represented** — possible selection)
+- Z < 0: motif is less common (**under-represented** — possible loss/avoidance)
+
+**p-value:** computed via the normal approximation to the distribution of |M(n)|.
+
+Significance stars: `***` p < 0.001 · `**` p < 0.01 · `*` p < 0.05 · `ns` p ≥ 0.05
+
+The **variance** needed for the Z-score is computed from:
+- **Corollary 2** for Full Duplication
+- **Corollary 16** (Binary Inheritance) for Partial Duplication
+        """)
+
+    with st.expander("Subnetwork Motif M"):
+        st.markdown("""
+A **subnetwork motif M** is a gene-family-specific substructure in a GRN,
+characterised by:
+- **k gene families** (the families whose members participate in the motif)
+- An **inheritance probability vector π⃗ = (π₁, …, πₖ)** (one πᵢ per family)
+
+An **instance** of M is a specific k-tuple of genes (a₁, …, aₖ) where aᵢ belongs
+to family *i*, all co-participating in the regulatory pattern.
+
+Key sets:
+- **M(m)** — contains only the original instance (the k founding genes)
+- **M(n)** — all instances present after n − m duplication events
+- **|M(n)|** — the count of motif instances, which this model analyses
+
+Subnetwork motifs differ from network motifs (Milo et al.) in that they carry
+**family labels** and encode **evolutionary information** about inheritance.
+        """)
+
+    with st.expander("Transcription Factor (TF)"):
+        st.markdown("""
+A protein that binds specific DNA sequences (**binding sites / TFBS**) to control
+the rate of transcription of nearby genes. TFs are the primary regulatory elements
+in a GRN.
+
+In this app, TFs are sourced from:
+- **JASPAR 2024**: 177 *S. cerevisiae* TFs with experimentally validated PFMs
+- **YEASTRACT**: 127 curated TFs with consensus binding sequences
+- **SGD**: GO-annotated TFs with DNA-binding evidence (GO:0003677, GO:0000981)
+
+A TF can be an **activator** (increases gene expression), a **repressor** (decreases
+expression), or **dual** (both, depending on context).
+        """)
+
+    with st.expander("YEASTRACT"):
+        st.markdown("""
+**YEASTRACT** (Yeast Search for Transcriptional Regulators And Consensus Tracking;
+yeastract.com) is a curated database of transcriptional regulatory associations and
+TF binding site sequences for *S. cerevisiae*.
+
+Data used in this app:
+- **127 TFs** with curated regulatory evidence
+- **IUPAC consensus sequences** for 115 TFs that overlap with JASPAR
+- Consensus sequences are used as the basis for the **Method 4 (Consensus-adjusted)**
+  π estimation: more specific (less ambiguous IUPAC) sequences → higher πᵢ prior
+        """)
+
+    st.divider()
+    st.caption(
+        "Glossary compiled from Scruse, Arnold & Robinson (2024) arXiv:2405.03148, "
+        "Harbison et al. (2004) Nature 431:99–104, and Ren et al. (2000) Science 290:2306–2309."
+    )
