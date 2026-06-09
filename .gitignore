@@ -3,10 +3,17 @@ __pycache__/
 *.pyc
 *.pyo
 
-# Large data files
-y1000plus_data/processed/
+# Large data files — exclude raw archives and all processed intermediates
 y1000plus_data/*.tar.gz
 y1000plus_data/*.zip
+# Ignore contents of processed/ but not the directory itself (so ! exceptions work)
+y1000plus_data/processed/*
+# Allow the pre-generated CSVs and manifest (small; needed by Streamlit Cloud)
+!y1000plus_data/processed/y1000plus_manifest.csv
+!y1000plus_data/processed/pi2_sequence_homology.csv
+!y1000plus_data/processed/pi3_tfbs_conservation.csv
+!y1000plus_data/processed/pi3_pairwise_histogram.csv
+!y1000plus_data/processed/pi4_snp_binding_sites.csv
 
 # Environment
 .env
