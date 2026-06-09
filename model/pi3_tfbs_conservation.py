@@ -531,6 +531,10 @@ def build_pairwise_histogram(
     The pairwise_sharing_mean is the key quantity connecting to Scruse et al.:
     it estimates π̂₃ for the family under the binary inheritance model.
     """
+    # Return cached result if available and no df was supplied
+    if pi3_df is None and PI3_PAIRWISE_CSV.exists():
+        return pd.read_csv(PI3_PAIRWISE_CSV)
+
     if pi3_df is None:
         if not PI3_CSV.exists():
             raise FileNotFoundError(f"Run estimate_pi3_all_tfs() first: {PI3_CSV}")
@@ -543,11 +547,12 @@ def build_pairwise_histogram(
             continue
 
         # Pairwise product = Pr(both species retain) under independence assumption
-        n = len(ret)
-        if n > 1:
-            pairs = [(ret[i] * ret[j]) for i in range(n) for j in range(i + 1, n)]
-            pw_mean = float(np.mean(pairs))
-            pw_std = float(np.std(pairs))
+        # Use vectorized outer product mean instead of O(n^2) Python loop
+        if len(ret) > 1:
+            outer = np.outer(ret, ret)
+            triu = outer[np.triu_indices(len(ret), k=1)]
+            pw_mean = float(triu.mean())
+            pw_std = float(triu.std())
         else:
             pw_mean = float(ret[0]) ** 2
             pw_std = 0.0

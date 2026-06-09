@@ -2392,7 +2392,7 @@ with tab7:
         try:
             from model.pi3_tfbs_conservation import load_pi3_results, build_pairwise_histogram
             df = load_pi3_results()
-            hist = build_pairwise_histogram(df, save=False)
+            hist = build_pairwise_histogram(save=False)
             return df, hist, None
         except FileNotFoundError:
             return None, None, "pi3_tfbs_conservation.csv not found"
