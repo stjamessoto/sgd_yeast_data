@@ -135,7 +135,7 @@ st.markdown("""
     display: block;
     margin-bottom: 6px;
 }
-.theorem-box pre {
+.theorem-box pre, .formula {
     background: #1e293b;
     color: #93c5fd;
     padding: 8px 12px;
@@ -161,6 +161,7 @@ st.markdown("""
     margin: 8px 0;
 }
 .intro-card h4 { margin: 0 0 6px 0; color: #1d4ed8; }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -192,6 +193,89 @@ def _load_inheritance():
 @st.cache_data
 def _load_snps():
     return load_snps()
+
+
+# ---------------------------------------------------------------------------
+# π interpretation helper
+# ---------------------------------------------------------------------------
+
+def _pi_interpretation(pi_hat: float, k: int, m: int, n: int) -> str:
+    """Return a plain-language interpretation block for a π̂ estimate."""
+    pi_hat = float(pi_hat) if pi_hat is not None else 0.0
+    per_avg = pi_hat / k if k > 0 else pi_hat
+    try:
+        exp_p = expected_partial(pi_hat, m, n)
+        exp_p = 0.0 if (exp_p is None or np.isnan(exp_p) or np.isinf(exp_p)) else exp_p
+    except Exception:
+        exp_p = 0.0
+    try:
+        exp_f = expected_full(k, m, n)
+        exp_f = 0.0 if (exp_f is None or np.isnan(exp_f) or np.isinf(exp_f)) else exp_f
+    except Exception:
+        exp_f = 0.0
+    ratio_pct = (exp_p / exp_f * 100) if exp_f > 0 else 0
+
+    if per_avg >= 0.80:
+        level = "very high"
+        biology = (
+            "regulatory links are strongly preserved after duplication. "
+            "This is consistent with **positive selection** maintaining these TF binding "
+            "sites in duplicated copies — likely because the binding motif is highly specific "
+            "(high information-content positions) and any mutation disrupts binding."
+        )
+        why = (
+            "High-IC, narrow binding motifs (e.g., zinc-finger TFs with 6-12 bp specific "
+            "consensus) leave little room for neutral drift. Both copies of the TF are "
+            "constrained to keep the same regulatory wiring, so π stays near 1."
+        )
+    elif per_avg >= 0.50:
+        level = "moderately high"
+        biology = (
+            "most regulatory links survive duplication. "
+            "This suggests **subfunctionalization** — both duplicated copies retain most "
+            "of their original connections, with partial loss at some sites."
+        )
+        why = (
+            "Intermediate π arises when TF binding specificity is moderate. Some promoter "
+            "sites diverge after duplication (neutral drift or relaxed constraint) while "
+            "conserved pathway-core sites are retained by purifying selection."
+        )
+    elif per_avg >= 0.25:
+        level = "moderate"
+        biology = (
+            "roughly half of regulatory links are lost after duplication. "
+            "This is a hallmark of **partial subfunctionalization**, where duplicated TFs "
+            "divide up regulatory responsibilities between them."
+        )
+        why = (
+            "Moderate π often reflects degeneracy in the binding motif (ambiguous IUPAC "
+            "positions). Degenerate sites are easier to gain or lose by point mutation, "
+            "so one paralog tends to drift away from a subset of targets."
+        )
+    else:
+        level = "low"
+        biology = (
+            "most regulatory links are not inherited after duplication. "
+            "This points toward **neofunctionalization or regulatory rewiring** — "
+            "the duplicated copy has diverged substantially in its regulatory role."
+        )
+        why = (
+            "Very short or degenerate binding sequences are nearly identical to background "
+            "sequence, so new sites arise and old ones are lost by random mutation. "
+            "Alternatively, the duplicated TF may have acquired a new DNA-binding "
+            "specificity through mutations in its binding domain."
+        )
+
+    return (
+        f"**Estimated π̂ = {pi_hat:.4f}** (mean per-family πᵢ ≈ {per_avg:.4f}, "
+        f"~{per_avg*100:.0f}% of links inherited on average)\n\n"
+        f"This is a **{level}** inheritance probability: {biology}\n\n"
+        f"**Model output (m = {m}, n = {n}, k = {k}):** "
+        f"Partial Duplication expects **{exp_p:.2f}** motif instances (Theorem 4) vs "
+        f"Full Duplication upper bound of **{exp_f:.2f}** (Theorem 1) — "
+        f"the data is ~{ratio_pct:.0f}% of the Full Duplication expectation.\n\n"
+        f"**Why does the data look this way?** {why}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -247,7 +331,19 @@ with st.sidebar:
     st.divider()
     summary = _dataset_summary()
     st.metric("TFs loaded", summary["n_tfs"])
-    st.metric("GO annotations", f"{summary['n_go_annotations']:,}")
+    st.metric(
+        "GO annotations",
+        f"{summary['n_go_annotations']:,}",
+        help=(
+            "**Why so many?**\n\n"
+            "SGD stores one record per (gene, GO term, evidence code) triple — "
+            "not just one record per gene. A single TF can have dozens of GO terms "
+            "(biological process, molecular function, cellular component), and each term "
+            "may be supported by several evidence codes (IDA, IMP, IEA, …), each counted "
+            "separately. With ~6,000 yeast genes and ~120 GO annotations on average per "
+            "well-studied TF, totals of 100,000+ records are normal and expected."
+        ),
+    )
     st.metric("Genome size", f"{summary['genome_size_mb']} Mb")
 
 
@@ -583,36 +679,31 @@ with tab2:
 
     col_l, col_r = st.columns(2)
     with col_l:
-        st.markdown("""
-<div class="theorem-box">
-<b>Theorem 1 — Full Duplication ($\\vec{\\pi}$ = 1)</b><br>
-<pre>E[|M(n)|; k, m, n] = Γ(n+k)Γ(m) / [Γ(n)Γ(m+k)]</pre>
-Growth rate: Θ(nᵏ) — degree equals motif size k.
-</div>
+        with st.container(border=True):
+            st.markdown("**Theorem 1 — Full Duplication ($\\vec{\\pi}$ = 1)**")
+            st.code("E[|M(n)|; k, m, n] = Γ(n+k)Γ(m) / [Γ(n)Γ(m+k)]", language=None)
+            st.caption("Growth rate: Θ(nᵏ) — degree equals motif size k.")
 
-<div class="theorem-box">
-<b>Theorem 4 — Partial Duplication</b><br>
-<pre>E[|M(n)|; m,n,π⃗,k] = Γ(π̂+n)Γ(m) / [Γ(π̂+m)Γ(n)]</pre>
-Depends on $\\vec{\\pi}$ only through π̂ = Σπᵢ.<br>
-Growth rate: Θ(n^π̂) — exponent <i>equals</i> total inheritance probability.
-</div>
-""", unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown("**Theorem 4 — Partial Duplication ($\\vec{\\pi}$ general)**")
+            st.code("E[|M(n)|; m, n, π, k] = Γ(π̂+n)Γ(m) / [Γ(π̂+m)Γ(n)]", language=None)
+            st.markdown("Depends on $\\vec{\\pi}$ only through π̂ = Σπᵢ.")
+            st.caption("Growth rate: Θ(n^π̂) — exponent *equals* total inheritance probability.")
 
     with col_r:
-        st.markdown("""
-<div class="theorem-box">
-<b>Lemma 4 — Single-gene motif</b><br>
-<pre>f(p, s) = Γ(p+s) / [Γ(s) Γ(p+1)]</pre>
-Expected instances when family size is s and inheritance probability is p.
-</div>
+        with st.container(border=True):
+            st.markdown("**Lemma 4 — Single-gene motif**")
+            st.code("f(p, s) = Γ(p+s) / [Γ(s) Γ(p+1)]", language=None)
+            st.caption("Expected instances when family size is s and inheritance probability is p.")
 
-<div class="theorem-box">
-<b>Theorem 6 — Binary Inheritance (max 2nd moment)</b><br>
-<pre>E[|M(n)|²] = Γ(m)/Γ(n) × Σ_{A⊆K} (-1)^|A| × 2^k ×
-              Γ(n+π̂+Σ_{i∉A}πᵢ) / [2^|A| × Γ(m+π̂+Σ_{i∉A}πᵢ)]</pre>
-Binary Inheritance maximises E[|M(n)|²] over all Partial Duplication refinements (Theorem 5).
-</div>
-""", unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown("**Theorem 6 — Binary Inheritance (max 2nd moment)**")
+            st.code(
+                "E[|M(n)|²] = Γ(m)/Γ(n) × Σ_{A⊆K} (-1)^|A| × 2^k ×\n"
+                "              Γ(n+π̂+Σ_{i∉A}πᵢ) / [2^|A| × Γ(m+π̂+Σ_{i∉A}πᵢ)]",
+                language=None,
+            )
+            st.caption("Binary Inheritance maximises E[|M(n)|²] over all Partial Duplication refinements (Theorem 5).")
 
     st.divider()
     st.subheader("🔗 Binding Sites: What Do They Bind?")
@@ -988,7 +1079,27 @@ Estimate **$\\vec{\\pi}$ = (π₁, …, πₖ)** — the per-family probability 
 links are inherited through gene duplication.
 """)
 
-    st.markdown("Three estimation methods are available (Scruse et al. Sections 4, 6, 9.2):")
+    st.markdown("Four estimation methods are available (Scruse et al. Sections 4, 6, 9.2):")
+
+    with st.expander("📐 About the four estimation methods — click to expand"):
+        st.markdown("""
+**How we arrived at each method and what it measures:**
+
+| # | Method | Data source | What it measures | How π is derived |
+|---|--------|------------|-----------------|-----------------|
+| 1 | **Evidence-based** | SGD evidence codes (IDA, IMP, IEA, …) | Quality of experimental evidence that a TF's regulatory role is real and stable | Each evidence code is assigned a weight (0.10–0.90) based on experimental rigor. The per-family π is the mean weight across all TFs in that family, adjusted for DNA-binding status and activator role. This is the *prior* — before looking at any network data. |
+| 2 | **MLE via Theorem 4** | Observed motif count &#124;M(n)&#124; | How much of the observed regulatory structure is explained by inherited duplication links | Theorem 4 gives E[&#124;M(n)&#124;] = Γ(π̂+n)Γ(m)/[Γ(π̂+m)Γ(n)]. We invert this numerically: find the π̂ that makes the expected count equal the observed count, then distribute uniformly across k families. This is a *data-fitted* estimate. |
+| 3 | **SNP divergence proxy** | YFL039C per-strain SNP data (SGD) | How much a specific well-studied TF target has diverged across yeast strains | π₃ ≈ 1 − (fraction of SNP positions in the TF binding site). The YFL039C locus is used as a calibrated example because it has dense strain-level variation data. This gives a *sequence-level* estimate grounded in observed genetic variation. |
+| 4 | **Consensus-adjusted (YEASTRACT)** | YEASTRACT IUPAC consensus sequences | Binding specificity of each TF — how degenerate or precise its binding sequence is | TFs with many, highly ambiguous IUPAC consensus sequences have lower π (their sites are easy to lose or gain after duplication). TFs with few, specific consensus sequences have higher π. The IUPAC ambiguity fraction is inverted and calibrated to the 0–1 π range. |
+
+**Which method should I use?**
+
+- Start with **Method 1** for a biology-grounded prior based on experimental evidence quality.
+- Use **Method 2** if you have a reliable observed motif count and want to back-calculate what π must have been.
+- Use **Method 3** when you want a sequence-divergence view anchored in real genetic variation data.
+- Use **Method 4** if you are specifically interested in how binding specificity constrains inheritance.
+- Use **All four** to compare methods and compute an ensemble mean.
+""")
 
     with st.spinner("Loading families…"):
         fam_df4 = _load_tf_families(min_family_size, _GROUPING_KEY)
@@ -1056,6 +1167,17 @@ links are inherited through gene duplication.
         st.markdown(f"pi_hat = {result4['pi_hat']:.4f}")
         st.markdown('</div>', unsafe_allow_html=True)
         pi_vec4 = result4["pi_vec"]
+        with st.expander("🔍 What do these results mean?"):
+            try:
+                st.markdown(_pi_interpretation(result4["pi_hat"], k4, m4, n4))
+            except Exception as _e:
+                st.warning(f"Could not generate interpretation: {_e}")
+            st.caption(
+                "**Method 1 note:** This estimate is derived entirely from evidence-code "
+                "quality weights and is independent of observed network structure. It is a "
+                "prior — use Method 2 to check how this prior compares to what the observed "
+                "motif count implies."
+            )
 
     elif "Method 2" in method4:
         obs_input = st.number_input(
@@ -1071,6 +1193,17 @@ links are inherited through gene duplication.
         st.markdown(f"pi_hat = {result4['pi_hat']:.4f}   |   {result4['description'][:100]}...")
         st.markdown('</div>', unsafe_allow_html=True)
         pi_vec4 = result4["pi_vec"]
+        with st.expander("🔍 What do these results mean?"):
+            try:
+                st.markdown(_pi_interpretation(result4["pi_hat"], k4, m4, n4))
+            except Exception as _e:
+                st.warning(f"Could not generate interpretation: {_e}")
+            st.caption(
+                "**Method 2 note:** The MLE inverts Theorem 4 — it finds the π̂ that makes "
+                "the model's expected count match the count you entered above. If the observed "
+                "count is at or near the Full Duplication bound, π̂ will be close to k "
+                "(nearly full inheritance). If well below, π̂ < k indicates partial loss."
+            )
 
     elif "Method 3" in method4:
         result4 = estimate_pi_from_snp(gene_names4)
@@ -1079,6 +1212,18 @@ links are inherited through gene duplication.
         st.markdown(f"pi_hat = {result4['pi_hat']:.4f}")
         st.markdown('</div>', unsafe_allow_html=True)
         pi_vec4 = result4["pi_vec"]
+        with st.expander("🔍 What do these results mean?"):
+            try:
+                st.markdown(_pi_interpretation(result4["pi_hat"], k4, m4, n4))
+            except Exception as _e:
+                st.warning(f"Could not generate interpretation: {_e}")
+            st.caption(
+                "**Method 3 note:** This estimate is calibrated on the YFL039C locus — "
+                "a TF target with well-characterised strain-level SNP data in SGD. "
+                "The chart below shows how π varies across yeast strains; the overall "
+                "π̂ used here is the mean across strains. Strains with more alternative "
+                "alleles at binding-site positions yield lower π (more divergence)."
+            )
 
         st.subheader("YFL039C per-strain pi estimates")
         ivec = _load_inheritance()
@@ -1102,6 +1247,19 @@ links are inherited through gene duplication.
         st.markdown(f"pi_hat = {result4['pi_hat']:.4f}")
         st.markdown('</div>', unsafe_allow_html=True)
         pi_vec4 = result4["pi_vec"]
+        with st.expander("🔍 What do these results mean?"):
+            try:
+                st.markdown(_pi_interpretation(result4["pi_hat"], k4, m4, n4))
+            except Exception as _e:
+                st.warning(f"Could not generate interpretation: {_e}")
+            st.caption(
+                "**Method 4 note:** π is lower for TFs with many, ambiguous IUPAC consensus "
+                "sequences (degenerate binding) and higher for TFs with few, specific "
+                "sequences. Degenerate sites are easier to gain or lose by point mutation, "
+                "so a post-duplication copy is less likely to inherit every binding site. "
+                "The scatter plot below illustrates the relationship: TFs in the upper-left "
+                "(few sequences, low ambiguity) have higher π; those in the lower-right have lower π."
+            )
 
         # Show consensus stats per family
         st.markdown("**Per-family consensus binding statistics:**")
@@ -1138,6 +1296,19 @@ links are inherited through gene duplication.
         from model.inheritance_estimator import estimate_pi_consensus_adjusted
         comp_df = estimate_pi_all_methods(gene_names4, m4, n4, obs_count4)
         st.dataframe(comp_df, use_container_width=True, height=200)
+        _ens_hat = comp_df["pi_ensemble"].sum() if "pi_ensemble" in comp_df.columns else 0
+        with st.expander("🔍 What do these results mean?"):
+            try:
+                st.markdown(_pi_interpretation(_ens_hat, k4, m4, n4))
+            except Exception as _e:
+                st.warning(f"Could not generate interpretation: {_e}")
+            st.markdown("""
+**Reading the comparison table and chart:**
+
+- **Agreement across methods** (bars at similar height) means the estimate is robust — the biological and sequence-level evidence are mutually consistent.
+- **Disagreement** (e.g., Method 1 high but Method 3 low) suggests the evidence-code quality and the actual genetic divergence tell different stories. Method 2 (MLE) is the most data-driven; Method 1 is the most conservative prior.
+- The **ensemble mean** (red bar) averages all four methods and is the recommended value to carry into the Motif Significance tab.
+""")
 
         fig_comp = go.Figure()
         x = comp_df["gene_family"]
@@ -2322,6 +2493,39 @@ with tab7:
                                       xaxis_tickangle=-45)
                 st.plotly_chart(fig_bar, use_container_width=True)
 
+            # Interpretation
+            with st.expander("🔍 What do these π₃ results mean?"):
+                mean_pi3 = pi3_df["pi3_estimate"].mean()
+                if mean_pi3 >= 0.7:
+                    pi3_level = "high"
+                    pi3_bio = (
+                        "TF binding sites in S. cerevisiae are largely conserved across the yeast tree. "
+                        "This is consistent with strong purifying selection on these regulatory elements — "
+                        "orthologous genes in distantly related yeasts are still regulated by the same TFs."
+                    )
+                elif mean_pi3 >= 0.4:
+                    pi3_level = "moderate"
+                    pi3_bio = (
+                        "Around half of S. cerevisiae TF→gene edges have conserved binding sites in other yeasts. "
+                        "This mixture reflects both conserved core regulatory circuits and lineage-specific rewiring."
+                    )
+                else:
+                    pi3_level = "low"
+                    pi3_bio = (
+                        "Many S. cerevisiae binding sites are not detected in other yeast species. "
+                        "This could reflect rapid TF binding-site turnover, low PWM specificity causing false-negative scans, "
+                        "or genuine lineage-specific regulatory innovation in S. cerevisiae."
+                    )
+                st.markdown(f"""
+**Mean π₃ = {mean_pi3:.3f}** across {len(pi3_df):,} TF→gene edges ({pi3_df['tf_name'].nunique()} TFs)
+
+This is a **{pi3_level}** cross-species conservation signal: {pi3_bio}
+
+**How π₃ differs from π₁–π₄ (SGD-based):** π₃ is a direct empirical measurement — for each TF→gene edge in S. cerevisiae, we counted how many of the 1,154 Y1000+ genomes have a PWM hit in the orthologous upstream region. A retention fraction of 0.8 means 80% of yeasts still have a detectable binding site at that location.
+
+**Why might retention fractions be low for some TFs?** (1) The JASPAR PWM may not generalise to diverged species; (2) ortholog assignment across ~1 billion years of yeast evolution is imperfect; (3) some binding sites are genuinely lineage-specific innovations. Low π₃ for a TF does **not** necessarily mean the TF is non-functional — it may have acquired different targets in other species.
+""")
+
             # Full table
             with st.expander("Full π₃ table"):
                 st.dataframe(
@@ -2384,6 +2588,23 @@ with tab7:
                 n_clusters = pi2_df[cluster_col].nunique()
                 st.info(f"At {thr}% identity: **{n_clusters}** families among TF proteins.")
 
+            # Interpretation
+            with st.expander("🔍 What do these π₂ results mean?"):
+                mean_id = pi2_df["pct_identity"].mean()
+                mean_pi2 = pi2_df["pi2_estimate"].mean()
+                st.markdown(f"""
+**Mean pairwise identity = {mean_id:.1f}%** · **Mean π₂ = {mean_pi2:.3f}** across {len(pi2_df):,} TF pairs
+
+**What π₂ measures:** Protein sequence identity between TF paralogs is used as a proxy for how recently they diverged. Higher identity → more recent duplication → less time for regulatory divergence → higher probability that both copies retain the same binding sites.
+
+**How to read the scatter plot:** Points above the diagonal would indicate that π₂ overestimates inheritance (identity is high but the binding sites may have already diverged). Since π₂ = identity/100, the scatter is linear by definition — the plot mainly reveals the range of identity values and any outliers.
+
+**Why does identity vary so much?**
+- Pairs near 100%: very recent duplications (e.g., tandem repeats, recent whole-genome duplication remnants). These TFs likely have nearly identical binding specificities.
+- Pairs near 30–50%: ancient duplications from the S. cerevisiae whole-genome duplication (~100 Mya). These TF paralogs have had time to diverge substantially in binding domain sequence, and likely have partially different binding specificities and regulatory targets.
+- π₂ is the most conservative (sequence-based) estimate. It does not directly measure whether binding sites are retained — use π₃ for a direct TFBS measurement.
+""")
+
             with st.expander("Full π₂ table"):
                 st.dataframe(pi2_df, use_container_width=True)
 
@@ -2432,6 +2653,23 @@ with tab7:
                 fig2.update_layout(height=320, margin=dict(t=20, b=30),
                                    showlegend=False)
                 st.plotly_chart(fig2, use_container_width=True)
+
+            # Interpretation
+            with st.expander("🔍 What do these π₄ results mean?"):
+                mean_pi4 = pi4_df["pi4_estimate"].mean()
+                mean_poly = pi4_df["weighted_polymorphism_rate"].mean()
+                st.markdown(f"""
+**Mean π₄ = {mean_pi4:.3f}** · **Mean weighted polymorphism rate = {mean_poly:.3f}** across {len(pi4_df):,} TF→gene edges
+
+**What π₄ measures:** IC-weighted polymorphism rate at binding-site positions across Y1000+ species. Each position in the PWM is weighted by its information content (IC, bits) — highly conserved positions count more. A high polymorphism rate at high-IC positions strongly indicates the binding site is diverging or has been lost.
+
+- **π₄ close to 1:** The binding site is nearly invariant across the 1,154 yeast genomes. Every position, especially the most specific ones, is polymorphism-free. This binding site is under strong purifying selection and is very likely functional in all sampled yeasts.
+- **π₄ close to 0:** The binding site is highly polymorphic at its most specific positions. The site may be non-functional in many species, recently acquired (not yet conserved), or under positive selection for divergence.
+
+**Why does this differ from π₃?** π₃ counts binary presence/absence of a PWM hit. π₄ measures the *quality* of retained sites — a site may be detectable by PWM scan (π₃ counted) but have elevated polymorphism at key positions (π₄ lower), indicating the site is eroding. Together, high π₃ and high π₄ give the strongest evidence of conserved, functional inheritance.
+
+**Why are some polymorphism rates high?** (1) Genuine positive selection driving binding site divergence; (2) the Y1000+ species are very broadly sampled (spanning ~1 billion years) — some variation is expected even at constrained sites; (3) ortholog-region misalignment can introduce apparent polymorphism.
+""")
 
             with st.expander("Full π₄ table"):
                 st.dataframe(pi4_df, use_container_width=True)
