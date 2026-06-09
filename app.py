@@ -18,6 +18,7 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 import sys
+import time
 from pathlib import Path
 
 # Allow imports from the project root
@@ -77,6 +78,26 @@ from model.scruse_math import (
     expected_bounds_partial,
     second_moment_binary,
 )
+
+# ---------------------------------------------------------------------------
+# Y1000+ background generation — fires once per server start
+# ---------------------------------------------------------------------------
+
+@st.cache_resource(show_spinner=False)
+def _launch_y1000_generation():
+    """
+    Called once when the Streamlit server starts (cache_resource is server-wide).
+    Spawns a daemon thread to generate the three cross-species π CSVs if any
+    are missing. Does nothing if all CSVs already exist.
+    """
+    try:
+        from model.y1000plus_generator import start_generation_if_needed
+        return start_generation_if_needed()
+    except Exception:
+        return False
+
+_launch_y1000_generation()
+
 
 # ---------------------------------------------------------------------------
 # Page config
@@ -157,8 +178,8 @@ def _load_tf_target_map(max_tfs, min_ev):
     return build_tf_target_map(max_tfs=max_tfs, min_evidence_score=min_ev)
 
 @st.cache_data(show_spinner="Building TF gene families…")
-def _load_tf_families(min_size):
-    return build_tf_families(min_family_size=min_size)
+def _load_tf_families(min_size, grouping="GO_Process"):
+    return build_tf_families(min_family_size=min_size, grouping=grouping)
 
 @st.cache_data
 def _dataset_summary():
@@ -178,9 +199,9 @@ def _load_snps():
 # ---------------------------------------------------------------------------
 
 with st.sidebar:
-    st.image("https://www.yeastgenome.org/images/SGD_logo.gif", width=160)
+    st.image("assets/subnetwork_motifs.png", use_container_width=True)
     st.title("GRN Inheritance Model")
-    st.caption("Scruse, Arnold & Robinson (2024)")
+    st.caption("Scruse, Arnold & Robinson (2026)")
     st.divider()
 
     st.subheader("⚙️ Global settings")
@@ -192,7 +213,36 @@ with st.sidebar:
         "Max TFs for network build", 10, 200, 100, 10,
         help="Limits TFs used to build the regulatory network (performance).",
     )
-    min_family_size = st.slider("Min gene-family size", 1, 20, 2)
+    min_family_size = st.slider(
+        "Min gene-family size", 1, 20, 1,
+        help="Minimum is 1. The calculations assume the initial number in a family is 1 (each family starts as a singleton before duplication).",
+    )
+    family_grouping = st.selectbox(
+        "Family grouping method",
+        [
+            "GO Biological Process",
+            "GO Molecular Function",
+            "GO Cellular Component",
+            "JASPAR TF Class",
+            "JASPAR TF Family",
+        ],
+        index=0,
+        help=(
+            "**GO Biological Process** (default) — groups TFs by shared biological pathway "
+            "(paper Section 2). **GO Molecular Function** — groups by shared molecular "
+            "activity / binding-domain type; closer to true sequence paralogy. "
+            "**GO Cellular Component** — groups by subcellular location (nucleus, complex, …). "
+            "**JASPAR TF Class / Family** — groups by DNA-binding domain architecture "
+            "(protein-sequence similarity proxy; 12 classes, 177 TFs)."
+        ),
+    )
+    _GROUPING_KEY = {
+        "GO Biological Process": "GO_Process",
+        "GO Molecular Function": "GO_Function",
+        "GO Cellular Component": "GO_Component",
+        "JASPAR TF Class":       "JASPAR_Class",
+        "JASPAR TF Family":      "JASPAR_Family",
+    }[family_grouping]
 
     st.divider()
     summary = _dataset_summary()
@@ -205,13 +255,15 @@ with st.sidebar:
 # Tabs
 # ---------------------------------------------------------------------------
 
-tab0, tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
     "📘 Introduction",
-    "📊 Overview",
+    "📋 Overview",
+    "📊 Methodology",
     "🔬 TF Explorer",
     "👨‍👩‍👧 Gene Families",
     "🎲 π Estimator",
     "🧪 Motif Significance",
+    "🌍 Y1000+ π Estimators",
     "📖 Glossary & References",
 ])
 
@@ -223,7 +275,7 @@ tab0, tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
 with tab0:
     st.header("Welcome — What This App Does")
     st.markdown(
-        "_Scruse, Arnold & Robinson (2024) · arXiv:2405.03148v1 · University of Georgia_"
+        "_Scruse, Arnold & Robinson (2026) · Bull. Math. Biol. 88, 31 · University of Georgia_"
     )
     st.markdown("""
     This app implements a mathematical model for studying **how gene regulatory networks
@@ -282,92 +334,224 @@ with tab0:
 
     st.divider()
     st.subheader("🗂️ How to Use This App")
-    st.caption("Work through the tabs left to right for the full analysis pipeline.")
+    st.caption(
+        "The tabs follow a natural analysis pipeline — start left, move right. "
+        "Jump to any tab directly if you know what you need."
+    )
 
-    row1_c1, row1_c2 = st.columns(2)
-    with row1_c1:
-        with st.container(border=True):
-            st.markdown("**📊 Overview**")
-            st.markdown(
-                "Dataset summary and key theorem equations. Live metric counts "
-                "for JASPAR TFs, GO annotations, and JASPAR binding site statistics."
-            )
-    with row1_c2:
-        with st.container(border=True):
-            st.markdown("**🔬 TF Explorer**")
-            st.markdown(
-                "Browse all JASPAR-validated transcription factors. Select any TF "
-                "to see its JASPAR PFM (consensus, IC, motif width), YEASTRACT "
-                "sequences, and regulatory targets."
-            )
+    _htabs = [
+        ("📋", "Overview",
+         "A card-by-card map of every tab: what it does, what data it uses, and "
+         "what question it answers. Good first stop if you are unsure where to look."),
+        ("📊", "Methodology",
+         "The mathematical backbone — Theorems 1–8, the Pólya urn model, Full vs "
+         "Partial Duplication, and the significance-testing framework. No data required."),
+        ("🔬", "TF Explorer",
+         "Browse all 179 JASPAR + YEASTRACT transcription factors. Select any TF "
+         "to see its JASPAR PFM, IUPAC consensus sequences, information content, "
+         "GO annotations, and regulatory targets."),
+        ("👨‍👩‍👧", "Gene Families",
+         "Group genes into paralog families using five methods (GO Process/Function/"
+         "Component, JASPAR TF Class/Family). Shows family-size distributions and "
+         "derives the model parameters m, n, and d = n − m."),
+        ("🎲", "π Estimator",
+         "Select k families to form a subnetwork motif and estimate the inheritance "
+         "probability vector π⃗ using four SGD-based methods: evidence codes, "
+         "MLE via Theorem 4, SNP divergence at YFL039C, or YEASTRACT binding flexibility."),
+        ("🧪", "Motif Significance",
+         "Full significance test: compare the observed motif count against Full and "
+         "Partial Duplication null models. Outputs Z-scores, p-values, and a "
+         "predictive forward forecast of motif count growth."),
+        ("🌍", "Y1000+ π Estimators",
+         "Three new cross-species estimators using 1,154 yeast genomes: "
+         "π₂ (protein sequence identity), π₃ (TFBS conservation via PWM scanning), "
+         "π₄ (IC-weighted SNP rate at binding site positions). "
+         "Data is generated automatically in the background on first launch."),
+    ]
 
-    row2_c1, row2_c2 = st.columns(2)
-    with row2_c1:
-        with st.container(border=True):
-            st.markdown("**👨‍👩‍👧 Gene Families**")
-            st.markdown(
-                "Genes grouped into families by shared GO Biological Process terms. "
-                "Shows family size distributions and Pólya urn parameters m and n."
-            )
-    with row2_c2:
-        with st.container(border=True):
-            st.markdown("**🎲 π Estimator**")
-            st.markdown(
-                "Select k families to form a motif and estimate the inheritance "
-                "probability vector $\\vec{\\pi}$ using four methods: evidence-based, MLE, "
-                "SNP divergence, and YEASTRACT consensus-adjusted."
-            )
-
-    with st.container(border=True):
-        st.markdown("**🧪 Motif Significance**")
-        st.markdown(
-            "Run a full significance test: compare the observed motif count against "
-            "the Full and Partial Duplication null models. Outputs Z-scores, p-values, "
-            "and a plain-language interpretation of the result."
-        )
+    for i in range(0, len(_htabs), 2):
+        cols = st.columns(2)
+        for j, col in enumerate(cols):
+            if i + j < len(_htabs):
+                icon, name, desc = _htabs[i + j]
+                with col:
+                    with st.container(border=True):
+                        st.markdown(f"**{icon} {name}**")
+                        st.markdown(desc)
 
     st.divider()
     st.subheader("📚 Data Sources")
     _js = jaspar_summary()
-    src_c1, src_c2, src_c3 = st.columns(3)
+    src_c1, src_c2, src_c3, src_c4 = st.columns(4)
     with src_c1:
         st.markdown(f"""
         **JASPAR 2024** *(jaspar.elixir.no)*
-        - **{_js['n_jaspar_tfs']} TFs** with experimentally validated PFMs
-        - {_js['n_chip_based']} ChIP-based · {_js['n_pbm_based']} PBM-based
-        - Mean motif width: {_js['mean_motif_width']} bp · mean IC: {_js['mean_ic_bits']} bits
-        - Primary source for TFBS binding sequences and π adjustment
+        - **{_js['n_jaspar_tfs']} TFs** with PFMs
+        - {_js['n_chip_based']} ChIP · {_js['n_pbm_based']} PBM
+        - Mean width: {_js['mean_motif_width']} bp
+        - Mean IC: {_js['mean_ic_bits']} bits
         """)
     with src_c2:
         st.markdown("""
         **YEASTRACT** *(yeastract.com)*
-        - 127 curated *S. cerevisiae* transcription factors
-        - IUPAC consensus sequences for 115 TFs also in JASPAR
-        - Supplementary binding sequence reference
+        - 127 curated *S. cerevisiae* TFs
+        - IUPAC consensus sequences
+        - 115 TFs overlap with JASPAR
         """)
     with src_c3:
         st.markdown("""
         **SGD** *(yeastgenome.org)*
-        - GO annotations for 6,446 genes (~120,000 records)
-        - TF evidence codes (IDA, IMP, IEA, …) for π priors
-        - Chromosome lengths, gene IDs, synonyms
+        - GO annotations, ~120,000 records
+        - Evidence codes for π priors
+        - Gene IDs, chromosome lengths
+        """)
+    with src_c4:
+        st.markdown("""
+        **Y1000+** *(Opulente et al. 2024)*
+        - 1,154 yeast genome assemblies
+        - GFF3 annotations + protein FASTA
+        - Cross-species π₂, π₃, π₄ pipeline
         """)
 
     st.info(
-        "💡 **Start here**, then move through the tabs left to right — "
-        "Overview → TF Explorer → Gene Families → π Estimator → Motif Significance.",
+        "The **Overview** tab has a full map of every tab. "
+        "The **Y1000+ π Estimators** tab generates its data automatically in the background — "
+        "results appear once the scan is complete.",
         icon="💡",
     )
 
 
 # ══════════════════════════════════════════════════════════════════════
-# TAB 1: Overview
+# TAB 1: Overview  (new — tab map)
 # ══════════════════════════════════════════════════════════════════════
 
 with tab1:
+    st.header("App Overview")
+    st.markdown(
+        "A quick map of every tab in this app — what it contains, what data it uses, "
+        "and what questions it answers."
+    )
+
+    tabs_info = [
+        {
+            "icon": "📘",
+            "name": "Introduction",
+            "what": (
+                "Plain-language walkthrough of the model. Explains what gene duplication "
+                "is, what a regulatory subnetwork motif is, and why inheritance probability "
+                "π matters."
+            ),
+            "data": "No data required — narrative only.",
+            "question": "What is this app doing and why?",
+        },
+        {
+            "icon": "📊",
+            "name": "Methodology",
+            "what": (
+                "Mathematical background from Scruse, Arnold & Robinson (2024). "
+                "Covers Theorems 1–8, the Pólya urn model, Full vs Partial Duplication, "
+                "and the significance-testing framework."
+            ),
+            "data": "Theoretical — no CSV data loaded.",
+            "question": "How does the model work mathematically?",
+        },
+        {
+            "icon": "🔬",
+            "name": "TF Explorer",
+            "what": (
+                "Browse all 127 YEASTRACT transcription factors: their evidence codes, "
+                "GO annotations, binding consensus sequences, JASPAR profiles, and "
+                "regulatory targets."
+            ),
+            "data": (
+                "sgd_transcription_factors.csv · sgd_tf_go_annotations.csv · "
+                "jaspar_yeast_tfbs_2024.csv · yeastract_consensus.csv"
+            ),
+            "question": "What do we know about a specific TF's binding and regulation?",
+        },
+        {
+            "icon": "👨‍👩‍👧",
+            "name": "Gene Families",
+            "what": (
+                "Groups genes into families using five methods (GO Process, GO Function, "
+                "GO Component, JASPAR TF Class, JASPAR TF Family). Shows family-size "
+                "distributions and derives the model parameters m, n, and d."
+            ),
+            "data": "sgd_go_annotations_full.csv · sgd_transcription_factors.csv",
+            "question": "How are genes grouped into paralog families and what are m, n, d?",
+        },
+        {
+            "icon": "🎲",
+            "name": "π Estimator",
+            "what": (
+                "Estimates the inheritance-probability vector π⃗ four ways using only SGD "
+                "data: (1) evidence-code quality, (2) MLE via Theorem 4, "
+                "(3) SNP divergence at YFL039C, (4) YEASTRACT consensus-sequence flexibility."
+            ),
+            "data": (
+                "sgd_transcription_factors.csv · sgd_YFL039C_inheritance_vectors.csv · "
+                "yeastract_consensus.csv"
+            ),
+            "question": "What is the probability that a regulatory link survives duplication?",
+        },
+        {
+            "icon": "🧪",
+            "name": "Motif Significance",
+            "what": (
+                "Tests whether a k-tuple of gene families forms a significantly "
+                "over- or under-represented subnetwork motif, using the z-score framework "
+                "from Theorems 1 & 4. Also provides a predictive forecast of motif counts "
+                "under future duplication."
+            ),
+            "data": "Computed from Gene Families + π Estimator outputs.",
+            "question": "Is this regulatory wiring pattern more common than expected by chance?",
+        },
+        {
+            "icon": "🌍",
+            "name": "Y1000+ π Estimators",
+            "what": (
+                "Three new cross-species estimators derived from 1,154 yeast genomes "
+                "(Opulente et al. 2024): π₂ (protein sequence identity), "
+                "π₃ (TFBS conservation via PWM scanning), and π₄ (IC-weighted SNP rate "
+                "at binding site positions)."
+            ),
+            "data": (
+                "Y1000+ GFF3 + genome FASTAs · JASPAR 2024 PWMs · "
+                "Pre-computed CSVs: pi2/pi3/pi4_*.csv (generate once via CLI)"
+            ),
+            "question": "How conserved are S. cerevisiae regulatory links across all yeasts?",
+        },
+        {
+            "icon": "📖",
+            "name": "Glossary & References",
+            "what": (
+                "Definitions of all mathematical terms (π, m, n, d, k-motif, Pólya urn, …) "
+                "and full citations for the paper, datasets, and databases."
+            ),
+            "data": "No data — reference material only.",
+            "question": "What does this term mean? Where does this data come from?",
+        },
+    ]
+
+    for info in tabs_info:
+        with st.expander(f"{info['icon']}  **{info['name']}**", expanded=False):
+            col_l, col_r = st.columns([2, 1])
+            with col_l:
+                st.markdown(f"**What it does:** {info['what']}")
+                st.markdown(f"**Key question:** _{info['question']}_")
+            with col_r:
+                st.markdown("**Data sources:**")
+                st.caption(info["data"])
+
+
+# ══════════════════════════════════════════════════════════════════════
+# TAB 2: Methodology (was Overview)
+# ══════════════════════════════════════════════════════════════════════
+
+with tab2:
     st.header("Counting Subnetworks Under Gene Duplication in GRNs")
     st.markdown(
-        "_Scruse, Arnold & Robinson (2024) · arXiv:2405.03148v1 · University of Georgia_"
+        "_Scruse, Arnold & Robinson (2026) · Bull. Math. Biol. 88, 31 · University of Georgia_"
     )
 
     st.markdown("""
@@ -458,7 +642,7 @@ are short DNA sequences in **gene promoter regions**.
 # TAB 2: TF Explorer
 # ══════════════════════════════════════════════════════════════════════
 
-with tab2:
+with tab3:
     st.header("🔬 Transcription Factor Explorer")
     st.caption("Source: sgd_transcription_factors.csv · sgd_tf_go_annotations.csv")
 
@@ -682,19 +866,29 @@ with tab2:
 # TAB 3: Gene Families
 # ══════════════════════════════════════════════════════════════════════
 
-with tab3:
+with tab4:
     st.header("👨‍👩‍👧 Gene Family Analysis")
-    st.markdown("""
-Each GO Biological Process term defines a **gene family** — the set of TFs that
-share that process.  This operationalises the Scruse et al. framework:
+
+    _grouping_descriptions = {
+        "GO_Process":    "Each **GO Biological Process** term defines a family — TFs that share the same biological pathway (paper Section 2, default).",
+        "GO_Function":   "Each **GO Molecular Function** term defines a family — TFs sharing the same molecular activity or binding-domain type. Closer to protein-sequence paralogy than Process grouping.",
+        "GO_Component":  "Each **GO Cellular Component** term defines a family — TFs sharing the same subcellular location or complex membership. Expect a dominant 'nucleus' family.",
+        "JASPAR_Class":  "Each **JASPAR TF Class** (binding-domain architecture, e.g. 'C6 zinc cluster factors') defines a family. A protein-sequence similarity proxy using 177 JASPAR TFs.",
+        "JASPAR_Family": "Each **JASPAR TF Family** (finer domain subtype, e.g. 'Myb/SANT domain factors') defines a family. Finer-grained protein-sequence proxy.",
+    }
+    st.markdown(
+        _grouping_descriptions.get(_GROUPING_KEY, "") + """
+
+This operationalises the Scruse et al. framework:
 
 - **m** = number of gene families
 - **n** = total TFs across families (Σcᵢ)
 - **d = n − m** = estimated duplication events (Proposition 1)
-""")
+"""
+    )
 
     with st.spinner("Building TF families…"):
-        fam_df = _load_tf_families(min_family_size)
+        fam_df = _load_tf_families(min_family_size, _GROUPING_KEY)
 
     if fam_df.empty:
         st.warning("No families found. Lower the minimum family size.")
@@ -716,7 +910,7 @@ share that process.  This operationalises the Scruse et al. framework:
         size_counts = family_size_distribution(fam_df, "family_size")
         fig_fam = px.bar(
             x=size_counts.index, y=size_counts.values,
-            title="Gene Family Size Distribution (TF families by GO process)",
+            title=f"Gene Family Size Distribution ({family_grouping})",
             labels={"x": "Family Size (cᵢ)", "y": "Number of families"},
             color=size_counts.values, color_continuous_scale="Viridis",
         )
@@ -741,10 +935,19 @@ share that process.  This operationalises the Scruse et al. framework:
         )
         st.plotly_chart(fig_exp, use_container_width=True)
 
+        _family_id_label = {
+            "GO_Process":    "GO Process ID",
+            "GO_Function":   "GO Function ID",
+            "GO_Component":  "GO Component ID",
+            "JASPAR_Class":  "JASPAR Binding Class",
+            "JASPAR_Family": "JASPAR Binding Family",
+        }.get(_GROUPING_KEY, "Family ID")
         st.subheader("Top Gene Families")
         st.dataframe(
             fam_df[["go_id", "family_size", "mean_evidence_score",
-                    "n_activators", "n_repressors"]].head(30),
+                    "n_activators", "n_repressors"]].head(30).rename(
+                columns={"go_id": _family_id_label}
+            ),
             use_container_width=True, height=300,
         )
 
@@ -778,7 +981,7 @@ Family proportions cᵢ/n converge almost surely to a **Dirichlet(1,…,1)** dis
 # TAB 4: π Estimator
 # ══════════════════════════════════════════════════════════════════════
 
-with tab4:
+with tab5:
     st.header("🎲 Inheritance Probability Estimator")
     st.markdown("""
 Estimate **$\\vec{\\pi}$ = (π₁, …, πₖ)** — the per-family probability that regulatory
@@ -788,7 +991,7 @@ links are inherited through gene duplication.
     st.markdown("Three estimation methods are available (Scruse et al. Sections 4, 6, 9.2):")
 
     with st.spinner("Loading families…"):
-        fam_df4 = _load_tf_families(min_family_size)
+        fam_df4 = _load_tf_families(min_family_size, _GROUPING_KEY)
 
     if fam_df4.empty:
         st.warning("No families found.")
@@ -1014,7 +1217,7 @@ links are inherited through gene duplication.
 # TAB 5: Motif Significance
 # ══════════════════════════════════════════════════════════════════════
 
-with tab5:
+with tab6:
     st.header("🧪 Subnetwork Motif Significance Testing")
 
     inf_tab, pred_tab = st.tabs(["📊 Inferential Test", "🔮 Predictive Forecast"])
@@ -1029,7 +1232,7 @@ in the GRN relative to the gene duplication null model (Scruse et al. Sections 4
 """)
 
         with st.spinner("Loading families…"):
-            fam_df5 = _load_tf_families(min_family_size)
+            fam_df5 = _load_tf_families(min_family_size, _GROUPING_KEY)
 
         if fam_df5.empty:
             st.warning("No families found.")
@@ -1230,7 +1433,7 @@ further gene duplication events.
         )
 
         with st.spinner("Loading families…"):
-            fam_df_p = _load_tf_families(min_family_size)
+            fam_df_p = _load_tf_families(min_family_size, _GROUPING_KEY)
 
         if fam_df_p.empty:
             st.warning("No families found.")
@@ -1408,10 +1611,10 @@ further gene duplication events.
 
 
 # ══════════════════════════════════════════════════════════════════════
-# TAB 6: Glossary & References
+# TAB 8: Glossary & References  (always last)
 # ══════════════════════════════════════════════════════════════════════
 
-with tab6:
+with tab8:
     st.header("📖 Glossary & References")
     st.markdown(
         "Definitions of key terms used throughout the app, and the primary papers "
@@ -1422,18 +1625,18 @@ with tab6:
     st.subheader("📚 Primary References")
 
     with st.container(border=True):
-        st.markdown("#### 1. Scruse, Arnold & Robinson (2024) — *The Model Paper*")
+        st.markdown("#### 1. Scruse, Arnold & Robinson (2026) — *The Model Paper*")
         st.markdown("""
 **Counting Subnetworks Under Gene Duplication in Genetic Regulatory Networks**
 Ashley Scruse, Jonathan Arnold, Robert Robinson
-*arXiv:2405.03148v1 [q-bio.MN] · University of Georgia · 6 May 2024*
+*Bulletin of Mathematical Biology 88, 31 (2026) · University of Georgia · doi:10.1007/s11538-025-01592-1*
 
 This is the primary theoretical paper implemented in this app. It introduces the
 gene duplication and inheritance model, defines **subnetwork motifs**, and derives
 the exact moments (mean and variance) for their count under both Full and Partial
 Duplication via combinatorial probability and generating functions.
         """)
-        st.link_button("View on arXiv (arXiv:2405.03148)", "https://arxiv.org/abs/2405.03148")
+        st.link_button("View paper (doi:10.1007/s11538-025-01592-1)", "https://doi.org/10.1007/s11538-025-01592-1")
 
     with st.container(border=True):
         st.markdown("#### 2. Harbison et al. (2004) — *Yeast Transcriptional Regulatory Code*")
@@ -1867,6 +2070,430 @@ Data used in this app:
 
     st.divider()
     st.caption(
-        "Glossary compiled from Scruse, Arnold & Robinson (2024) arXiv:2405.03148, "
+        "Glossary compiled from Scruse, Arnold & Robinson (2026) Bull. Math. Biol. 88:31, "
         "Harbison et al. (2004) Nature 431:99–104, and Ren et al. (2000) Science 290:2306–2309."
     )
+
+
+# ══════════════════════════════════════════════════════════════════════
+# TAB 7: Y1000+ π Estimators
+# ══════════════════════════════════════════════════════════════════════
+
+with tab7:
+    st.header("🌍 Y1000+ Cross-Species π Estimators")
+    st.markdown(
+        "Three new inheritance-probability estimators derived from the "
+        "[Y1000+ dataset](https://y1000plus.wei.wisc.edu/) (Opulente et al. 2024, *Science*) "
+        "and JASPAR 2024 CORE yeast binding profiles."
+    )
+
+    # ── Phylogenetic context ──────────────────────────────────────────
+    _LABELED_TREE = Path(__file__).parent / "assets" / "y1000plus_species_labeled.png"
+    _PHYLO_TREE   = Path(__file__).parent / "assets" / "y1000plus_phylogeny.png"
+
+    _either_exists = _LABELED_TREE.exists() or _PHYLO_TREE.exists()
+
+    if _either_exists:
+        st.subheader("Species panel & phylogenetic context")
+        col_t1, col_t2 = st.columns(2)
+        with col_t1:
+            if _LABELED_TREE.exists():
+                st.image(
+                    str(_LABELED_TREE),
+                    caption=(
+                        "Species included in Y1000+ (Opulente et al. 2024, Science). "
+                        "Colored regions indicate major clades. "
+                        "WGD = whole-genome duplication; CTG = CTG-clade yeasts "
+                        "that decode CUG as serine rather than leucine."
+                    ),
+                    use_container_width=True,
+                )
+        with col_t2:
+            if _PHYLO_TREE.exists():
+                st.image(
+                    str(_PHYLO_TREE),
+                    caption=(
+                        "Maximum-likelihood phylogeny with branch lengths "
+                        "(substitutions/site) and bootstrap support values. "
+                        "Colored bars on the right indicate taxonomic families. "
+                        "Numbers at nodes = posterior probability / bootstrap support."
+                    ),
+                    use_container_width=True,
+                )
+    else:
+        st.caption(
+            "📷 To show the species phylogeny here, save the two tree images from the "
+            "Y1000+ paper into the `assets/` folder:  \n"
+            "`assets/y1000plus_species_labeled.png` and `assets/y1000plus_phylogeny.png`"
+        )
+
+    st.divider()
+
+    # ── Generation status banner ──────────────────────────────────────
+    from model.y1000plus_generator import get_status, all_done, csvs_ready, start_generation_if_needed
+
+    _gen_status = get_status()
+    _ready = csvs_ready()
+    _status_code = _gen_status.get("status", "idle")
+
+    if _status_code == "done" or all_done():
+        st.success(
+            "All three cross-species π datasets are ready.",
+            icon="✅",
+        )
+    elif _status_code == "error":
+        st.error(
+            f"Generation failed: {_gen_status.get('error', 'unknown error')}  \n"
+            "Fix the error and restart the app to retry.",
+            icon="❌",
+        )
+    else:
+        # Running or idle — show live status
+        _pct = _gen_status.get("pct", 0)
+        _msg = _gen_status.get("message", "Waiting to start…")
+
+        _banner = st.container()
+        with _banner:
+            if _status_code == "idle":
+                st.info(
+                    "Cross-species data generation will start automatically. "
+                    "If it has not begun, click **Generate now**.",
+                    icon="ℹ️",
+                )
+                if st.button("Generate now", key="gen_now_btn"):
+                    start_generation_if_needed()
+                    st.rerun()
+            else:
+                st.info(
+                    f"⏳ **Generating in background** — {_msg}",
+                    icon="⏳",
+                )
+
+            # Per-CSV status pills
+            pill_cols = st.columns(3)
+            for col, (key, label) in zip(
+                pill_cols,
+                [("pi2", "π₂ Sequence"), ("pi3", "π₃ TFBS"), ("pi4", "π₄ SNP")]
+            ):
+                if _ready[key]:
+                    col.success(f"{label} ✓")
+                elif _status_code.endswith(key):
+                    col.warning(f"{label} ⏳")
+                else:
+                    col.info(f"{label} …")
+
+            st.progress(_pct / 100)
+
+        # Auto-refresh every 5 s while generation is in progress
+        if _status_code not in ("done", "error", "idle"):
+            time.sleep(5)
+            st.rerun()
+
+    st.divider()
+
+    # ── Method selector ──────────────────────────────────────────────
+    method_choice = st.radio(
+        "Select estimator to display",
+        ["π₃ — TFBS Conservation", "π₂ — Sequence Homology", "π₄ — SNP at Binding Sites",
+         "All methods comparison"],
+        horizontal=True,
+    )
+
+    family_def = st.selectbox(
+        "Family definition",
+        ["TFBS-based (π₃/π₄)", "Sequence identity clusters (π₂)", "GO Biological Process (π₁)"],
+        help="Determines which genes are grouped into one 'family' for each estimator.",
+    )
+
+    st.divider()
+
+    # ── Load data helpers ─────────────────────────────────────────────
+    @st.cache_data(show_spinner="Loading Y1000+ manifest…")
+    def _load_y1000_manifest():
+        try:
+            from model.y1000plus_loader import load_manifest
+            return load_manifest()
+        except Exception as e:
+            return None, str(e)
+
+    @st.cache_data(show_spinner="Loading π₃ TFBS conservation data…")
+    def _load_pi3():
+        try:
+            from model.pi3_tfbs_conservation import load_pi3_results, build_pairwise_histogram
+            df = load_pi3_results()
+            hist = build_pairwise_histogram(df, save=False)
+            return df, hist, None
+        except FileNotFoundError:
+            return None, None, "pi3_tfbs_conservation.csv not found"
+        except Exception as e:
+            return None, None, str(e)
+
+    @st.cache_data(show_spinner="Loading π₂ sequence homology data…")
+    def _load_pi2():
+        try:
+            from model.pi2_sequence_homology import load_pi2_results
+            return load_pi2_results(), None
+        except FileNotFoundError:
+            return None, "pi2_sequence_homology.csv not found"
+        except Exception as e:
+            return None, str(e)
+
+    @st.cache_data(show_spinner="Loading π₄ SNP binding data…")
+    def _load_pi4():
+        try:
+            from model.pi4_snp_binding import load_pi4_results
+            return load_pi4_results(), None
+        except FileNotFoundError:
+            return None, "pi4_snp_binding_sites.csv not found"
+        except Exception as e:
+            return None, str(e)
+
+    def _not_ready_box(csv_key: str, label: str) -> None:
+        if _status_code in ("running_pi2", "running_pi3", "running_pi4"):
+            st.info(f"{label} is being generated in the background — check back shortly.")
+        else:
+            st.warning(
+                f"{label} not yet available. "
+                "Generation will start automatically on the next app load, "
+                "or click **Generate now** above.",
+                icon="⚠️",
+            )
+
+    # ── π₃ TFBS Conservation ─────────────────────────────────────────
+    if method_choice in ("π₃ — TFBS Conservation", "All methods comparison"):
+        st.subheader("π₃ — TFBS Conservation across Y1000+ species")
+        st.markdown(
+            "For each TF→gene edge identified in *S. cerevisiae* S288C, π₃ = "
+            "the fraction of Y1000+ genomes that retain a significant PWM hit "
+            "in the upstream promoter of the orthologous gene."
+        )
+
+        pi3_df, pi3_hist, pi3_err = _load_pi3()
+
+        if pi3_err:
+            _not_ready_box("pi3", "π₃ TFBS conservation")
+        else:
+            col_a, col_b, col_c = st.columns(3)
+            col_a.metric("TF→gene edges", f"{len(pi3_df):,}")
+            col_b.metric("TFs covered", pi3_df["tf_name"].nunique())
+            col_c.metric("Mean π₃", f"{pi3_df['pi3_estimate'].mean():.3f}")
+
+            # TF selector
+            tf_opts = sorted(pi3_df["tf_name"].unique().tolist())
+            sel_tf = st.selectbox("Select TF (for family histogram)", tf_opts, key="pi3_tf")
+
+            col1, col2 = st.columns([1, 1])
+
+            with col1:
+                st.markdown("**Retention fraction distribution (all TFs)**")
+                fig_hist = px.histogram(
+                    pi3_df, x="retention_fraction", nbins=40,
+                    labels={"retention_fraction": "Retention fraction (π₃)"},
+                    color_discrete_sequence=["#2563eb"],
+                )
+                fig_hist.update_layout(height=320, margin=dict(t=20, b=30))
+                st.plotly_chart(fig_hist, use_container_width=True)
+
+            with col2:
+                st.markdown(f"**Pairwise shared binding-site distribution — {sel_tf}**")
+                if pi3_hist is not None and not pi3_hist.empty:
+                    tf_hist_row = pi3_hist[pi3_hist["tf_name"] == sel_tf]
+                    if not tf_hist_row.empty:
+                        r = tf_hist_row.iloc[0]
+                        st.markdown(
+                            f"Family size: **{int(r['n_target_genes'])}** genes · "
+                            f"Mean retention: **{r['mean_retention']:.3f}** · "
+                            f"σ = **{r['std_retention']:.3f}**"
+                        )
+                        st.markdown(
+                            f"Pairwise sharing mean: **{r['pairwise_sharing_mean']:.3f}** "
+                            f"(π̂₃ estimate for family)"
+                        )
+
+                tf_edges = pi3_df[pi3_df["tf_name"] == sel_tf]
+                fig_bar = px.bar(
+                    tf_edges.sort_values("retention_fraction"),
+                    x="target_gene_name", y="retention_fraction",
+                    labels={"target_gene_name": "Target gene", "retention_fraction": "π₃"},
+                    color="retention_fraction",
+                    color_continuous_scale="Blues",
+                )
+                fig_bar.update_layout(height=320, margin=dict(t=20, b=30),
+                                      xaxis_tickangle=-45)
+                st.plotly_chart(fig_bar, use_container_width=True)
+
+            # Full table
+            with st.expander("Full π₃ table"):
+                st.dataframe(
+                    pi3_df[["tf_name", "jaspar_matrix_id", "target_gene_id",
+                             "target_gene_name", "n_genomes_scanned",
+                             "n_genomes_with_hit", "retention_fraction", "pi3_estimate"]],
+                    use_container_width=True,
+                )
+
+    st.divider()
+
+    # ── π₂ Sequence Homology ─────────────────────────────────────────
+    if method_choice in ("π₂ — Sequence Homology", "All methods comparison"):
+        st.subheader("π₂ — Sequence Homology")
+        st.markdown(
+            "Pairwise protein sequence identity between TF paralogs. "
+            "π₂ = identity / 100 (higher identity → more recently duplicated → "
+            "higher probability of retained regulatory links)."
+        )
+
+        pi2_df, pi2_err = _load_pi2()
+
+        if pi2_err:
+            _not_ready_box("pi2", "π₂ sequence homology")
+        else:
+            col_a, col_b, col_c = st.columns(3)
+            col_a.metric("TF pairs aligned", f"{len(pi2_df):,}")
+            col_b.metric("Mean identity", f"{pi2_df['pct_identity'].mean():.1f}%")
+            col_c.metric("Mean π₂", f"{pi2_df['pi2_estimate'].mean():.3f}")
+
+            col1, col2 = st.columns([1, 1])
+            with col1:
+                st.markdown("**Pairwise identity distribution**")
+                fig = px.histogram(
+                    pi2_df, x="pct_identity", nbins=40,
+                    labels={"pct_identity": "Pairwise identity (%)"},
+                    color_discrete_sequence=["#16a34a"],
+                )
+                fig.update_layout(height=320, margin=dict(t=20, b=30))
+                st.plotly_chart(fig, use_container_width=True)
+
+            with col2:
+                st.markdown("**π₂ vs pct_identity scatter**")
+                fig2 = px.scatter(
+                    pi2_df, x="pct_identity", y="pi2_estimate",
+                    hover_data=["gene1_name", "gene2_name"],
+                    labels={"pct_identity": "Identity (%)", "pi2_estimate": "π₂"},
+                    color_discrete_sequence=["#16a34a"],
+                    opacity=0.6,
+                )
+                fig2.update_layout(height=320, margin=dict(t=20, b=30))
+                st.plotly_chart(fig2, use_container_width=True)
+
+            thr = st.select_slider(
+                "Identity threshold for family clustering",
+                options=[30, 50, 80], value=50,
+            )
+            cluster_col = f"family_{thr}pct"
+            if cluster_col in pi2_df.columns:
+                n_clusters = pi2_df[cluster_col].nunique()
+                st.info(f"At {thr}% identity: **{n_clusters}** families among TF proteins.")
+
+            with st.expander("Full π₂ table"):
+                st.dataframe(pi2_df, use_container_width=True)
+
+    st.divider()
+
+    # ── π₄ SNP at Binding Sites ──────────────────────────────────────
+    if method_choice in ("π₄ — SNP at Binding Sites", "All methods comparison"):
+        st.subheader("π₄ — SNP rate at binding site positions")
+        st.markdown(
+            "IC-weighted polymorphism rate at PWM binding site positions across Y1000+ "
+            "species. π₄ = 1 − Σ(IC_weight[pos] × polymorphism_rate[pos]). "
+            "Perfectly conserved sites → π₄ = 1; hypervariable sites → π₄ → 0."
+        )
+
+        pi4_df, pi4_err = _load_pi4()
+
+        if pi4_err:
+            _not_ready_box("pi4", "π₄ SNP at binding sites")
+        else:
+            col_a, col_b, col_c = st.columns(3)
+            col_a.metric("TF→gene edges", f"{len(pi4_df):,}")
+            col_b.metric("Mean π₄", f"{pi4_df['pi4_estimate'].mean():.3f}")
+            col_c.metric("Mean poly rate", f"{pi4_df['weighted_polymorphism_rate'].mean():.3f}")
+
+            col1, col2 = st.columns([1, 1])
+            with col1:
+                st.markdown("**π₄ distribution**")
+                fig = px.histogram(
+                    pi4_df, x="pi4_estimate", nbins=40,
+                    labels={"pi4_estimate": "π₄ (SNP at binding sites)"},
+                    color_discrete_sequence=["#d97706"],
+                )
+                fig.update_layout(height=320, margin=dict(t=20, b=30))
+                st.plotly_chart(fig, use_container_width=True)
+
+            with col2:
+                st.markdown("**Weighted polymorphism rate vs π₄**")
+                fig2 = px.scatter(
+                    pi4_df, x="weighted_polymorphism_rate", y="pi4_estimate",
+                    color="tf_name",
+                    hover_data=["target_gene_name", "binding_site_seq"],
+                    labels={"weighted_polymorphism_rate": "Weighted poly rate",
+                            "pi4_estimate": "π₄"},
+                    opacity=0.6,
+                )
+                fig2.update_layout(height=320, margin=dict(t=20, b=30),
+                                   showlegend=False)
+                st.plotly_chart(fig2, use_container_width=True)
+
+            with st.expander("Full π₄ table"):
+                st.dataframe(pi4_df, use_container_width=True)
+
+    st.divider()
+
+    # ── Cross-method comparison ───────────────────────────────────────
+    if method_choice == "All methods comparison":
+        st.subheader("Cross-estimator comparison: π₃ vs π₁ (evidence-based)")
+        pi3_df2, _, pi3_err2 = _load_pi3()
+        if pi3_err2 is None and pi3_df2 is not None:
+            # Load evidence-based π for each TF
+            from model.inheritance_estimator import estimate_pi_from_evidence
+            tf_list_comp = sorted(pi3_df2["tf_name"].unique().tolist())
+
+            ev_rows = []
+            for tf in tf_list_comp:
+                res = estimate_pi_from_evidence([tf])
+                ev_rows.append({
+                    "tf_name": tf,
+                    "pi1_evidence": res["pi_vec"][0] if res["pi_vec"] else None,
+                })
+            ev_df = pd.DataFrame(ev_rows)
+
+            pi3_by_tf = (
+                pi3_df2.groupby("tf_name")["pi3_estimate"].mean().reset_index()
+                .rename(columns={"pi3_estimate": "pi3_tfbs"})
+            )
+            comp_df = pi3_by_tf.merge(ev_df, on="tf_name")
+
+            fig_cmp = px.scatter(
+                comp_df, x="pi1_evidence", y="pi3_tfbs", text="tf_name",
+                labels={"pi1_evidence": "π₁ (evidence-based)", "pi3_tfbs": "π₃ (TFBS conservation)"},
+                color_discrete_sequence=["#7c3aed"],
+            )
+            fig_cmp.add_shape(type="line", x0=0, y0=0, x1=1, y1=1,
+                              line=dict(dash="dash", color="gray"))
+            fig_cmp.update_traces(textposition="top center", textfont_size=9)
+            fig_cmp.update_layout(height=450)
+            st.plotly_chart(fig_cmp, use_container_width=True)
+            st.caption(
+                "Points above the diagonal: π₃ > π₁ (conservation signal exceeds "
+                "what evidence codes predict). Points below: experimental evidence "
+                "overestimates conservation."
+            )
+
+    # ── Dataset status panel ─────────────────────────────────────────
+    with st.expander("Y1000+ dataset status"):
+        try:
+            from model.y1000plus_loader import load_manifest, manifest_summary
+            ms = manifest_summary()
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("Total assemblies", ms["n_unique_assemblies"])
+            c2.metric("Annotated (final)", ms["n_final"])
+            c3.metric("SGD reference", ms["n_sgd"])
+            c4.metric("With genome", ms["n_with_genome"])
+
+            from model.y1000plus_loader import PROCESSED_DIR
+            gff3_extracted = len(list((PROCESSED_DIR / "y1000p_gff3_files").glob("*.gff3")))
+            st.info(
+                f"GFF3 files extracted: **{gff3_extracted}** / {ms['n_unique_assemblies']}  \n"
+                f"Processed directory: `{PROCESSED_DIR}`"
+            )
+        except Exception as e:
+            st.error(f"Could not load Y1000+ manifest: {e}")

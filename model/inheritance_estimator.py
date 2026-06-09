@@ -2,32 +2,40 @@
 inheritance_estimator.py
 Estimates the inheritance probability vector π⃗ = (π₁, ..., πₖ) for gene families.
 
-Four estimation methods, corresponding to different data sources:
+SGD-based methods (existing):
 
   Method 1 — Evidence-based (from sgd_transcription_factors.csv)
     π_i = f(evidence_quality_i) using the EVIDENCE_QUALITY map.
-    Higher-quality experimental support → links more likely to truly persist
-    through duplication → higher πᵢ.
 
   Method 2 — MLE from observed counts (Theorem 4 inversion)
-    Given observed |M(n)| and model parameters m, n, solve numerically for π̂.
-    Then distribute π̂ across families proportional to evidence weights.
+    Numerically inverts Theorem 4 given observed motif count.
 
   Method 3 — SNP-divergence proxy (from sgd_YFL039C_inheritance_vectors.csv)
-    π_i ≈ 1 − (pct_alt_i / 100).
-    Higher divergence from reference → regulatory links less likely inherited.
-    This is a per-strain/per-gene proxy demonstrated on gene YFL039C.
+    π_i ≈ 1 − (pct_alt_i / 100) for gene YFL039C strains.
 
   Method 4 — Consensus-adjusted (from YEASTRACT consensuslist.php)
-    Applies a pi_consensus_factor derived from the number and ambiguity of a
-    TF's YEASTRACT consensus sequences.  Promiscuous binders (many/flexible
-    consensus sequences) are more likely to maintain regulatory links after
-    duplication because their binding sites tolerate sequence divergence.
-    Factor = 1 + variant_boost + ambiguity_boost  (see consensus_loader.py).
+    Adjusts evidence-based π by a binding-flexibility factor from YEASTRACT.
 
-All methods produce:
-  - pi_vec:  List[float] of per-family πᵢ values  (one per family)
-  - pi_hat:  float = Σπᵢ  (used directly in Theorem 4)
+Y1000+ cross-species methods (new — require y1000plus_data/processed/):
+
+  Method 5 — TFBS Conservation (π₃)
+    π₃ = retention_fraction across Y1000+ species subset.
+    Requires pi3_tfbs_conservation.csv (run estimate_pi3_all_tfs() once).
+    Family definition: genes sharing a TF regulator.
+
+  Method 6 — Sequence Homology (π₂)
+    π₂ = pairwise protein sequence identity between TF paralogs.
+    Requires pi2_sequence_homology.csv (run estimate_pi2() once).
+    Family definition: protein identity clusters.
+
+  Method 7 — SNP at Binding Sites (π₄)
+    π₄ = 1 − IC-weighted polymorphism rate at binding site positions.
+    Requires pi4_snp_binding_sites.csv (run estimate_pi4_all_tfs() once).
+    Family definition: same as Method 5 (TFBS-based).
+
+All SGD methods produce:
+  - pi_vec:  List[float] of per-family πᵢ values
+  - pi_hat:  float = Σπᵢ
   - method:  str label
   - weights: List[float] allocation weights used
 
@@ -490,4 +498,279 @@ def pi_sensitivity(
             "lower_bound": round(lo, 4),
             "upper_bound": round(hi, 4),
         })
+    return pd.DataFrame(rows)
+
+
+# ---------------------------------------------------------------------------
+# Method 5: TFBS conservation across Y1000+ species (π₃)
+# ---------------------------------------------------------------------------
+
+def estimate_pi_from_tfbs_conservation(
+    tf_name: str,
+    gene_names: Optional[List[str]] = None,
+) -> Dict:
+    """
+    Method 5 (π₃): Estimate π from TFBS retention across Y1000+ 1,154 species.
+
+    Loads pre-computed pi3_tfbs_conservation.csv.
+    π₃ for each gene = retention_fraction (proportion of Y1000+ species that
+    retain a significant binding site for this TF upstream of the ortholog).
+
+    Requires: y1000plus_data/processed/pi3_tfbs_conservation.csv
+    Generate with: model.pi3_tfbs_conservation.estimate_pi3_all_tfs()
+    """
+    try:
+        from .pi3_tfbs_conservation import load_pi3_results
+        pi3_df = load_pi3_results()
+    except FileNotFoundError as e:
+        return {
+            "method": "tfbs_conservation",
+            "error": str(e),
+            "pi_vec": [],
+            "pi_hat": float("nan"),
+            "description": "pi3_tfbs_conservation.csv not found — run estimate_pi3_all_tfs().",
+        }
+
+    tf_rows = pi3_df[pi3_df["tf_name"].str.upper() == tf_name.upper()]
+    if gene_names:
+        gene_names_up = {g.upper() for g in gene_names}
+        mask = (
+            tf_rows["target_gene_id"].str.upper().isin(gene_names_up) |
+            tf_rows["target_gene_name"].str.upper().isin(gene_names_up)
+        )
+        tf_rows = tf_rows[mask]
+
+    if tf_rows.empty:
+        return {
+            "method": "tfbs_conservation",
+            "tf_name": tf_name,
+            "pi_vec": [],
+            "pi_hat": float("nan"),
+            "gene_names": gene_names or [],
+            "description": f"No π₃ data for TF {tf_name!r}.",
+        }
+
+    pi_vec = tf_rows["pi3_estimate"].dropna().tolist()
+    gene_ids = tf_rows["target_gene_id"].tolist()
+    pi_hat = sum(pi_vec)
+
+    return {
+        "method": "tfbs_conservation",
+        "tf_name": tf_name,
+        "gene_names": gene_ids,
+        "pi_vec": [round(p, 4) for p in pi_vec],
+        "pi_hat": round(pi_hat, 4),
+        "weights": pi_vec,
+        "n_genes": len(pi_vec),
+        "description": (
+            "π₃ estimated from TFBS retention across Y1000+ species. "
+            "retention_fraction = (genomes with significant PWM hit) / "
+            "(genomes with orthologous gene)."
+        ),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Method 6: Sequence homology (π₂)
+# ---------------------------------------------------------------------------
+
+def estimate_pi_from_sequence_homology(
+    gene_names: List[str],
+    cluster_threshold: float = 50.0,
+) -> Dict:
+    """
+    Method 6 (π₂): Estimate π from pairwise protein sequence identity.
+
+    Loads pre-computed pi2_sequence_homology.csv.
+    π₂ for a gene pair = pct_identity / 100.
+    Family-level π₂ = mean pairwise identity within the cluster.
+
+    Requires: y1000plus_data/processed/pi2_sequence_homology.csv
+    Generate with: model.pi2_sequence_homology.estimate_pi2()
+    """
+    try:
+        from .pi2_sequence_homology import load_pi2_results
+        pi2_df = load_pi2_results()
+    except FileNotFoundError as e:
+        return {
+            "method": "sequence_homology",
+            "error": str(e),
+            "pi_vec": [],
+            "pi_hat": float("nan"),
+            "description": "pi2_sequence_homology.csv not found — run estimate_pi2().",
+        }
+
+    gene_names_up = {g.upper() for g in gene_names}
+    mask = (
+        pi2_df["gene1"].str.upper().isin(gene_names_up) |
+        pi2_df["gene2"].str.upper().isin(gene_names_up) |
+        pi2_df["gene1_name"].str.upper().isin(gene_names_up) |
+        pi2_df["gene2_name"].str.upper().isin(gene_names_up)
+    )
+    rows = pi2_df[mask]
+
+    if rows.empty:
+        default_pi = 0.5
+        pi_vec = [default_pi] * len(gene_names)
+        return {
+            "method": "sequence_homology",
+            "gene_names": gene_names,
+            "pi_vec": pi_vec,
+            "pi_hat": round(sum(pi_vec), 4),
+            "weights": pi_vec,
+            "description": f"No π₂ data for {gene_names}; using default 0.5.",
+        }
+
+    mean_pi2 = float(rows["pi2_estimate"].mean())
+    pi_vec = [round(mean_pi2, 4)] * len(gene_names)
+    pi_hat = sum(pi_vec)
+
+    return {
+        "method": "sequence_homology",
+        "gene_names": gene_names,
+        "pi_vec": pi_vec,
+        "pi_hat": round(pi_hat, 4),
+        "weights": pi_vec,
+        "n_pairs": len(rows),
+        "mean_pct_identity": round(rows["pct_identity"].mean(), 2),
+        "description": (
+            "π₂ estimated from pairwise protein sequence identity. "
+            f"Mean identity = {rows['pct_identity'].mean():.1f}% "
+            f"across {len(rows)} TF pairs."
+        ),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Method 7: SNP rate at binding sites (π₄)
+# ---------------------------------------------------------------------------
+
+def estimate_pi_from_snp_binding_sites(
+    tf_name: str,
+    gene_names: Optional[List[str]] = None,
+) -> Dict:
+    """
+    Method 7 (π₄): Estimate π from IC-weighted SNP polymorphism at binding sites.
+
+    Loads pre-computed pi4_snp_binding_sites.csv.
+    π₄ = 1 − weighted_polymorphism_rate, where weights are PWM IC values.
+
+    Requires: y1000plus_data/processed/pi4_snp_binding_sites.csv
+    Generate with: model.pi4_snp_binding.estimate_pi4_all_tfs()
+    """
+    try:
+        from .pi4_snp_binding import load_pi4_results
+        pi4_df = load_pi4_results()
+    except FileNotFoundError as e:
+        return {
+            "method": "snp_binding_sites",
+            "error": str(e),
+            "pi_vec": [],
+            "pi_hat": float("nan"),
+            "description": "pi4_snp_binding_sites.csv not found — run estimate_pi4_all_tfs().",
+        }
+
+    tf_rows = pi4_df[pi4_df["tf_name"].str.upper() == tf_name.upper()]
+    if gene_names:
+        gene_names_up = {g.upper() for g in gene_names}
+        mask = (
+            tf_rows["target_gene_id"].str.upper().isin(gene_names_up) |
+            tf_rows["target_gene_name"].str.upper().isin(gene_names_up)
+        )
+        tf_rows = tf_rows[mask]
+
+    if tf_rows.empty:
+        return {
+            "method": "snp_binding_sites",
+            "tf_name": tf_name,
+            "pi_vec": [],
+            "pi_hat": float("nan"),
+            "gene_names": gene_names or [],
+            "description": f"No π₄ data for TF {tf_name!r}.",
+        }
+
+    pi_vec = tf_rows["pi4_estimate"].dropna().tolist()
+    gene_ids = tf_rows["target_gene_id"].tolist()
+    pi_hat = sum(pi_vec)
+
+    return {
+        "method": "snp_binding_sites",
+        "tf_name": tf_name,
+        "gene_names": gene_ids,
+        "pi_vec": [round(p, 4) for p in pi_vec],
+        "pi_hat": round(pi_hat, 4),
+        "weights": pi_vec,
+        "mean_weighted_poly_rate": round(
+            float(tf_rows["weighted_polymorphism_rate"].mean()), 4
+        ),
+        "description": (
+            "π₄ estimated from IC-weighted SNP polymorphism at binding site positions. "
+            "π₄ = 1 − Σ (IC_weight[pos] × polymorphism_rate[pos])."
+        ),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Consensus estimator: combine all available methods
+# ---------------------------------------------------------------------------
+
+def estimate_pi_consensus(
+    tf_name: str,
+    gene_names: List[str],
+    m: int,
+    n: int,
+    observed_count: Optional[float] = None,
+) -> pd.DataFrame:
+    """
+    Run all available methods for a single TF and return a comparison DataFrame.
+
+    Columns: gene_family, pi_evidence, pi_mle, pi_snp_yvfl039c, pi_consensus_adj,
+             pi3_tfbs, pi2_seq, pi4_snp_sites, pi_all_mean, pi_range, n_methods
+
+    Methods 5/6/7 require pre-computed CSVs; missing data is filled with NaN.
+    """
+    k = len(gene_names)
+
+    ev_result = estimate_pi_from_evidence(gene_names)
+    if observed_count is None:
+        observed_count = expected_full(k, m, n)
+    mle_result = estimate_pi_from_mle(observed_count, m, n, gene_names)
+    snp_result = estimate_pi_from_snp(gene_names)
+    cons_result = estimate_pi_consensus_adjusted(gene_names)
+    pi3_result = estimate_pi_from_tfbs_conservation(tf_name, gene_names)
+    pi2_result = estimate_pi_from_sequence_homology(gene_names)
+    pi4_result = estimate_pi_from_snp_binding_sites(tf_name, gene_names)
+
+    def _safe_pi(result: Dict, idx: int) -> Optional[float]:
+        pv = result.get("pi_vec", [])
+        if pv and idx < len(pv):
+            v = pv[idx]
+            return v if v is not None else None
+        return None
+
+    rows = []
+    for i, gene in enumerate(gene_names):
+        pi_vals = {
+            "pi_evidence":      _safe_pi(ev_result, i),
+            "pi_mle":           _safe_pi(mle_result, i),
+            "pi_snp_yfl039c":   _safe_pi(snp_result, i),
+            "pi_consensus_adj": _safe_pi(cons_result, i),
+            "pi3_tfbs":         None,
+            "pi2_seq":          _safe_pi(pi2_result, i),
+            "pi4_snp_sites":    None,
+        }
+
+        # π₃ and π₄ return one value per TF→gene edge, not per gene_names index
+        if pi3_result.get("pi_vec"):
+            pi_vals["pi3_tfbs"] = float(np.mean(pi3_result["pi_vec"]))
+        if pi4_result.get("pi_vec"):
+            pi_vals["pi4_snp_sites"] = float(np.mean(pi4_result["pi_vec"]))
+
+        valid = [v for v in pi_vals.values() if v is not None and not np.isnan(v)]
+        row = {"gene_family": gene, **pi_vals}
+        row["pi_all_mean"] = round(float(np.mean(valid)), 4) if valid else None
+        row["pi_range"] = round(float(max(valid) - min(valid)), 4) if valid else None
+        row["n_methods"] = len(valid)
+        rows.append(row)
+
     return pd.DataFrame(rows)

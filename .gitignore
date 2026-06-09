@@ -1,0 +1,15 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Large data files
+y1000plus_data/processed/
+y1000plus_data/*.tar.gz
+y1000plus_data/*.zip
+
+# Environment
+.env
+*.egg-info/
+dist/
+build/

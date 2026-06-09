@@ -205,7 +205,7 @@ def main():
 
     # families
     p_fam = sub.add_parser("families", help="Show gene families")
-    p_fam.add_argument("--min-size", type=int, default=2)
+    p_fam.add_argument("--min-size", type=int, default=1)
     p_fam.add_argument("--limit", type=int, default=20)
 
     # binding

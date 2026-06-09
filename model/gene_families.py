@@ -60,36 +60,22 @@ def build_go_process_families(
     return families.sort_values("go_family_size", ascending=False).reset_index(drop=True)
 
 
-def build_tf_families(min_family_size: int = 2) -> pd.DataFrame:
-    """
-    Build gene families restricted to transcription factors.
-    Family = set of TFs sharing the same GO process term.
-
-    Returns DataFrame with:
-      go_id, family_size (= cᵢ), member_tfs, mean_evidence_score,
-      n_activators, n_repressors
-    """
+def _build_go_tf_families(go_list_col: str, min_family_size: int) -> pd.DataFrame:
+    """Group TFs by a parsed GO list column (tf_process_go_list or tf_function_go_list)."""
     tfs = load_transcription_factors()
-    tf_names = set(tfs["gene_name"])
-
-    # Explode process GO terms per TF
     rows = []
     for _, row in tfs.iterrows():
-        for go_id in row["tf_process_go_list"]:
-            rows.append(
-                {
-                    "gene_name": row["gene_name"],
-                    "go_id": go_id,
-                    "evidence_score": row["evidence_score"],
-                    "is_activator": row["is_activator"],
-                    "is_repressor": row["is_repressor"],
-                }
-            )
+        for go_id in row[go_list_col]:
+            rows.append({
+                "gene_name":      row["gene_name"],
+                "go_id":          go_id,
+                "evidence_score": row["evidence_score"],
+                "is_activator":   row["is_activator"],
+                "is_repressor":   row["is_repressor"],
+            })
     if not rows:
         return pd.DataFrame()
-
     exploded = pd.DataFrame(rows)
-
     families = (
         exploded.groupby("go_id")
         .agg(
@@ -103,6 +89,97 @@ def build_tf_families(min_family_size: int = 2) -> pd.DataFrame:
     )
     families = families[families["family_size"] >= min_family_size]
     return families.sort_values("family_size", ascending=False).reset_index(drop=True)
+
+
+def _build_component_tf_families(min_family_size: int) -> pd.DataFrame:
+    """Group TFs by GO Cellular Component annotations (from the full GO file)."""
+    tfs = load_transcription_factors()
+    tf_names = set(tfs["gene_name"].str.upper())
+    go_full = load_go_annotations_full()
+    # Keep only the GO ID and gene name from the full GO slice (drop its evidence_score
+    # to avoid a column conflict with the TF-level evidence_score added below).
+    df = go_full.loc[
+        (go_full["go_aspect"] == "C") &
+        (go_full["gene_name"].str.upper().isin(tf_names)),
+        ["go_id", "gene_name"],
+    ].copy()
+    df = df.merge(
+        tfs[["gene_name", "evidence_score", "is_activator", "is_repressor"]],
+        on="gene_name", how="left",
+    )
+    df["evidence_score"] = df["evidence_score"].fillna(0.10)
+    df["is_activator"]   = df["is_activator"].fillna(False)
+    df["is_repressor"]   = df["is_repressor"].fillna(False)
+    families = (
+        df.groupby("go_id")
+        .agg(
+            family_size=("gene_name", "nunique"),
+            member_tfs=("gene_name", lambda x: sorted(x.unique().tolist())),
+            mean_evidence_score=("evidence_score", "mean"),
+            n_activators=("is_activator", "sum"),
+            n_repressors=("is_repressor", "sum"),
+        )
+        .reset_index()
+    )
+    families = families[families["family_size"] >= min_family_size]
+    return families.sort_values("family_size", ascending=False).reset_index(drop=True)
+
+
+def _build_jaspar_tf_families(jaspar_col: str, min_family_size: int) -> pd.DataFrame:
+    """Group TFs by JASPAR binding-domain class or family (protein-sequence proxy)."""
+    from .jaspar_loader import load_jaspar_tfbs
+    tfs = load_transcription_factors()
+    jaspar = load_jaspar_tfbs()
+    merged = tfs.merge(
+        jaspar[["name", jaspar_col]].rename(columns={"name": "gene_name"}),
+        on="gene_name", how="inner",
+    )
+    merged = merged[merged[jaspar_col].str.strip() != ""]
+    if merged.empty:
+        return pd.DataFrame()
+    families = (
+        merged.groupby(jaspar_col)
+        .agg(
+            family_size=("gene_name", "nunique"),
+            member_tfs=("gene_name", lambda x: sorted(x.unique().tolist())),
+            mean_evidence_score=("evidence_score", "mean"),
+            n_activators=("is_activator", "sum"),
+            n_repressors=("is_repressor", "sum"),
+        )
+        .reset_index()
+        .rename(columns={jaspar_col: "go_id"})
+    )
+    families = families[families["family_size"] >= min_family_size]
+    return families.sort_values("family_size", ascending=False).reset_index(drop=True)
+
+
+def build_tf_families(min_family_size: int = 1, grouping: str = "GO_Process") -> pd.DataFrame:
+    """
+    Build gene families restricted to transcription factors.
+
+    grouping options:
+      'GO_Process'    — shared GO Biological Process term (default; paper Section 2)
+      'GO_Function'   — shared GO Molecular Function term (binding-type proxy)
+      'GO_Component'  — shared GO Cellular Component term (subcellular location)
+      'JASPAR_Class'  — JASPAR binding-domain class (protein-sequence similarity proxy)
+      'JASPAR_Family' — JASPAR binding-domain family (finer sequence grouping)
+
+    Returns DataFrame with columns:
+      go_id, family_size (= cᵢ), member_tfs, mean_evidence_score,
+      n_activators, n_repressors
+    """
+    if grouping == "GO_Process":
+        return _build_go_tf_families("tf_process_go_list", min_family_size)
+    elif grouping == "GO_Function":
+        return _build_go_tf_families("tf_function_go_list", min_family_size)
+    elif grouping == "GO_Component":
+        return _build_component_tf_families(min_family_size)
+    elif grouping == "JASPAR_Class":
+        return _build_jaspar_tf_families("tf_class", min_family_size)
+    elif grouping == "JASPAR_Family":
+        return _build_jaspar_tf_families("tf_family", min_family_size)
+    else:
+        raise ValueError(f"Unknown grouping method: {grouping!r}")
 
 
 # ---------------------------------------------------------------------------

@@ -167,3 +167,88 @@ def jaspar_summary() -> dict:
         "unique_tf_classes":   df["tf_class"].nunique(),
         "unique_tf_families":  df["tf_family"].nunique(),
     }
+
+
+# ---------------------------------------------------------------------------
+# JASPAR x YEASTRACT cross-reference
+# ---------------------------------------------------------------------------
+
+def build_jaspar_yeastract_crossref(save: bool = True) -> pd.DataFrame:
+    """
+    Cross-reference JASPAR 2024 CORE profiles against the 127 YEASTRACT TFs.
+
+    Match types:
+      'exact'  — case-insensitive name match
+      'fuzzy'  — SequenceMatcher ratio >= 0.75 (handles minor name variants)
+      'no_match' — no JASPAR profile found
+
+    Output columns:
+      yeastract_tf_name, jaspar_matrix_id, jaspar_tf_name, match_type,
+      motif_width, information_content_bits, pfm_A, pfm_C, pfm_G, pfm_T
+    """
+    import difflib
+    from .data_loader import YEASTRACT_TFS_SGD
+
+    jaspar = load_jaspar_tfbs()
+    jaspar_upper = {row["name"].upper(): row for _, row in jaspar.iterrows()}
+    jaspar_names = list(jaspar_upper.keys())
+
+    rows = []
+    for tf in sorted(YEASTRACT_TFS_SGD):
+        tf_up = tf.upper()
+
+        # 1. Exact match (case-insensitive)
+        if tf_up in jaspar_upper:
+            j = jaspar_upper[tf_up]
+            rows.append(_crossref_row(tf, j, "exact"))
+            continue
+
+        # 2. Fuzzy match
+        matches = difflib.get_close_matches(tf_up, jaspar_names, n=1, cutoff=0.75)
+        if matches:
+            j = jaspar_upper[matches[0]]
+            rows.append(_crossref_row(tf, j, "fuzzy"))
+            continue
+
+        # 3. No match
+        rows.append({
+            "yeastract_tf_name": tf,
+            "jaspar_matrix_id": "",
+            "jaspar_tf_name": "",
+            "match_type": "no_match",
+            "motif_width": None,
+            "information_content_bits": None,
+            "pfm_A": "",
+            "pfm_C": "",
+            "pfm_G": "",
+            "pfm_T": "",
+        })
+
+    df = pd.DataFrame(rows)
+    if save:
+        out = DATA_DIR / "jaspar_yeastract_crossref.csv"
+        df.to_csv(out, index=False)
+    return df
+
+
+def _crossref_row(yeastract_name: str, jaspar_row: pd.Series, match_type: str) -> dict:
+    return {
+        "yeastract_tf_name":       yeastract_name,
+        "jaspar_matrix_id":        jaspar_row["matrix_id"],
+        "jaspar_tf_name":          jaspar_row["name"],
+        "match_type":              match_type,
+        "motif_width":             jaspar_row["motif_width"],
+        "information_content_bits": jaspar_row["information_content_bits"],
+        "pfm_A":                   jaspar_row["pfm_A"],
+        "pfm_C":                   jaspar_row["pfm_C"],
+        "pfm_G":                   jaspar_row["pfm_G"],
+        "pfm_T":                   jaspar_row["pfm_T"],
+    }
+
+
+def load_jaspar_yeastract_crossref(force_rebuild: bool = False) -> pd.DataFrame:
+    """Load (or build) the JASPAR x YEASTRACT cross-reference table."""
+    out = DATA_DIR / "jaspar_yeastract_crossref.csv"
+    if not out.exists() or force_rebuild:
+        return build_jaspar_yeastract_crossref(save=True)
+    return pd.read_csv(out, dtype=str)

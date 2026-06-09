@@ -6,7 +6,7 @@ Implementation of the mathematical framework from:
 > Ashley Scruse, Jonathan Arnold, Robert Robinson
 > arXiv:2405.03148v1 · University of Georgia · May 2024
 
-Applied to *Saccharomyces cerevisiae* data from three curated sources: **179 transcription factors** drawn from [JASPAR 2024](https://jaspar.elixir.no/) (177 TFs with experimentally validated position frequency matrices), [YEASTRACT](https://www.yeastract.com/) (127 TFs with consensus binding sequences), and gene annotations from the [Saccharomyces Genome Database (SGD)](https://www.yeastgenome.org/).
+Applied to *Saccharomyces cerevisiae* using curated data from [SGD](https://www.yeastgenome.org/), [YEASTRACT](https://www.yeastract.com/), and [JASPAR 2024](https://jaspar.elixir.no/), and extended with cross-species analysis across **1,154 yeast genomes** from the [Y1000+ dataset](https://y1000plus.wei.wisc.edu/) (Opulente et al. 2024, *Science*).
 
 ---
 
@@ -25,102 +25,206 @@ python main.py tfs
 python main.py significance --k 2 --strategy largest
 ```
 
+The app opens at `http://localhost:8501`. Cross-species data (π₂, π₃, π₄) is generated automatically in the background on first launch — see [Y1000+ Pipeline](#y1000-pipeline) for details.
+
 ---
 
 ## What This Project Does
 
-Gene duplication is how genomes grow in complexity. When a gene duplicates, its regulatory relationships — which transcription factors bind to it and control its expression — may or may not be inherited by the new copy. The probability of that inheritance is **π** (pi).
+Gene duplication is how genomes grow in complexity. When a gene duplicates, its regulatory relationships — which transcription factors bind to it, and control its expression — may or may not be inherited by the new copy. The probability of that inheritance is **π** (pi).
 
-This project:
+This project estimates **π⃗ = (π₁, …, πₖ)**, the per-family inheritance probability vector, using seven complementary methods across two data tiers:
 
-1. **Identifies transcription factors (TFs)** in the yeast genome and characterises their binding sites and regulatory targets
-2. **Groups genes into families** based on shared GO Biological Process terms (operationalising the Scruse et al. duplication model)
-3. **Estimates π⃗ = (π₁, …, πₖ)** — the per-family inheritance probability vector — using three data-driven methods
-4. **Tests whether subnetwork motifs are significant** relative to the gene duplication null model
+**SGD-based methods** (run instantly, no extra data needed):
+1. Evidence-based: maps SGD experimental evidence codes to a π prior
+2. MLE: numerically inverts Theorem 4 given an observed motif count
+3. SNP divergence: uses sequence divergence at gene YFL039C as a proxy for link age
+4. Consensus-adjusted: adjusts π by YEASTRACT binding-sequence flexibility
 
----
-
-## Biological Questions Answered
-
-### What are transcription factor binding sites binding?
-TF binding sites (also called *cis-regulatory elements* or *TFBS*) are short DNA sequences in **gene promoter regions**. A TF protein binds its TFBS via a DNA-binding domain (GO:0003677, GO:0000981) and either activates or represses transcription of the downstream gene. When a TF gene duplicates, the question is whether the new copy retains the same TFBS in its targets' promoters — that retention probability is **πᵢ**.
-
-### Which transcription factor regulates which gene?
-Inferred from shared GO Biological Process terms: if a TF and a gene share a process annotation, the TF is a candidate regulator. 179 TFs (union of JASPAR 2024 and YEASTRACT) are mapped to 6,446 target genes across 120,000+ GO annotations.
-
-### What is the inheritance probability vector?
-Estimated three ways — see [Estimation Methods](#estimation-methods) below.
+**Y1000+ cross-species methods** (generated automatically in the background):
+5. **π₂ — Sequence homology**: pairwise protein identity between TF paralogs
+6. **π₃ — TFBS conservation**: fraction of 1,154 yeast genomes that retain a significant PWM hit upstream of the orthologous gene
+7. **π₄ — SNP at binding sites**: IC-weighted polymorphism rate at the exact binding site positions
 
 ---
 
 ## Mathematical Framework
 
-All functions are implemented in [model/scruse_math.py](model/scruse_math.py).
+All functions are in [model/scruse_math.py](model/scruse_math.py).
 
 | Result | Equation | What it gives you |
 |--------|----------|-------------------|
-| **Theorem 1** | `E[│M(n)│] = Γ(n+k)Γ(m) / [Γ(n)Γ(m+k)]` | Expected motif count under **Full Duplication** (π⃗ = 1) |
-| **Theorem 4** | `E[│M(n)│] = Γ(π̂+n)Γ(m) / [Γ(π̂+m)Γ(n)]` | Expected count under **Partial Duplication**; depends only on π̂ = Σπᵢ |
-| **Lemma 4** | `f(p,s) = Γ(p+s) / [Γ(s)Γ(p+1)]` | Expected single-gene motif instances given family size s and π = p |
-| **Theorem 6** | Inclusion-exclusion over all 2^k subsets | Second moment under **Binary Inheritance** (maximises variance, Theorem 5) |
-| **Corollary 2** | `Var = E[│M│²] − E[│M│]²` | Variance under Full Duplication |
-| **Corollary 16** | Variance under Binary Inheritance | Used to construct the significance test |
+| **Theorem 1** | `E[|M(n)|] = Γ(n+k)Γ(m) / [Γ(n)Γ(m+k)]` | Expected motif count under **Full Duplication** (π⃗ = 1) |
+| **Theorem 4** | `E[|M(n)|] = Γ(π̂+n)Γ(m) / [Γ(π̂+m)Γ(n)]` | Expected count under **Partial Duplication**; depends only on π̂ = Σπᵢ |
+| **Corollary 2** | `Var = E[|M|²] − E[|M|]²` | Variance under Full Duplication |
+| **Corollary 16** | Binary Inheritance variance | Drives the significance z-score |
 | **Theorem 8** | Pólya urn probability | Exact distribution of gene family sizes |
 
-**Growth rates** (from Theorem 4):
-- Full Duplication: `Θ(nᵏ)` — degree equals motif size k
-- Partial Duplication: `Θ(n^π̂)` — exponent equals total inheritance probability
+**Growth rates** (Theorem 4): Full Duplication → `Θ(nᵏ)`; Partial → `Θ(n^π̂)`.
 
 ---
 
-## Estimation Methods
+## The Seven Estimation Methods
 
-### Method 1 — Evidence-based
-Maps SGD evidence codes to a π prior. Experimental evidence → high π; automated annotation → low π.
+### Methods 1–4: SGD-based (instant)
 
-| Evidence Code | Meaning | π prior |
-|---------------|---------|---------|
-| IDA | Inferred from Direct Assay | 0.90 |
-| IMP | Inferred from Mutant Phenotype | 0.82 |
-| IGI | Inferred from Genetic Interaction | 0.72 |
-| IBA | Biological Aspect of Ancestor | 0.58 |
-| IEA | Inferred from Electronic Annotation | 0.30 |
-| ND  | No Data | 0.10 |
+| # | Name | Data source | Key idea |
+|---|------|-------------|----------|
+| 1 | Evidence-based | SGD evidence codes | IDA (direct assay) → π = 0.90; IEA (automated) → π = 0.30 |
+| 2 | MLE — Theorem 4 | Observed motif count | Numerically inverts `Γ(π̂+n)Γ(m)/[Γ(π̂+m)Γ(n)] = count` for π̂ |
+| 3 | SNP divergence | `sgd_YFL039C_snps.csv` | `πᵢ ≈ 1 − (pct_alt / 100)` across strains of gene YFL039C |
+| 4 | Consensus-adjusted | YEASTRACT consensus | More flexible IUPAC binding sequences → binding tolerates divergence → higher π |
 
-### Method 2 — MLE (Theorem 4 inversion)
-Given an observed motif count |M(n)|, numerically solves:
+### Methods 5–7: Y1000+ cross-species (auto-generated)
 
+| # | Name | Family definition | Formula |
+|---|------|-------------------|---------|
+| 5 | π₂ — Sequence homology | Protein identity clusters (30/50/80%) | `π₂ = pct_identity / 100` |
+| 6 | π₃ — TFBS conservation | Genes sharing a TF regulator | `π₃ = (genomes with significant PWM hit) / (genomes with ortholog)` |
+| 7 | π₄ — SNP at binding sites | Same as π₃ | `π₄ = 1 − Σ IC_weight[pos] × polymorphism_rate[pos]` |
+
+π₃ and π₄ use JASPAR 2024 position weight matrices (PWMs) to score 1,000 bp upstream promoter sequences across the Y1000+ species panel. IC-weighting in π₄ means that mutations at high-information-content (critical) positions count more heavily.
+
+---
+
+## Y1000+ Pipeline
+
+### Data
+
+Download the Y1000+ archives from [Figshare](https://figshare.com/articles/dataset/22802147) (or run `download_y1000plus.py`) and place them in `y1000plus_data/`:
+
+| Archive | Size | Contents |
+|---------|------|----------|
+| `y1000p_gff3_files.tar.gz` | 360 MB | GFF3 gene annotations for all 1,154 species |
+| `y1000p_pep_files.tar.gz` | 1.9 GB | Protein (peptide) sequences |
+| `y1000p_cds_files.tar.gz` | 2.7 GB | CDS nucleotide sequences |
+| `y1000p_genome_files.zip` | 4.4 GB | Genome FASTA assemblies (`.fas.gz` inside `.zip`) |
+
+The GFF3 archive is bulk-extracted to `y1000plus_data/processed/y1000p_gff3_files/` on first use. All other species files are extracted on-demand.
+
+### Auto-generation of π₂/π₃/π₄
+
+When you open the Streamlit app, a background thread automatically generates the three cross-species π CSV files if they do not yet exist. Progress is shown live in the **Y1000+ π Estimators** tab with per-step status pills, a progress bar, and a per-species counter that updates as each genome is processed. The app auto-refreshes every 5 seconds while generation is running.
+
+Generation runs in this order:
+
+| Step | Time (first run) | Time (subsequent) | Bottleneck |
+|------|-----------------|-------------------|------------|
+| **π₂** sequence homology | ~2 seconds | ~2 seconds | k-mer alignment of 8,001 TF pairs |
+| **π₃** TFBS conservation | 15–30 minutes | 3–5 minutes | First-run genome extraction from 4.4 GB ZIP |
+| **π₄** SNP at binding sites | 15–30 minutes | 3–5 minutes | Same genome extraction |
+
+The large range for π₃/π₄ on first run is because each species' genome FASTA must be decompressed from the 4.4 GB ZIP (doubly compressed: DEFLATE + gzip). Once extracted to `y1000plus_data/processed/genomes/`, all subsequent runs read from disk and are much faster.
+
+Results are cached as CSVs in `y1000plus_data/processed/`. Restarting the app resumes from the last completed step.
+
+### Monitoring and resetting generation
+
+**Check progress** from a second terminal at any time while the app is running:
+
+```bash
+python check_progress.py
 ```
-Γ(π̂+n)Γ(m) / [Γ(π̂+m)Γ(n)] = observed_count
+
+Output:
+```
+=======================================================
+  Y1000+ Generation Status
+=======================================================
+  [##########--------------------] 35%
+  Status  : running_pi3
+  Message : TFBS conservation: species 12/48 — lachancea_thermotolerans
+  Updated : 2026-06-08T14:35:02
+
+  Output CSVs:
+    pi2: done   (7,875 rows, 750 KB)
+    pi3: running
+    pi4: pending
+
+  Genomes cached : 12 / 48
+=======================================================
 ```
 
-for π̂, then distributes π̂ across families proportional to evidence weights.
+**Clean restart** — if generation stalls or you want to start over:
 
-### Method 3 — SNP divergence proxy
-Uses `sgd_YFL039C_inheritance_vectors.csv` as a demonstration. Higher sequence divergence from the reference strain → older regulatory link → less likely to be inherited:
+```bash
+# 1. Stop the Streamlit app (Ctrl+C in its terminal)
 
+# 2a. Reset state, keep cached genomes (faster next run):
+python reset_y1000_generation.py
+
+# 2b. Full reset including genome FASTAs (re-extracts everything from ZIP):
+python reset_y1000_generation.py --full
+
+# 3. Restart the app
+python -m streamlit run app.py
 ```
-πᵢ ≈ 1 − (pct_alt / 100)
-```
 
-This mirrors the paper's MITE/rice genome application (Section 9.2): greater MITE sequence divergence dates older regulatory links.
+The reset script removes the progress/lock files and all three output CSVs, but keeps the already-extracted genome FASTAs by default so the next run is significantly faster.
+
+### S. cerevisiae reference
+
+The Y1000+ dataset includes two annotation files for *S. cerevisiae* S288C:
+- `.sgd.gff3 / .sgd.pep` — curated SGD reference annotation (used by this pipeline)
+- `.final.gff3 / .final.pep` — BRAKER ab initio annotation (used for all other species)
+
+The SGD GFF3 uses `chrI/chrII/…` chromosome names while the genome FASTA uses NCBI accessions (`NC_001133/NC_001134/…`). The mapping is hardcoded in `model/promoter_extractor.SGD_CHR_MAP`.
+
+### Phylogenetic species subset
+
+π₃ and π₄ scan a curated 48-species subset (`REPRESENTATIVE_SUBSET` in `model/y1000plus_loader.py`) spanning all major Saccharomycotina clades: *Saccharomyces* sensu stricto, Lachancea, Kluyveromyces/Eremothecium, Candida/CTG clade, Pichia/Komagataella, Debaryomycetaceae, and deep outgroups. This balances phylogenetic coverage with compute time.
+
+Note: the Y1000+ archive uses strain-prefixed IDs for many species (e.g. `yHMPu5000034678_lachancea_thermotolerans_180604` rather than `lachancea_thermotolerans`). `REPRESENTATIVE_SUBSET` uses the exact archive IDs as they appear in the manifest.
+
+---
+
+## Gene Family Grouping
+
+Five methods available via the sidebar:
+
+| Method | Basis |
+|--------|-------|
+| GO Biological Process | Shared biological pathway (default; paper Section 2) |
+| GO Molecular Function | Shared molecular activity / binding-domain type |
+| GO Cellular Component | Shared subcellular location or complex |
+| JASPAR TF Class | DNA-binding domain architecture (12 classes, 177 TFs) |
+| JASPAR TF Family | Finer binding-domain subtype (17 families) |
+
+Each family starts as a singleton (minimum size = 1), consistent with Proposition 1. Model parameters: **m** = number of families, **n** = total genes, **d = n − m** = duplication events.
+
+For the Y1000+ estimators, families are defined differently:
+- **π₂**: genes clustered by protein identity at three thresholds (30%, 50%, 80%)
+- **π₃/π₄**: genes sharing the same TF regulator (= TF regulon = one family)
 
 ---
 
 ## Data Files
 
-All data lives in `sgd_yeast_data/sgd_yeast_data/`:
+### SGD / JASPAR / YEASTRACT (`sgd_yeast_data/sgd_yeast_data/`)
 
 | File | Rows | Contents |
 |------|------|----------|
-| `jaspar_yeast_tfbs_2024.csv` | 177 | JASPAR 2024 yeast TFs: PFMs, consensus sequences, IC scores, TF class/family |
-| `jaspar_yeast_pfm_long.csv` | 5,708 | Long-format PFM table: one row per (TF, position, nucleotide) |
-| `sgd_transcription_factors.csv` | 732 (179 used — union of JASPAR ∪ YEASTRACT) | TF names, GO terms, evidence codes, activator/repressor flags |
-| `sgd_go_annotations_full.csv` | ~120,000 | GO annotations for all 6,446 yeast genes |
+| `sgd_transcription_factors.csv` | 732 (179 used) | TF names, GO terms, evidence codes, activator/repressor flags |
+| `sgd_go_annotations_full.csv` | ~120,000 | GO annotations for 6,446 genes (all three GO aspects) |
 | `sgd_tf_go_annotations.csv` | ~1,942 | GO annotations specifically for TFs |
-| `sgd_chromosome_lengths.csv` | 16 | Chromosome lengths (12.07 Mb total genome) |
-| `sgd_YFL039C_inheritance_vectors.csv` | 11 | Per-strain SNP divergence for gene YFL039C |
+| `sgd_chromosome_lengths.csv` | 16 | Chromosome lengths (12.07 Mb total) |
+| `sgd_YFL039C_inheritance_vectors.csv` | 11 | Per-strain SNP divergence for YFL039C |
 | `sgd_YFL039C_snps.csv` | 9 | Individual SNP positions for YFL039C |
+| `jaspar_yeast_tfbs_2024.csv` | 177 | JASPAR 2024 yeast TFs: PFMs, IC scores, consensus sequences, TF class/family |
+| `jaspar_yeast_pfm_long.csv` | 5,708 | Long-format PFM table: one row per (TF, position, nucleotide) |
+| `jaspar_yeastract_crossref.csv` | 127 | JASPAR × YEASTRACT name cross-reference (115 exact, 6 fuzzy, 6 no-match) |
+| `yeastract_consensus.csv` | — | IUPAC consensus binding sequences for 127 YEASTRACT TFs |
+
+### Y1000+ processed outputs (`y1000plus_data/processed/`)
+
+| File | Contents |
+|------|----------|
+| `y1000plus_manifest.csv` | One row per (species, annotation_type): archive paths, species names, reference flag |
+| `promoters_Scerevisiae_S288C.fasta` | 1,000 bp upstream sequences for 6,579 S. cerevisiae genes |
+| `pi2_sequence_homology.csv` | Pairwise protein identity for all TF pairs; cluster labels at 30/50/80% |
+| `pi3_tfbs_conservation.csv` | Per TF→gene retention fraction across the species subset |
+| `pi3_pairwise_histogram.csv` | Per-family pairwise sharing statistics (π̂₃ family-level estimate) |
+| `pi4_snp_binding_sites.csv` | IC-weighted polymorphism rate and π₄ per TF→gene edge |
 
 ---
 
@@ -128,51 +232,81 @@ All data lives in `sgd_yeast_data/sgd_yeast_data/`:
 
 ```
 sgd_yeast_data/
+│
 ├── model/
-│   ├── scruse_math.py          Core math: Theorems 1-8, Lemmas, Corollaries
-│   ├── data_loader.py          CSV loading with evidence score mapping
-│   ├── tf_network.py           TF identification, binding sites, TF→gene network
-│   ├── gene_families.py        GO-based family grouping, m/n/d parameters
-│   ├── inheritance_estimator.py  Three π estimation methods + significance test
-│   ├── consensus_loader.py     YEASTRACT TF↔consensus sequences (127 TFs)
-│   ├── jaspar_loader.py        JASPAR 2024 PFMs, IC scores, π adjustment factors
-│   └── __init__.py
-├── sgd_yeast_data/             Raw CSV data files
-├── app.py                      Streamlit frontend (7 tabs)
-├── main.py                     Command-line interface
+│   ├── scruse_math.py            Core math: Theorems 1–8, Lemmas, Corollaries
+│   ├── data_loader.py            SGD CSV loading, evidence score mapping, TF sets
+│   ├── tf_network.py             TF identification, binding sites, TF→gene network
+│   ├── gene_families.py          Family grouping (5 methods), m/n/d parameters
+│   ├── inheritance_estimator.py  All 7 π estimation methods + significance tests
+│   ├── consensus_loader.py       YEASTRACT TF↔consensus sequences (127 TFs)
+│   ├── jaspar_loader.py          JASPAR 2024 PFMs, IC factors, YEASTRACT cross-ref
+│   │
+│   ├── y1000plus_loader.py       Manifest builder, on-demand archive extraction
+│   ├── promoter_extractor.py     1,000 bp upstream extraction (strand-aware, GFF3 parser)
+│   ├── pi2_sequence_homology.py  π₂: pairwise protein sequence identity
+│   ├── pi3_tfbs_conservation.py  π₃: PWM conservation scan across Y1000+ species
+│   ├── pi4_snp_binding.py        π₄: IC-weighted SNP rate at binding site positions
+│   └── y1000plus_generator.py    Background thread manager for auto-generating CSVs
+│
+├── assets/
+│   ├── subnetwork_motifs.png           Sidebar figure: four subnetwork motifs A–D
+│   ├── sgd_logo.png                    SGD logo (local fallback)
+│   ├── y1000plus_species_labeled.png   Phylogenetic species panel (add manually)
+│   ├── y1000plus_phylogeny.png         ML phylogeny with branch lengths (add manually)
+│   └── generate_figure1.py             Script to regenerate subnetwork_motifs.png
+│
+├── sgd_yeast_data/               SGD, JASPAR, YEASTRACT CSV data files
+├── y1000plus_data/               Y1000+ archives + processed outputs
+│   └── processed/                Extracted files and generated π CSVs
+│
+├── app.py                        Streamlit frontend (9 tabs)
+├── main.py                       Command-line interface
+├── check_progress.py             Check Y1000+ generation status from terminal
+├── reset_y1000_generation.py     Reset generation state for a clean restart
+├── download_y1000plus.py         Download Y1000+ archives from Figshare
 ├── requirements.txt
 └── README.md
 ```
 
 ---
 
-## Installation
-
-```bash
-pip install -r requirements.txt
-```
-
-Requirements: `streamlit`, `pandas`, `numpy`, `scipy`, `plotly`
-
----
-
-## Running the Frontend
+## App — Nine Tabs
 
 ```bash
 python -m streamlit run app.py
 ```
 
-Opens in your browser at `http://localhost:8501`. Seven tabs:
+| Tab | Contents |
+|-----|----------|
+| **Introduction** | Plain-language biology primer: what duplication is, what π means |
+| **Overview** | Card-by-card map of all tabs — what each does and what data it uses |
+| **Methodology** | Mathematical background: Theorems 1–8, Pólya urn, Full vs Partial Duplication |
+| **TF Explorer** | Browse 179 TFs; evidence codes, GO terms, JASPAR PFMs, YEASTRACT consensus sequences, regulatory targets |
+| **Gene Families** | Family-size distributions, m/n/d parameters, Dirichlet simulation — five grouping methods |
+| **π Estimator** | Select k families; estimate π⃗ by any of the four SGD-based methods; sensitivity plot |
+| **Motif Significance** | Z-scores, p-values, null distributions; predictive forward forecast of motif growth |
+| **Y1000+ π Estimators** | π₂/π₃/π₄ results with live generation status; retention histograms; π₃ vs π₁ scatter; phylogenetic context |
+| **Glossary & References** | Definitions of all model terms and full citations |
 
-| Tab | What it shows |
-|-----|---------------|
-| **Introduction** | Plain-language guide to the model, the biology, and how to navigate the app |
-| **Overview** | Dataset summary, key theorems, binding site explanation, chromosome lengths |
-| **TF Explorer** | Browse and filter all 179 TFs (JASPAR ∪ YEASTRACT); JASPAR PFM heatmap; binding site info; regulatory targets |
-| **Gene Families** | Family size distribution, Pólya urn parameters (m, n, d), Dirichlet simulation |
-| **π Estimator** | Select k families, estimate π⃗ with any of the three methods, sensitivity plot |
-| **Motif Significance** | Full significance test: Z-scores, p-values, null model distributions |
-| **Glossary & References** | Definitions of every model term and citations for the three primary papers |
+### Sidebar settings
+
+| Setting | Default | Effect |
+|---------|---------|--------|
+| Min. evidence score | 0.0 | Filter TFs below this quality threshold |
+| Max TFs for network | 100 | Cap on network construction (performance) |
+| Min family size | 1 | Families start as singletons; 1 is the paper-consistent minimum |
+| Family grouping | GO Biological Process | Switches all family-based calculations simultaneously |
+
+---
+
+## Utility Scripts
+
+| Script | Usage | Description |
+|--------|-------|-------------|
+| `check_progress.py` | `python check_progress.py` | Show live Y1000+ generation status: which CSVs are done, how many genomes are cached, current species being processed |
+| `reset_y1000_generation.py` | `python reset_y1000_generation.py` | Wipe generation state for a clean restart (keeps cached genomes); use `--full` to also delete genome FASTAs |
+| `download_y1000plus.py` | `python download_y1000plus.py` | Download all Y1000+ archives from Figshare into `y1000plus_data/` |
 
 ---
 
@@ -182,108 +316,59 @@ Opens in your browser at `http://localhost:8501`. Seven tabs:
 python main.py <command> [options]
 ```
 
-### Commands
+| Command | Example | Description |
+|---------|---------|-------------|
+| `summary` | `python main.py summary` | Dataset overview: TF counts, GO annotations, genome size |
+| `math-demo` | `python main.py math-demo` | Verify Theorems 1–8 with test values |
+| `tfs` | `python main.py tfs --dna-binding --min-evidence 0.7` | List TFs with filters |
+| `families` | `python main.py families --min-size 2 --limit 10` | Show gene families |
+| `binding` | `python main.py binding --tf GAL4` | Describe what a TF's binding sites regulate |
+| `estimate` | `python main.py estimate --genes GAL4 GCN4 --method evidence` | Estimate π⃗ |
+| `significance` | `python main.py significance --k 2 --strategy largest` | Full significance test |
 
-**`summary`** — Dataset overview
-```bash
-python main.py summary
-```
-
-**`math-demo`** — Verify the mathematical functions
-```bash
-python main.py math-demo
-```
-
-**`tfs`** — List transcription factors
-```bash
-python main.py tfs --limit 20 --dna-binding --min-evidence 0.5
-```
-
-**`families`** — Show gene families (GO process clusters)
-```bash
-python main.py families --min-size 3 --limit 10
-```
-
-**`binding`** — Describe what a TF's binding sites bind to
-```bash
-python main.py binding --tf ABF1
-python main.py binding --tf GAL4
-```
-
-**`estimate`** — Estimate π⃗ for a set of gene families
-```bash
-python main.py estimate --genes GO:0006355 GO:0045944 --method evidence
-python main.py estimate --genes GO:0006355 GO:0045944 --method mle --observed 500
-python main.py estimate --genes GO:0006355 GO:0045944 --method snp
-```
-
-**`significance`** — Run a full subnetwork motif significance test
-```bash
-# k=2 motif, 2 largest families, evidence-based π
-python main.py significance --k 2 --strategy largest
-
-# k=3 motif with a specific observed count
-python main.py significance --k 3 --strategy highest_ev --observed 1000
-```
-
+Options for `--method`: `evidence` | `mle` | `snp` | `consensus`
 Options for `--strategy`: `largest` | `highest_ev` | `balanced` | `random`
 
 ---
 
-## Example Output
+## Installation
 
+```bash
+pip install -r requirements.txt
 ```
-python main.py significance --k 2 --strategy largest
 
-  Motif size k = 2,  m = 8,  n = 856
-  Selected families: ['GO:0045944', 'GO:0006357']
-
-  Observed count:              41829
-  Expected (Full Dup):         10188.78      [Theorem 1]
-  Expected (Partial Dup):      16.75         [Theorem 4, π̂=0.60]
-  Variance (Full Dup):         165,769,603   [Corollary 2]
-  Variance (Binary Inherit.):  540.56        [Corollary 16]
-  Z-score  (Full Dup):         2.46          p = 0.014  *
-  Z-score  (Partial Dup):      1798.38       p < 0.001  ***
-
-  Interpretation:
-  The observed motif count is significantly over-represented relative to
-  the Partial Duplication null model (fold change 2497x, p ≈ 0).
-  This pattern is consistent with positive selection for this regulatory wiring.
-```
+Core requirements: `streamlit`, `pandas`, `numpy`, `scipy`, `plotly`, `pillow`, `biopython`, `requests`, `tqdm`
 
 ---
 
-## Key Concepts from the Paper
+## Key Concepts
 
-**Subnetwork motif** — A gene-family-specific regulatory substructure. Unlike network motifs (defined up to graph isomorphism), subnetwork motifs label each node with a specific gene family. Two topologically identical patterns involving different families are counted as *distinct* subnetwork motifs.
+**Subnetwork motif** — A labelled regulatory substructure. Two topologically identical patterns involving different gene families are distinct subnetwork motifs (unlike classical network motifs which are defined up to isomorphism).
 
-**Full Duplication (π⃗ = 1)** — Every duplication event deterministically inherits all regulatory links. `|M(n)| = c₁ × c₂ × … × cₖ` (Cartesian product of family sizes).
+**Full Duplication (π⃗ = 1)** — All regulatory links are deterministically inherited. `|M(n)| = c₁ × c₂ × … × cₖ`.
 
-**Partial Duplication (0 ≤ π⃗ ≤ 1)** — Each regulatory link is independently inherited with probability πᵢ per family. `|M(n)|` is a random subset of the Cartesian product.
+**Partial Duplication (0 ≤ π⃗ ≤ 1)** — Each link is inherited independently with probability πᵢ. Expected count follows Theorem 4.
 
-**Binary Inheritance** — A refinement of Partial Duplication in which all instances sharing a common gene either all inherit or all fail together. Theorem 5 proves this maximises `E[|M(n)|²]` over all refinements, making it the canonical choice for the variance calculation and significance test.
+**Binary Inheritance** — A refinement where all instances sharing a common gene inherit or fail together. Theorem 5 proves this maximises `E[|M(n)|²]`, making it the canonical variance model for the significance test.
 
-**Pólya urn connection** — The duplication process is a multi-colour Pólya urn (Theorem 8). Family proportions cᵢ/n converge almost surely to a Dirichlet(1,…,1) distribution.
+**Pólya urn** — The duplication process is a multi-colour Pólya urn (Theorem 8). Family proportions converge almost surely to a Dirichlet(1,…,1) distribution.
+
+**Retention fraction (π₃)** — For a TF→gene edge, the proportion of Y1000+ species that have a significant JASPAR PWM hit in the upstream promoter of the orthologous gene. Interpreted as an empirical estimate of the per-edge inheritance probability.
+
+**IC-weighted polymorphism (π₄)** — Positions in a binding site are weighted by their PWM information content. A mutation at a highly conserved, high-IC position contributes more to the polymorphism score than one at a degenerate position.
 
 ---
 
 ## References
 
-**[1]** Scruse, A., Arnold, J., & Robinson, R. (2024).
-*Counting Subnetworks Under Gene Duplication in Genetic Regulatory Networks.*
-arXiv:2405.03148v1. https://arxiv.org/abs/2405.03148
-— *Primary paper. Introduces the gene duplication and inheritance model, subnetwork motifs,
-and derives exact moments for Full and Partial Duplication.*
+**[1]** Scruse, A., Arnold, J., & Robinson, R. (2024). *Counting Subnetworks Under Gene Duplication in Genetic Regulatory Networks.* arXiv:2405.03148v1. https://arxiv.org/abs/2405.03148
 
-**[2]** Harbison, C. T., Gordon, D. B., Lee, T. I., et al. (2004).
-*Transcriptional regulatory code of a eukaryotic genome.*
-Nature, 431, 99–104. https://doi.org/10.1038/nature02800
-— *Genome-wide map of yeast transcriptional regulatory elements. Source for the TF binding
-site interactions that define regulatory edges in this app.*
+**[2]** Opulente, D. A., Langdon, Q. K., Buh, K. V., et al. (2024). *Genomic survey of 1,154 Saccharomycotina yeasts.* Science, 384, eadq2116. https://doi.org/10.1126/science.adq2116
+— *Y1000+ dataset: 1,154 yeast genome assemblies, GFF3 annotations, and protein sequences used for cross-species π estimation.*
 
-**[3]** Ren, B., Robert, F., Wyrick, J. J., et al. (2000).
-*Genome-Wide Location and Function of DNA Binding Proteins.*
-Science, 290, 2306–2309. https://doi.org/10.1126/science.290.5500.2306
-— *Introduced the ChIP-chip method for genome-wide protein–DNA interaction mapping.
-Foundational methodology for the experimental TF binding data used here.*
+**[3]** Castro-Mondragon, J. A., Riudavets-Puig, R., Rauluseviciute, I., et al. (2022). *JASPAR 2022: the 9th release of the open-access database of transcription factor binding profiles.* Nucleic Acids Research, 50(D1), D165–D173.
+— *JASPAR 2024 CORE yeast TF collection: 177 position frequency matrices used for PWM scanning in π₃ and π₄.*
+
+**[4]** Harbison, C. T., Gordon, D. B., Lee, T. I., et al. (2004). *Transcriptional regulatory code of a eukaryotic genome.* Nature, 431, 99–104. https://doi.org/10.1038/nature02800
+
+**[5]** Ren, B., Robert, F., Wyrick, J. J., et al. (2000). *Genome-Wide Location and Function of DNA Binding Proteins.* Science, 290, 2306–2309. https://doi.org/10.1126/science.290.5500.2306
