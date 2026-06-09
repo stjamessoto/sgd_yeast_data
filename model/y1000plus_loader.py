@@ -144,6 +144,14 @@ def build_manifest(save: bool = True) -> pd.DataFrame:
     """
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
+    for archive in (GFF3_TAR, PEP_TAR, CDS_TAR):
+        if not archive.exists():
+            raise FileNotFoundError(
+                f"Required data archive not found: {archive.name}\n"
+                "Download the Y1000+ dataset archives from https://y1000plus.wei.wisc.edu/ "
+                "and place them in the y1000plus_data/ directory."
+            )
+
     print("Reading GFF3 archive members...")
     gff3_m = _read_tar_members(GFF3_TAR, ".gff3")
     print(f"  {len(gff3_m)} GFF3 files")
@@ -222,6 +230,12 @@ def manifest_summary() -> dict:
 
 def _extract_from_tar(tar_path: Path, member_name: str) -> bytes:
     """Extract one member from a tar.gz archive and return its raw bytes."""
+    if not tar_path.exists():
+        raise FileNotFoundError(
+            f"Required data archive not found: {tar_path.name}\n"
+            "Download the Y1000+ dataset archives from https://y1000plus.wei.wisc.edu/ "
+            "and place them in the y1000plus_data/ directory."
+        )
     with tarfile.open(tar_path, "r:gz") as t:
         f = t.extractfile(member_name)
         if f is None:

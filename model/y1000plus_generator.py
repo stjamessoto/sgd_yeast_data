@@ -27,7 +27,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
-from .y1000plus_loader import PROCESSED_DIR
+from .y1000plus_loader import PROCESSED_DIR, GFF3_TAR, PEP_TAR
 from .pi3_tfbs_conservation import PI3_CSV
 from .pi2_sequence_homology import PI2_CSV
 from .pi4_snp_binding import PI4_CSV
@@ -109,6 +109,15 @@ def _generation_worker() -> None:
     """
     LOCK_FILE.touch()
     try:
+        missing = [p for p in (GFF3_TAR, PEP_TAR) if not p.exists()]
+        if missing:
+            names = ", ".join(p.name for p in missing)
+            raise FileNotFoundError(
+                f"Required Y1000+ data archives are missing: {names}. "
+                "Download them from https://y1000plus.wei.wisc.edu/ and place them "
+                "in y1000plus_data/."
+            )
+
         ready = csvs_ready()
 
         # ── π₂: protein sequence homology ────────────────────────────
