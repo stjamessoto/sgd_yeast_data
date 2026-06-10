@@ -1,13 +1,16 @@
 """
 app.py — Streamlit frontend for the Scruse et al. (2024) inheritance probability model.
 
-Tabs:
-  0. Introduction   — plain-language guide: what the model does and how to navigate the app
-  1. Overview       — dataset summary & paper overview
-  2. TF Explorer    — browse TFs, binding sites, consensus sequences, regulatory targets
-  3. Gene Families  — family size distribution and Pólya urn parameters
-  4. π Estimator    — estimate inheritance probability vector four ways
-  5. Motif Significance — test whether a k-motif is over/under-represented
+Tabs (left → right as they appear in the UI):
+  0. Overview            — app map; one-card summary of every tab
+  1. Introduction        — plain-language guide: what the model does and how to navigate the app
+  2. Methodology         — mathematical framework; Theorems 1–8, Pólya urn, Full vs Partial Duplication
+  3. TF Explorer         — browse TFs, binding sites, consensus sequences, regulatory targets
+  4. Gene Families       — family size distribution and Pólya urn parameters
+  5. π Estimator         — estimate inheritance probability vector four ways
+  6. Motif Significance  — test whether a k-motif is over/under-represented
+  7. Y1000+ π Estimators — cross-species π₂, π₃, π₄ from 1,154 yeast genomes
+  8. Glossary & References — term definitions and primary citations
 
 Run:  streamlit run app.py
 """
@@ -19,6 +22,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import sys
 import time
+import io
 from pathlib import Path
 
 # Allow imports from the project root
@@ -78,6 +82,49 @@ from model.scruse_math import (
     expected_bounds_partial,
     second_moment_binary,
 )
+
+# ---------------------------------------------------------------------------
+# Sequence logo renderer (logomaker + matplotlib → PNG bytes)
+# ---------------------------------------------------------------------------
+
+def _render_sequence_logo(pfm_df: "pd.DataFrame", tf_name: str, matrix_id: str) -> "io.BytesIO | None":
+    """Convert a long-format PFM dataframe into an IC sequence logo PNG."""
+    try:
+        import logomaker
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+
+        pfm_wide = (
+            pfm_df.pivot(index="position", columns="nucleotide", values="count")
+            .fillna(0)
+        )
+        # Ensure A C G T column order
+        for base in ["A", "C", "G", "T"]:
+            if base not in pfm_wide.columns:
+                pfm_wide[base] = 0.0
+        pfm_wide = pfm_wide[["A", "C", "G", "T"]]
+
+        freq = pfm_wide.div(pfm_wide.sum(axis=1), axis=0)
+        ic_matrix = logomaker.transform_matrix(freq, from_type="probability", to_type="information")
+
+        width = max(5, len(ic_matrix) * 0.55)
+        fig, ax = plt.subplots(figsize=(width, 2.2))
+        logomaker.Logo(ic_matrix, ax=ax, color_scheme="classic", show_spines=False)
+        ax.set_xlabel("Position", fontsize=9)
+        ax.set_ylabel("Bits", fontsize=9)
+        ax.tick_params(labelsize=8)
+        fig.suptitle(f"{tf_name}  ·  {matrix_id}", fontsize=9, y=1.02)
+        fig.tight_layout()
+
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", dpi=130, bbox_inches="tight")
+        plt.close(fig)
+        buf.seek(0)
+        return buf
+    except Exception:
+        return None
+
 
 # ---------------------------------------------------------------------------
 # Y1000+ background generation — fires once per server start
@@ -351,9 +398,9 @@ with st.sidebar:
 # Tabs
 # ---------------------------------------------------------------------------
 
-tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
-    "📘 Introduction",
+tab1, tab0, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
     "📋 Overview",
+    "📘 Introduction",
     "📊 Methodology",
     "🔬 TF Explorer",
     "👨‍👩‍👧 Gene Families",
@@ -376,11 +423,13 @@ with tab0:
     st.markdown("""
     This app implements a mathematical model for studying **how gene regulatory networks
     (GRNs) evolve after gene duplication** in brewer's yeast (*Saccharomyces cerevisiae*).
-    It draws on **179 transcription factors** from three curated sources:
+    It draws on **179 transcription factors** from four curated sources:
     [JASPAR 2024](https://jaspar.elixir.no/) (177 TFs with experimentally validated
     position frequency matrices), [YEASTRACT](https://www.yeastract.com/) (127 curated TFs
-    with consensus binding sequences), and gene annotations from the
-    [Saccharomyces Genome Database (SGD)](https://www.yeastgenome.org/).
+    with consensus binding sequences), gene annotations from the
+    [Saccharomyces Genome Database (SGD)](https://www.yeastgenome.org/), and cross-species
+    conservation data from [Y1000+](https://doi.org/10.1016/j.cell.2023.11.016)
+    (1,154 yeast genome assemblies used to estimate π₂, π₃, and π₄).
     """)
 
     st.divider()
@@ -463,6 +512,10 @@ with tab0:
          "π₂ (protein sequence identity), π₃ (TFBS conservation via PWM scanning), "
          "π₄ (IC-weighted SNP rate at binding site positions). "
          "Data is generated automatically in the background on first launch."),
+        ("📖", "Glossary & References",
+         "Definitions of all mathematical terms (π, m, n, d, k-motif, Pólya urn, …) "
+         "and full citations for the paper, datasets, and databases. "
+         "Good reference if you encounter unfamiliar notation anywhere in the app."),
     ]
 
     for i in range(0, len(_htabs), 2):
@@ -893,6 +946,21 @@ with tab3:
                     )
                     fig_pfm.update_layout(height=220, margin=dict(t=40, b=10))
                     st.plotly_chart(fig_pfm, use_container_width=True)
+
+                    # Sequence logo (information-content representation)
+                    logo_buf = _render_sequence_logo(
+                        pfm_df,
+                        tf_choice,
+                        binding_info["jaspar_matrix_id"],
+                    )
+                    if logo_buf:
+                        st.markdown("**Sequence Logo** — letter height = information content (bits)")
+                        st.image(logo_buf, use_container_width=True)
+                        st.caption(
+                            "Classic colour scheme: A = green · C = blue · G = gold · T = red. "
+                            "Total column height = IC at that position (max 2 bits). "
+                            "Tall, single-letter columns are highly specific; short mixed columns are degenerate."
+                        )
 
             # YEASTRACT consensus table (collapsed by default)
             if binding_info.get("has_yeastract_consensus"):
@@ -1356,17 +1424,21 @@ links are inherited through gene duplication.
         "changes with the inheritance probability estimate."
     )
     sens_df = pi_sensitivity(m4, n4, k4, pi_hat_range=(0.01, float(k4)), steps=60)
+    sens_df["upper_2sd"] = sens_df["expected"] + 2 * sens_df["std"]
+    sens_df["lower_2sd"] = (sens_df["expected"] - 2 * sens_df["std"]).clip(lower=0)
+
     fig_sens = go.Figure()
+    # ±2σ band (Corollary 9 / Theorem 6 variance) — drawn first so line sits on top
+    fig_sens.add_trace(go.Scatter(
+        x=pd.concat([sens_df["pi_hat"], sens_df["pi_hat"].iloc[::-1]]),
+        y=pd.concat([sens_df["upper_2sd"], sens_df["lower_2sd"].iloc[::-1]]),
+        fill="toself", fillcolor="rgba(31,119,180,0.20)",
+        line=dict(color="rgba(31,119,180,0.45)", width=1),
+        name="±2σ prediction interval (Theorem 6)",
+    ))
     fig_sens.add_trace(go.Scatter(
         x=sens_df["pi_hat"], y=sens_df["expected"],
         name="E[|M(n)|]", line=dict(color="#1f77b4", width=2),
-    ))
-    fig_sens.add_trace(go.Scatter(
-        x=pd.concat([sens_df["pi_hat"], sens_df["pi_hat"].iloc[::-1]]),
-        y=pd.concat([sens_df["upper_bound"], sens_df["lower_bound"].iloc[::-1]]),
-        fill="toself", fillcolor="rgba(31,119,180,0.15)",
-        line=dict(color="rgba(0,0,0,0)"),
-        name="Corollary 9 bounds",
     ))
     if "All three" not in method4:
         pi_hat4 = sum(pi_vec4)
@@ -1382,6 +1454,50 @@ links are inherited through gene duplication.
         height=320, margin=dict(t=20, b=30),
     )
     st.plotly_chart(fig_sens, use_container_width=True)
+
+    with st.expander("🔍 What do these sensitivity results mean?"):
+        st.markdown("""
+**Reading the sensitivity curve:**
+
+The chart shows how the expected motif count E[|M(n)|] changes as the total inheritance
+probability π̂ = Σπᵢ varies from near zero to its maximum (k). The red star marks your
+current estimate.
+
+**Key reference points:**
+
+| π̂ value | Meaning |
+|---------|---------|
+| **π̂ → 0** | Near-zero inheritance — almost no regulatory links survive duplication. The motif count stays flat (constant) regardless of network size. |
+| **0 < π̂ < k** | Partial Duplication — motif count grows as Θ(n^π̂). Each unit increase in π̂ raises the growth exponent by one. |
+| **π̂ = k** | Full Duplication — all links are perfectly inherited. Maximum possible motif count; grows as Θ(nᵏ). |
+
+**What the shaded band means:**
+
+The shaded region is a **±2σ prediction interval** derived from the Binary Inheritance
+variance (Theorem 6) — the approximate range within which an observed motif count should
+fall ~95% of the time under the model at each π̂. If your observed count (plotted as the
+red star) falls *outside* this band, the data is inconsistent with that π̂ value at the
+5% level.
+
+Note: this band is *not* the same as **Corollary 9**, which gives tight multiplicative
+bounds on the *expected value* E[|M(n)|] itself (within a few percent of the mean when
+n ≥ 2k²). Those bounds are mathematically precise but so narrow they are visually
+indistinguishable from the curve. The ±2σ band shown here is wider and more useful for
+judging whether an observed count is surprising — it reflects natural sampling variability
+around the mean, not uncertainty in the asymptotic approximation.
+
+**Biological significance:**
+
+- A **steep curve** (large slope at your π̂) means small changes in inheritance probability
+  produce large changes in motif count — the model is highly sensitive at this operating
+  point. Even modest relaxation of selective pressure on binding sites would substantially
+  reduce regulatory structure.
+- A **flat curve** means the motif count is robust to uncertainty in π̂ — useful when your
+  π̂ estimate carries some uncertainty.
+- The **gap between Full and Partial Duplication** trajectories quantifies how much
+  regulatory structure is *lost* relative to the maximum-inheritance scenario. A large gap
+  indicates significant regulatory rewiring has occurred since duplication.
+""")
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -1555,6 +1671,41 @@ in the GRN relative to the gene duplication null model (Scruse et al. Sections 4
                               color_continuous_scale="Blues", aspect="auto")
             fig_f.update_layout(height=320, margin=dict(t=50, b=20))
             st.plotly_chart(fig_f, use_container_width=True)
+
+            with st.expander("🔍 What do these results mean?"):
+                st.markdown(f"""
+**Interpreting the significance test output:**
+
+**Z-scores** measure how many standard deviations the observed motif count
+({obs5:,}) falls from the expected count under each null model.
+A Z-score above +2 means the motif is significantly *over-represented*;
+below −2 means it is significantly *under-represented*.
+
+| Significance code | p-value threshold | Interpretation |
+|---|---|---|
+| `***` | p < 0.001 | Very strong evidence against the null model |
+| `**` | p < 0.01 | Strong evidence |
+| `*` | p < 0.05 | Moderate evidence |
+| `ns` | p ≥ 0.05 | No significant departure from null |
+
+**Full Duplication null (Theorem 1):**
+Expected {result5['expected_full']:,.2f} motifs if π = 1 (every regulatory link
+perfectly inherited). Z = {result5['z_full']} ({result5['sig_full']}).
+{"The observed count is **above** the Full Duplication expectation — more motifs than even perfect inheritance predicts, suggesting this pattern is actively selected for." if obs5 > result5['expected_full'] else "The observed count is **below** the Full Duplication expectation — some regulatory links have been lost or the motif is under negative selection."}
+
+**Partial Duplication null (Theorem 4, π̂ = {result5['pi_hat']}):**
+Expected {result5['expected_partial']:,.2f} motifs under the estimated inheritance rate.
+Z = {result5['z_partial']} ({result5['sig_partial']}).
+{"The observed count is **consistent** with Partial Duplication at this π̂ — the model explains the data well." if abs(float(result5['z_partial'])) < 2 else "The observed count **departs significantly** from the Partial Duplication expectation — reconsider the π̂ estimate or check whether this motif class follows the duplication model."}
+
+**Variance Decomposition:**
+The Full Duplication standard deviation (σ = {result5['std_full']:.2f}) gives the
+±2σ band shown in the chart. The Binary Inheritance standard deviation
+(σ = {result5['std_binary']:.2f}) provides a conservative upper bound on variance under
+any Partial Duplication refinement (Theorem 5).
+
+**Bottom line:** {result5['interpretation']}
+""")
 
             with st.expander("📋 Full result JSON"):
                 st.json(result5)
@@ -2085,21 +2236,21 @@ The Scruse et al. formulas are expressed in terms of *n*, so the model output
         """)
 
     with st.expander("Partial Duplication"):
-        st.markdown(r"""
+        st.markdown("""
 The general inheritance model in which **regulatory links are inherited stochastically**
-at each duplication step, controlled by the vector $\vec{\pi}$ = (π₁, …, πₖ).
+at each duplication step, controlled by the vector $\\vec{\\pi}$ = (π₁, …, πₖ).
 
 At each step, if a gene in family *i* is duplicated (1 ≤ i ≤ k), each existing motif
 instance that includes that gene produces a new instance with probability πᵢ.
 
 Key result (**Theorem 4**):
 
-`E[|M(n)|; m, n, π⃗, k] = Γ(π̂+n)Γ(m) / [Γ(π̂+m)Γ(n)]`
+`E[|M(n)|; m, n, π, k] = Γ(π̂+n)Γ(m) / [Γ(π̂+m)Γ(n)]`
 
-where π̂ = π₁ + … + πₖ. The expected count depends on $\vec{\pi}$ only through the scalar π̂,
+where π̂ = π₁ + … + πₖ. The expected count depends on $\\vec{\\pi}$ only through the scalar π̂,
 which determines the polynomial growth rate Θ(n^π̂).
 
-Full Duplication ($\vec{\pi}$ = $\vec{1}$, π̂ = k) is a special case.
+Full Duplication ($\\vec{\\pi}$ = **1**, π̂ = k) is a special case.
         """)
 
     with st.expander("PFM — Position Frequency Matrix"):
@@ -2138,7 +2289,7 @@ function of π̂ for fixed *m*, *n*, and *k*.
         """)
 
     with st.expander("Pólya Urn Model"):
-        st.markdown(r"""
+        st.markdown("""
 A classical probability model for reinforcement processes. An urn contains balls of
 different colours; at each step, one ball is drawn at random, and a new ball of the
 same colour is added.
@@ -2152,7 +2303,7 @@ The gene duplication process is equivalent to a Pólya urn where:
 
 **Theorem 8** gives the exact probability:
 
-`P[X⃗ = t⃗ | s⃗] = C(n−m; t₁,…,tω) × (m−1)! / (n−1)! × Π(sⱼ+tⱼ−1)! / (sⱼ−1)!`
+P[$\\vec{X}$ = $\\vec{t}$ | $\\vec{s}$] = C(n−m; t₁,…,tω) × (m−1)! / (n−1)! × Π(sⱼ+tⱼ−1)! / (sⱼ−1)!
 
 Family proportions cᵢ/n converge almost surely to a **Dirichlet(1,…,1)** distribution
 as n → ∞, giving the model its exact probabilistic grounding. This also connects it to

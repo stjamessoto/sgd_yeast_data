@@ -54,13 +54,13 @@ All functions are in [model/scruse_math.py](model/scruse_math.py).
 
 | Result | Equation | What it gives you |
 |--------|----------|-------------------|
-| **Theorem 1** | `E[|M(n)|] = Γ(n+k)Γ(m) / [Γ(n)Γ(m+k)]` | Expected motif count under **Full Duplication** (π⃗ = 1) |
-| **Theorem 4** | `E[|M(n)|] = Γ(π̂+n)Γ(m) / [Γ(π̂+m)Γ(n)]` | Expected count under **Partial Duplication**; depends only on π̂ = Σπᵢ |
-| **Corollary 2** | `Var = E[|M|²] − E[|M|]²` | Variance under Full Duplication |
+| **Theorem 1** | E[&#124;M(n)&#124;] = Γ(n+k)Γ(m) / [Γ(n)Γ(m+k)] | Expected motif count under **Full Duplication** (π⃗ = 1) |
+| **Theorem 4** | E[&#124;M(n)&#124;] = Γ(π̂+n)Γ(m) / [Γ(π̂+m)Γ(n)] | Expected count under **Partial Duplication**; depends only on π̂ = Σπᵢ |
+| **Corollary 2** | Var = E[&#124;M&#124;²] − E[&#124;M&#124;]² | Variance under Full Duplication |
 | **Corollary 16** | Binary Inheritance variance | Drives the significance z-score |
 | **Theorem 8** | Pólya urn probability | Exact distribution of gene family sizes |
 
-**Growth rates** (Theorem 4): Full Duplication → `Θ(nᵏ)`; Partial → `Θ(n^π̂)`.
+**Growth rates** (Theorem 4): Full Duplication → Θ(n^k) ; Partial → Θ(n^π̂).
 
 ---
 
@@ -279,10 +279,10 @@ python -m streamlit run app.py
 
 | Tab | Contents |
 |-----|----------|
-| **Introduction** | Plain-language biology primer: what duplication is, what π means |
 | **Overview** | Card-by-card map of all tabs — what each does and what data it uses |
+| **Introduction** | Plain-language biology primer: what duplication is, what π means |
 | **Methodology** | Mathematical background: Theorems 1–8, Pólya urn, Full vs Partial Duplication |
-| **TF Explorer** | Browse 179 TFs; evidence codes, GO terms, JASPAR PFMs, YEASTRACT consensus sequences, regulatory targets |
+| **TF Explorer** | Browse 179 TFs; evidence codes, GO terms, JASPAR PFMs, YEASTRACT consensus sequences, sequence logos, regulatory targets |
 | **Gene Families** | Family-size distributions, m/n/d parameters, Dirichlet simulation — five grouping methods |
 | **π Estimator** | Select k families; estimate π⃗ by any of the four SGD-based methods; sensitivity plot |
 | **Motif Significance** | Z-scores, p-values, null distributions; predictive forward forecast of motif growth |
