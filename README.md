@@ -27,6 +27,8 @@ python main.py significance --k 2 --strategy largest
 
 The app opens at `http://localhost:8501`. Cross-species data (π₂, π₃, π₄) is generated automatically in the background on first launch — see [Y1000+ Pipeline](#y1000-pipeline) for details.
 
+> **Note:** Utility scripts have moved to `scripts/`. Use `python scripts/utils/check_progress.py`, `python scripts/utils/reset_y1000_generation.py`, and `python scripts/data/download_y1000plus.py` instead of the root-level paths shown in older docs.
+
 ---
 
 ## What This Project Does
@@ -96,6 +98,7 @@ Download the Y1000+ archives from [Figshare](https://figshare.com/articles/datas
 | Archive | Size | Contents |
 |---------|------|----------|
 | `y1000p_gff3_files.tar.gz` | 360 MB | GFF3 gene annotations for all 1,154 species |
+| `y1000p_gtf_files.tar.gz` | — | GTF gene annotations (alternative annotation format) |
 | `y1000p_pep_files.tar.gz` | 1.9 GB | Protein (peptide) sequences |
 | `y1000p_cds_files.tar.gz` | 2.7 GB | CDS nucleotide sequences |
 | `y1000p_genome_files.zip` | 4.4 GB | Genome FASTA assemblies (`.fas.gz` inside `.zip`) |
@@ -123,7 +126,7 @@ Results are cached as CSVs in `y1000plus_data/processed/`. Restarting the app re
 **Check progress** from a second terminal at any time while the app is running:
 
 ```bash
-python check_progress.py
+python scripts/utils/check_progress.py
 ```
 
 Output:
@@ -151,10 +154,10 @@ Output:
 # 1. Stop the Streamlit app (Ctrl+C in its terminal)
 
 # 2a. Reset state, keep cached genomes (faster next run):
-python reset_y1000_generation.py
+python scripts/utils/reset_y1000_generation.py
 
 # 2b. Full reset including genome FASTAs (re-extracts everything from ZIP):
-python reset_y1000_generation.py --full
+python scripts/utils/reset_y1000_generation.py --full
 
 # 3. Restart the app
 python -m streamlit run app.py
@@ -252,19 +255,31 @@ sgd_yeast_data/
 ├── assets/
 │   ├── subnetwork_motifs.png           Sidebar figure: four subnetwork motifs A–D
 │   ├── sgd_logo.png                    SGD logo (local fallback)
-│   ├── y1000plus_species_labeled.png   Phylogenetic species panel (add manually)
-│   ├── y1000plus_phylogeny.png         ML phylogeny with branch lengths (add manually)
+│   ├── y1000plus_species_labeled.png   Phylogenetic species panel
+│   ├── y1000plus_phylogeny.png         ML phylogeny with branch lengths
 │   └── generate_figure1.py             Script to regenerate subnetwork_motifs.png
+│
+├── scripts/
+│   ├── analysis/
+│   │   ├── _check_consensus.py         Dev: inspect YEASTRACT/JASPAR consensus agreement
+│   │   ├── _generate_doc.py            Dev: auto-generate documentation snippets
+│   │   └── _get_estimates.py           Dev: batch π estimation across TF families
+│   ├── data/
+│   │   ├── download_y1000plus.py       Download Y1000+ archives from Figshare
+│   │   └── fetch_jaspar_yeast.py       Fetch/refresh JASPAR 2024 yeast PFMs
+│   └── utils/
+│       ├── check_progress.py           Check Y1000+ generation status from terminal
+│       ├── reset_y1000_generation.py   Reset generation state for a clean restart
+│       └── _inspect_yeastract.py       Dev: inspect YEASTRACT binding-sequence data
 │
 ├── sgd_yeast_data/               SGD, JASPAR, YEASTRACT CSV data files
 ├── y1000plus_data/               Y1000+ archives + processed outputs
 │   └── processed/                Extracted files and generated π CSVs
+│       ├── gff3/                 Extracted per-species GFF3 annotation files
+│       └── pep/                  Extracted per-species peptide FASTA files
 │
 ├── app.py                        Streamlit frontend (9 tabs)
 ├── main.py                       Command-line interface
-├── check_progress.py             Check Y1000+ generation status from terminal
-├── reset_y1000_generation.py     Reset generation state for a clean restart
-├── download_y1000plus.py         Download Y1000+ archives from Figshare
 ├── requirements.txt
 └── README.md
 ```
@@ -304,9 +319,10 @@ python -m streamlit run app.py
 
 | Script | Usage | Description |
 |--------|-------|-------------|
-| `check_progress.py` | `python check_progress.py` | Show live Y1000+ generation status: which CSVs are done, how many genomes are cached, current species being processed |
-| `reset_y1000_generation.py` | `python reset_y1000_generation.py` | Wipe generation state for a clean restart (keeps cached genomes); use `--full` to also delete genome FASTAs |
-| `download_y1000plus.py` | `python download_y1000plus.py` | Download all Y1000+ archives from Figshare into `y1000plus_data/` |
+| `scripts/utils/check_progress.py` | `python scripts/utils/check_progress.py` | Show live Y1000+ generation status: which CSVs are done, how many genomes are cached, current species being processed |
+| `scripts/utils/reset_y1000_generation.py` | `python scripts/utils/reset_y1000_generation.py` | Wipe generation state for a clean restart (keeps cached genomes); use `--full` to also delete genome FASTAs |
+| `scripts/data/download_y1000plus.py` | `python scripts/data/download_y1000plus.py` | Download all Y1000+ archives from Figshare into `y1000plus_data/` |
+| `scripts/data/fetch_jaspar_yeast.py` | `python scripts/data/fetch_jaspar_yeast.py` | Fetch/refresh JASPAR 2024 yeast TF PFMs and write to `sgd_yeast_data/` |
 
 ---
 
