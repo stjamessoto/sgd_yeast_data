@@ -7,8 +7,8 @@ SGD-based methods (existing):
   Method 1 — Evidence-based (from sgd_transcription_factors.csv)
     π_i = f(evidence_quality_i) using the EVIDENCE_QUALITY map.
 
-  Method 2 — MLE from observed counts (Theorem 4 inversion)
-    Numerically inverts Theorem 4 given observed motif count.
+  Method 2 — Moment Estimation from observed counts (Theorem 4 inversion)
+    Sets E[|M(n)|] = observed count and solves for π̂ (Method of Moments).
 
   Method 3 — SNP-divergence proxy (from sgd_YFL039C_inheritance_vectors.csv)
     π_i ≈ 1 − (pct_alt_i / 100) for gene YFL039C strains.
@@ -115,10 +115,15 @@ def estimate_pi_from_mle(
     weights: Optional[List[float]] = None,
 ) -> Dict:
     """
-    Method 2: MLE — invert Theorem 4 to find π̂, then allocate across families.
+    Method 2: Moment Estimation — invert Theorem 4 to find π̂, then allocate across families.
 
-    Solves: Γ(π̂+n)Γ(m) / [Γ(π̂+m)Γ(n)] = observed_count
-    for π̂, then sets πᵢ = π̂ · wᵢ / Σwᵢ (weights default to uniform).
+    Sets the theoretical first moment equal to the observed count (Method of Moments):
+      Γ(π̂+n)Γ(m) / [Γ(π̂+m)Γ(n)] = observed_count
+    and solves for π̂, then sets πᵢ = π̂ · wᵢ / Σwᵢ (weights default to uniform).
+
+    Note: this is NOT MLE (which requires maximising the full likelihood of |M(n)|).
+    It is Method of Moments: match the theoretical expectation (Theorem 4) to the
+    observed count.
 
     Parameters
     ----------
@@ -143,9 +148,9 @@ def estimate_pi_from_mle(
 
     if pi_hat_est is None:
         pi_hat_est = float(k) * 0.5  # fallback
-        note = "MLE did not converge; using uniform fallback π̂ = k/2."
+        note = "Moment Estimation did not converge; using uniform fallback π̂ = k/2."
     else:
-        note = f"MLE converged: π̂ = {pi_hat_est:.4f}"
+        note = f"Moment Estimation converged: π̂ = {pi_hat_est:.4f}"
 
     pi_vec = allocate_pi(pi_hat_est, weights)
 
@@ -160,8 +165,8 @@ def estimate_pi_from_mle(
         "n": n,
         "note": note,
         "description": (
-            "π̂ estimated by inverting Theorem 4 (MLE). "
-            "Solves Γ(π̂+n)Γ(m)/[Γ(π̂+m)Γ(n)] = observed count. "
+            "π̂ estimated by Method of Moments (Theorem 4 inversion). "
+            "Sets E[|M(n)|] = observed count and solves for π̂. "
             "Individual πᵢ allocated proportional to evidence weights."
         ),
     }

@@ -334,7 +334,7 @@ def polya_probability(
 
 
 # ---------------------------------------------------------------------------
-# MLE: Invert Theorem 4 to estimate π̂ from observed count
+# Method of Moments: Invert Theorem 4 to estimate π̂ from observed count
 # ---------------------------------------------------------------------------
 
 def estimate_pi_hat(
@@ -344,7 +344,10 @@ def estimate_pi_hat(
     pi_bounds: Tuple[float, float] = (1e-6, 50.0),
 ) -> Optional[float]:
     """
-    MLE inversion of Theorem 4: find π̂ such that E[|M(n)|] = observed_count.
+    Method of Moments inversion of Theorem 4: find π̂ such that E[|M(n)|] = observed_count.
+    Sets the theoretical first moment (Theorem 4 expected value) equal to the observed count
+    and solves numerically — this is Method of Moments, not MLE (which would require
+    maximising the full likelihood over the distribution of |M(n)|).
     Uses Brent's method on the monotone function expected_partial(·, m, n).
     Returns None if no solution exists in pi_bounds.
     """

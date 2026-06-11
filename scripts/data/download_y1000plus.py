@@ -1,8 +1,9 @@
 import requests
 import os
+from pathlib import Path
 
 ARTICLE_ID = 22802147
-OUT_DIR = "y1000plus_data"
+OUT_DIR = str(Path(__file__).parent.parent.parent / "y1000plus_data")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # Get file list from public API

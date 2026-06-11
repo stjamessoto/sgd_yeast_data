@@ -11,7 +11,7 @@ Usage:
     pip install requests
     python fetch_jaspar_yeast.py
 
-Outputs are placed in the same directory as the script.
+Outputs are placed in the project root directory.
 """
 
 import requests
@@ -21,6 +21,7 @@ import time
 import math
 import os
 import sys
+from pathlib import Path
 
 # ── Configuration ──────────────────────────────────────────────────────────────
 BASE_URL   = "https://jaspar.elixir.no/api/v1"
@@ -30,8 +31,9 @@ PAGE_SIZE  = 200
 HEADERS    = {"User-Agent": "jaspar-yeast-fetcher/1.0", "Accept": "application/json"}
 DELAY      = 0.25             # seconds between detail requests (be polite)
 
-OUT_WIDE   = "jaspar_yeast_tfbs_2024.csv"
-OUT_LONG   = "jaspar_yeast_pfm_long.csv"
+_ROOT    = Path(__file__).parent.parent.parent
+OUT_WIDE = str(_ROOT / "jaspar_yeast_tfbs_2024.csv")
+OUT_LONG = str(_ROOT / "jaspar_yeast_pfm_long.csv")
 # ───────────────────────────────────────────────────────────────────────────────
 
 

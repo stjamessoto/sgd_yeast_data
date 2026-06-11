@@ -1,3 +1,7 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
 from model.consensus_loader import load_consensus_data, load_tf_consensus_stats, list_yeastract_tfs
 
 df = load_consensus_data(force_refresh=True)

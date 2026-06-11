@@ -14,7 +14,7 @@ import sys
 import shutil
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from model.y1000plus_loader import PROCESSED_DIR
 from model.y1000plus_generator import PROGRESS_FILE, LOCK_FILE

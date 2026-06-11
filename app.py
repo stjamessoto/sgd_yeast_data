@@ -502,7 +502,7 @@ with tab0:
         ("🎲", "π Estimator",
          "Select k families to form a subnetwork motif and estimate the inheritance "
          "probability vector π⃗ using four SGD-based methods: evidence codes, "
-         "MLE via Theorem 4, SNP divergence at YFL039C, or YEASTRACT binding flexibility."),
+         "Moment Estimation via Theorem 4, SNP divergence at YFL039C, or YEASTRACT binding flexibility."),
         ("🧪", "Motif Significance",
          "Full significance test: compare the observed motif count against Full and "
          "Partial Duplication null models. Outputs Z-scores, p-values, and a "
@@ -634,7 +634,7 @@ with tab1:
             "name": "π Estimator",
             "what": (
                 "Estimates the inheritance-probability vector π⃗ four ways using only SGD "
-                "data: (1) evidence-code quality, (2) MLE via Theorem 4, "
+                "data: (1) evidence-code quality, (2) Moment Estimation via Theorem 4, "
                 "(3) SNP divergence at YFL039C, (4) YEASTRACT consensus-sequence flexibility."
             ),
             "data": (
@@ -1156,7 +1156,7 @@ links are inherited through gene duplication.
 | # | Method | Data source | What it measures | How π is derived |
 |---|--------|------------|-----------------|-----------------|
 | 1 | **Evidence-based** | SGD evidence codes (IDA, IMP, IEA, …) | Quality of experimental evidence that a TF's regulatory role is real and stable | Each evidence code is assigned a weight (0.10–0.90) based on experimental rigor. The per-family π is the mean weight across all TFs in that family, adjusted for DNA-binding status and activator role. This is the *prior* — before looking at any network data. |
-| 2 | **MLE via Theorem 4** | Observed motif count &#124;M(n)&#124; | How much of the observed regulatory structure is explained by inherited duplication links | Theorem 4 gives E[&#124;M(n)&#124;] = Γ(π̂+n)Γ(m)/[Γ(π̂+m)Γ(n)]. We invert this numerically: find the π̂ that makes the expected count equal the observed count, then distribute uniformly across k families. This is a *data-fitted* estimate. |
+| 2 | **Moment Estimation (Theorem 4)** | Observed motif count &#124;M(n)&#124; | How much of the observed regulatory structure is explained by inherited duplication links | Theorem 4 gives E[&#124;M(n)&#124;] = Γ(π̂+n)Γ(m)/[Γ(π̂+m)Γ(n)]. We invert this numerically: find the π̂ that makes the expected count equal the observed count — this is Method of Moments, equating the theoretical first moment to the observed value — then distribute uniformly across k families. This is a *data-fitted* estimate. |
 | 3 | **SNP divergence proxy** | YFL039C per-strain SNP data (SGD) | How much a specific well-studied TF target has diverged across yeast strains | π₃ ≈ 1 − (fraction of SNP positions in the TF binding site). The YFL039C locus is used as a calibrated example because it has dense strain-level variation data. This gives a *sequence-level* estimate grounded in observed genetic variation. |
 | 4 | **Consensus-adjusted (YEASTRACT)** | YEASTRACT IUPAC consensus sequences | Binding specificity of each TF — how degenerate or precise its binding sequence is | TFs with many, highly ambiguous IUPAC consensus sequences have lower π (their sites are easy to lose or gain after duplication). TFs with few, specific consensus sequences have higher π. The IUPAC ambiguity fraction is inverted and calibrated to the 0–1 π range. |
 
@@ -1220,7 +1220,7 @@ links are inherited through gene duplication.
         "Estimation method",
         [
             "Method 1: Evidence-based (Lemma 4 / evidence codes)",
-            "Method 2: MLE Theorem 4 inversion",
+            "Method 2: Moment Estimation (Theorem 4)",
             "Method 3: SNP divergence proxy (YFL039C example)",
             "Method 4: Consensus-adjusted (YEASTRACT)",
             "All four — comparison table",
@@ -1256,7 +1256,7 @@ links are inherited through gene duplication.
         )
         result4 = estimate_pi_from_mle(obs_input, m4, n4, gene_names4)
         st.markdown('<div class="result-box">', unsafe_allow_html=True)
-        st.markdown(f"**Method 2 — MLE (Theorem 4 inversion)**")
+        st.markdown(f"**Method 2 — Moment Estimation (Theorem 4)**")
         st.markdown(result4.get("note", ""))
         st.markdown(f"pi_hat = {result4['pi_hat']:.4f}   |   {result4['description'][:100]}...")
         st.markdown('</div>', unsafe_allow_html=True)
@@ -1267,8 +1267,8 @@ links are inherited through gene duplication.
             except Exception as _e:
                 st.warning(f"Could not generate interpretation: {_e}")
             st.caption(
-                "**Method 2 note:** The MLE inverts Theorem 4 — it finds the π̂ that makes "
-                "the model's expected count match the count you entered above. If the observed "
+                "**Method 2 note:** Moment Estimation inverts Theorem 4 — it finds the π̂ that makes "
+                "the model's expected count (the theoretical first moment) match the count you entered above. If the observed "
                 "count is at or near the Full Duplication bound, π̂ will be close to k "
                 "(nearly full inheritance). If well below, π̂ < k indicates partial loss."
             )
@@ -1374,7 +1374,7 @@ links are inherited through gene duplication.
 **Reading the comparison table and chart:**
 
 - **Agreement across methods** (bars at similar height) means the estimate is robust — the biological and sequence-level evidence are mutually consistent.
-- **Disagreement** (e.g., Method 1 high but Method 3 low) suggests the evidence-code quality and the actual genetic divergence tell different stories. Method 2 (MLE) is the most data-driven; Method 1 is the most conservative prior.
+- **Disagreement** (e.g., Method 1 high but Method 3 low) suggests the evidence-code quality and the actual genetic divergence tell different stories. Method 2 (Moment Estimation) is the most data-driven; Method 1 is the most conservative prior.
 - The **ensemble mean** (red bar) averages all four methods and is the recommended value to carry into the Motif Significance tab.
 """)
 
@@ -1382,7 +1382,7 @@ links are inherited through gene duplication.
         x = comp_df["gene_family"]
         for col, name, colour in [
             ("pi_evidence", "Evidence-based", "#1f77b4"),
-            ("pi_mle", "MLE (Theorem 4)", "#ff7f0e"),
+            ("pi_mle", "Moment Estimation (Theorem 4)", "#ff7f0e"),
             ("pi_snp", "SNP divergence", "#2ca02c"),
             ("pi_consensus", "Consensus-adjusted", "#9467bd"),
             ("pi_ensemble", "Ensemble mean", "#d62728"),
@@ -1539,7 +1539,7 @@ in the GRN relative to the gene duplication null model (Scruse et al. Sections 4
         with col5c:
             pi_method5 = st.selectbox(
                 "π estimation method",
-                ["Evidence-based", "MLE (Theorem 4)", "SNP proxy", "Manual"],
+                ["Evidence-based", "Moment Estimation (Theorem 4)", "SNP proxy", "Manual"],
                 key="pm5",
             )
 
@@ -1555,7 +1555,7 @@ in the GRN relative to the gene duplication null model (Scruse et al. Sections 4
         if pi_method5 == "Evidence-based":
             pi_res5 = estimate_pi_from_evidence(gene_names5)
             pi_vec5 = pi_res5["pi_vec"]
-        elif pi_method5 == "MLE (Theorem 4)":
+        elif pi_method5 == "Moment Estimation (Theorem 4)":
             pi_res5 = estimate_pi_from_mle(float(obs_full5), m5, n5, gene_names5)
             pi_vec5 = pi_res5["pi_vec"]
         elif pi_method5 == "SNP proxy":
@@ -1777,7 +1777,7 @@ further gene duplication events.
         with pc3:
             pi_method_p = st.selectbox(
                 "π estimation method",
-                ["Evidence-based", "MLE (Theorem 4)", "Manual"],
+                ["Evidence-based", "Moment Estimation (Theorem 4)", "Manual"],
                 key="pm_pred",
             )
 
@@ -1788,7 +1788,7 @@ further gene duplication events.
         if pi_method_p == "Evidence-based":
             pi_res_p = estimate_pi_from_evidence(gene_names_p)
             pi_vec_p = pi_res_p["pi_vec"]
-        elif pi_method_p == "MLE (Theorem 4)":
+        elif pi_method_p == "Moment Estimation (Theorem 4)":
             pi_res_p = estimate_pi_from_mle(float(obs_full_p), m_p, n_p, gene_names_p)
             pi_vec_p = pi_res_p["pi_vec"]
         else:
@@ -2161,7 +2161,7 @@ The vector **$\\vec{\\pi}$ = (π₁, …, πₖ)** characterises the inheritance
 across its *k* gene families. The model shows (Theorem 4) that the expected motif count
 depends on $\\vec{\\pi}$ only through the scalar **π̂ = Σπᵢ**.
 
-In this app, π is estimated from SGD evidence codes, MLE on observed counts, SNP
+In this app, π is estimated from SGD evidence codes, Moment Estimation on observed counts, SNP
 divergence proxies, or YEASTRACT consensus binding data.
         """)
 

@@ -8,7 +8,7 @@ Run from the project root to see the current Y1000+ generation status.
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from model.y1000plus_generator import get_status, csvs_ready
 from model.y1000plus_loader import PROCESSED_DIR
