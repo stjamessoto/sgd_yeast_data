@@ -3,22 +3,31 @@ pi3_tfbs_conservation.py
 Estimates π₃: regulatory inheritance probability from TFBS conservation
 across the Y1000+ 1,154-species panel (Opulente et al. 2024).
 
-Algorithm (per TF):
+Algorithm (per TF, v2 — ortholog-anchored):
   1. Scan S. cerevisiae S288C promoters with the TF's JASPAR PWM to identify
-     target genes (significant hit at p < 1e-4).
-  2. For each target gene, find its ortholog in each Y1000+ species by scanning
-     that species' promoters with the same PWM.  The 'scan-all' approach is used:
-     the ortholog is the gene whose promoter has the best PWM score, subject to
-     the same significance threshold.
-  3. retention_fraction for that TF→gene edge =
-       (# genomes with ortholog AND significant hit) / (# genomes with ortholog)
+     target genes (significant hit at p < 1e-4, SCORE_THRESHOLD = 6.0).
+  2. For each species in the representative subset:
+     a. Extract all promoters (GFF3 + genome FASTA).
+     b. Load the species proteome and find the best-matching protein for
+        each S. cerevisiae target gene via k-mer vote counting
+        (see model/ortholog_finder.py).
+     c. "Retained" for that TF→gene edge = the ortholog's promoter has a
+        significant PWM hit.  If no confident ortholog is found the species
+        is excluded from that gene's denominator (neither counted as
+        retained nor not-retained).
+  3. retention_fraction = (species with hit) / (species with confident ortholog)
   4. π̂₃ for the TF = mean retention_fraction across all its target genes.
-  5. Family definition: genes sharing the same TF as a regulator form one family.
+
+Why this matters:
+  The previous (v1) approach asked "does ANY promoter in the species have a
+  hit?" and credited ALL target genes if yes.  Because TF binding motifs are
+  short and degenerate, nearly every genome has at least one random match,
+  inflating retention fractions to near 1.0.  Anchoring to the specific
+  ortholog promoter removes this bias.
 
 PWM scoring (FIMO-style log-odds):
   score(seq, pwm, pos) = Σ pwm[nuc][pos] over motif width positions
-  p-value approximated from the score distribution (max-score method):
-    p ≈ exp(-score) clipped to [0, 1], thresholded at SCORE_THRESHOLD.
+  Thresholded at SCORE_THRESHOLD = 6.0 (≈ p-value 1e-4 for typical motifs).
 
 Key outputs (saved to y1000plus_data/processed/):
   pi3_tfbs_conservation.csv — one row per (TF, target_gene)
@@ -48,9 +57,12 @@ from .y1000plus_loader import (
     PROCESSED_DIR,
     get_gff3_path,
     get_genome_fasta_path,
+    get_pep_path,
     get_representative_subset,
     load_manifest,
+    scerevisiae_pep_path,
 )
+from .ortholog_finder import find_orthologs, load_species_proteins
 
 PI3_CSV = PROCESSED_DIR / "pi3_tfbs_conservation.csv"
 PI3_PAIRWISE_CSV = PROCESSED_DIR / "pi3_pairwise_histogram.csv"
@@ -179,7 +191,7 @@ def best_score(seq: str, pwm: np.ndarray) -> float:
 
 
 # ---------------------------------------------------------------------------
-# Step 1 & 2: Scan S. cerevisiae promoters to build binding map
+# Step 1: Scan S. cerevisiae promoters to build binding map
 # ---------------------------------------------------------------------------
 
 def scan_scerevisiae(
@@ -215,70 +227,37 @@ def scan_scerevisiae(
 
 
 # ---------------------------------------------------------------------------
-# Step 3: Conservation scan across species subset
-# ---------------------------------------------------------------------------
-
-def scan_species_for_genes(
-    assembly_id: str,
-    annotation_type: str,
-    pwm: np.ndarray,
-    target_gene_ids: set[str],
-) -> dict[str, bool]:
-    """
-    For one species, scan all promoters and return which S. cerevisiae gene IDs
-    have a homologous promoter with a significant PWM hit.
-
-    The 'ortholog' identification is purely scan-based: we return True for the
-    target gene if ANY promoter in this species has a score >= threshold.
-    This is a conservative proxy — a species 'retains' the TF→gene link if it
-    has at least one gene with a significant binding site for this TF.
-
-    Returns {target_gene_id: True/False} — True means 'retained'.
-    """
-    try:
-        gff3 = get_gff3_path(assembly_id, annotation_type)
-        fasta = get_genome_fasta_path(assembly_id)
-        prom_df = extract_promoters(gff3_path=gff3, fasta_path=fasta)
-    except Exception as e:
-        warnings.warn(f"Failed to extract promoters for {assembly_id}: {e}")
-        return {}
-
-    # Count total genes with a significant hit (species-level retention)
-    n_hits_in_species = sum(
-        1 for _, r in prom_df.iterrows()
-        if has_significant_hit(r["sequence"], pwm)
-    )
-
-    # We approximate: if the TF has any hits in this species, assign 'retained'
-    # to all target genes (because we lack one-to-one ortholog mapping).
-    # A future improvement: use BLASTP to identify true 1-to-1 orthologs.
-    has_any_hit = n_hits_in_species > 0
-    return {gid: has_any_hit for gid in target_gene_ids}
-
-
-# ---------------------------------------------------------------------------
-# Main estimator
+# Main estimator — single TF
 # ---------------------------------------------------------------------------
 
 def estimate_pi3_for_tf(
     tf_name: str,
     species_subset: Optional[list[str]] = None,
     promoter_df: Optional[pd.DataFrame] = None,
+    sc_pep: Optional[dict[str, str]] = None,
     verbose: bool = False,
 ) -> pd.DataFrame:
     """
     Estimate π₃ for all target genes of one TF.
 
+    Ortholog-anchored: for each species, only the promoter of the gene with
+    the highest protein-sequence similarity to the S. cerevisiae target gene
+    is checked.  Species where no confident ortholog is found are excluded
+    from the denominator.
+
     Parameters
     ----------
     tf_name       : YEASTRACT TF name (e.g. 'GAL4', 'GCN4').
-    species_subset: List of assembly_ids to scan. Defaults to REPRESENTATIVE_SUBSET.
-    promoter_df   : Pre-computed S. cerevisiae promoter DataFrame (reuse across TFs).
+    species_subset: List of assembly_ids to scan.  Defaults to
+                    REPRESENTATIVE_SUBSET.
+    promoter_df   : Pre-computed S. cerevisiae promoter DataFrame (reuse).
+    sc_pep        : Pre-loaded S. cerevisiae proteins {gene_id → seq}.
     verbose       : Print progress.
 
     Returns DataFrame with columns:
       tf_name, jaspar_matrix_id, target_gene_id, target_gene_name,
-      n_genomes_scanned, n_genomes_with_hit, retention_fraction, pi3_estimate
+      n_genomes_scanned, n_genomes_with_hit, n_orthologs_found,
+      retention_fraction, pi3_estimate
     """
     pwm = build_pwm_from_crossref(tf_name)
     if pwm is None:
@@ -301,12 +280,17 @@ def estimate_pi3_for_tf(
     if verbose:
         print(f"  {tf_name} ({matrix_id}): {len(target_ids)} S.cer. targets")
 
-    # Load manifest for annotation types
+    # Load S. cerevisiae proteins if not supplied
+    if sc_pep is None:
+        sc_pep = load_species_proteins(scerevisiae_pep_path())
+
+    sc_seqs = {gid: sc_pep[gid] for gid in target_ids if gid in sc_pep}
+
     manifest = load_manifest()
     if species_subset is None:
         species_subset = get_representative_subset()
 
-    # Step 2 & 3: For each species in subset, check if any promoter has a hit
+    # Accumulators
     hit_counts: dict[str, int] = {gid: 0 for gid in target_ids}
     scan_counts: dict[str, int] = {gid: 0 for gid in target_ids}
 
@@ -314,7 +298,6 @@ def estimate_pi3_for_tf(
         rows = manifest[manifest["assembly_id"] == aid]
         if rows.empty:
             continue
-        # Prefer 'sgd' annotation for S. cerevisiae, 'final' for others
         preferred = rows[rows["annotation_type"] == "sgd"]
         if preferred.empty:
             preferred = rows[rows["annotation_type"] == "final"]
@@ -322,10 +305,44 @@ def estimate_pi3_for_tf(
             continue
         ann_type = preferred.iloc[0]["annotation_type"]
 
-        retained = scan_species_for_genes(aid, ann_type, pwm, target_ids)
+        # Extract promoters for this species
+        try:
+            gff3 = get_gff3_path(aid, ann_type)
+            fasta = get_genome_fasta_path(aid)
+            sp_prom = extract_promoters(gff3_path=gff3, fasta_path=fasta)
+        except Exception as e:
+            warnings.warn(f"Failed to extract promoters for {aid}: {e}")
+            continue
+
+        if sp_prom.empty:
+            continue
+
+        # Load species proteins and find orthologs
+        try:
+            pep_path = get_pep_path(aid, ann_type)
+            sp_pep = load_species_proteins(pep_path)
+        except Exception as e:
+            warnings.warn(f"Failed to load proteins for {aid}: {e}")
+            sp_pep = {}
+
+        ortholog_map = find_orthologs(sc_seqs, sp_pep, target_ids)
+
+        # Build gene_id → promoter sequence index for this species
+        sp_prom_seqs: dict[str, str] = {
+            row["gene_id"]: row["sequence"]
+            for _, row in sp_prom.iterrows()
+        }
+
+        # Check ortholog's promoter
         for gid in target_ids:
+            orth_id = ortholog_map.get(gid)
+            if orth_id is None:
+                continue   # no ortholog — exclude this species from denominator
+            orth_seq = sp_prom_seqs.get(orth_id)
+            if orth_seq is None:
+                continue   # ortholog found but no promoter extracted — skip
             scan_counts[gid] += 1
-            if retained.get(gid, False):
+            if has_significant_hit(orth_seq, pwm):
                 hit_counts[gid] += 1
 
     # Build output rows
@@ -343,6 +360,7 @@ def estimate_pi3_for_tf(
                 "target_gene_name": gene_meta.get(gid, ""),
                 "n_genomes_scanned": n_scan,
                 "n_genomes_with_hit": n_hit,
+                "n_orthologs_found": n_scan,   # == species where ortholog was located
                 "retention_fraction": round(ret, 4) if not np.isnan(ret) else None,
                 "pi3_estimate": round(ret, 4) if not np.isnan(ret) else None,
             }
@@ -350,6 +368,10 @@ def estimate_pi3_for_tf(
 
     return pd.DataFrame(output_rows)
 
+
+# ---------------------------------------------------------------------------
+# Main estimator — all TFs (species-first loop for efficiency)
+# ---------------------------------------------------------------------------
 
 def estimate_pi3_all_tfs(
     tf_list: Optional[list[str]] = None,
@@ -361,19 +383,23 @@ def estimate_pi3_all_tfs(
     """
     Run π₃ estimation for all (or specified) YEASTRACT TFs.
 
-    Uses a species-first loop: each species' promoters are extracted and
-    parsed exactly once, then all TF PWMs are scanned against that batch.
+    Uses a species-first loop: each species' promoters and proteins are
+    loaded exactly once, then all TF PWMs are scanned against that batch.
     This reduces genome reads from (n_tfs × n_species) to n_species.
 
-    The scanner is fully vectorized via numpy sliding_window_view — no
-    Python-level position loops.
+    Retention is computed per target gene relative to its best-matching
+    ortholog in each species (see ortholog_finder.py).  Species where no
+    confident ortholog is found for a given gene are excluded from that
+    gene's denominator.
 
     Parameters
     ----------
-    tf_list      : TFs to process (default: all 127 YEASTRACT TFs with JASPAR PWMs).
+    tf_list       : TFs to process (default: all YEASTRACT TFs with JASPAR PWMs).
     species_subset: Species to scan (default: REPRESENTATIVE_SUBSET ~50 species).
-    save         : Whether to write pi3_tfbs_conservation.csv.
-    verbose      : Print per-TF and per-species progress.
+    save          : Whether to write pi3_tfbs_conservation.csv.
+    verbose       : Print per-TF and per-species progress.
+    progress_callback: Optional callable(phase, done, total, label) for
+                       UI progress bars.
     """
     from .data_loader import YEASTRACT_TFS_SGD
 
@@ -384,9 +410,8 @@ def estimate_pi3_all_tfs(
     if verbose:
         print("Pre-computing S. cerevisiae promoters...")
     sc_prom = extract_scerevisiae_promoters(save_fasta=False)
-    sc_seqs = sc_prom["sequence"].tolist()
 
-    # ── Step 2: Build all PWMs and find S. cerevisiae targets ─────────
+    # ── Step 2: Build all PWMs, scan S. cerevisiae, load S.cer. proteins ─
     if verbose:
         print(f"Building PWMs and scanning S. cerevisiae for {len(tf_list)} TFs...")
 
@@ -394,7 +419,7 @@ def estimate_pi3_all_tfs(
     n_tfs_total = len(tf_list)
 
     pwm_cache: dict[str, np.ndarray] = {}
-    sc_targets: dict[str, dict] = {}  # tf -> {gene_id: gene_name}
+    sc_targets: dict[str, dict] = {}   # tf → {gene_id: gene_name}
     matrix_ids: dict[str, str] = {}
 
     for tf_i, tf in enumerate(tf_list):
@@ -409,7 +434,6 @@ def estimate_pi3_all_tfs(
         xr = xref[xref["yeastract_tf_name"].str.upper() == tf.upper()]
         matrix_ids[tf] = xr.iloc[0]["jaspar_matrix_id"] if not xr.empty else ""
 
-        # Fire callback every 10 TFs so the progress display doesn't freeze
         if progress_callback and (tf_i + 1) % 10 == 0:
             progress_callback("prescan", tf_i + 1, n_tfs_total, tf)
 
@@ -417,7 +441,20 @@ def estimate_pi3_all_tfs(
     if verbose:
         print(f"  {len(active_tfs)} TFs have PWMs and S. cerevisiae hits")
 
-    # Accumulate hit counts: hit_counts[tf][gene_id], scan_counts[tf][gene_id]
+    # Collect every unique target gene ID across all TFs
+    all_target_ids: set[str] = set()
+    for tf in active_tfs:
+        all_target_ids.update(sc_targets[tf].keys())
+
+    # Load S. cerevisiae proteins (needed for ortholog mapping)
+    if verbose:
+        print("Loading S. cerevisiae reference proteins...")
+    sc_pep_all = load_species_proteins(scerevisiae_pep_path())
+    sc_seqs = {gid: sc_pep_all[gid] for gid in all_target_ids if gid in sc_pep_all}
+    if verbose:
+        print(f"  {len(sc_seqs)}/{len(all_target_ids)} target genes have protein sequences")
+
+    # Accumulators: hit_counts[tf][gene_id], scan_counts[tf][gene_id]
     hit_counts: dict[str, dict[str, int]] = {
         tf: {gid: 0 for gid in sc_targets[tf]} for tf in active_tfs
     }
@@ -431,7 +468,7 @@ def estimate_pi3_all_tfs(
     manifest = load_manifest()
 
     if verbose:
-        print(f"Scanning {len(species_subset)} species (extract once, scan all TFs)...")
+        print(f"Scanning {len(species_subset)} species (ortholog-anchored)...")
 
     for sp_i, aid in enumerate(species_subset):
         rows = manifest[manifest["assembly_id"] == aid]
@@ -444,7 +481,7 @@ def estimate_pi3_all_tfs(
             continue
         ann_type = preferred.iloc[0]["annotation_type"]
 
-        # Extract + parse promoters for this species (one disk read)
+        # Extract promoters for this species (one disk read)
         try:
             gff3 = get_gff3_path(aid, ann_type)
             fasta = get_genome_fasta_path(aid)
@@ -454,29 +491,50 @@ def estimate_pi3_all_tfs(
             continue
 
         if sp_prom.empty:
-            warnings.warn(f"No promoters extracted for {aid} (FASTA/GFF3 name mismatch?) — skipping")
+            warnings.warn(
+                f"No promoters extracted for {aid} "
+                "(FASTA/GFF3 name mismatch?) — skipping"
+            )
             continue
 
-        sp_seqs = sp_prom["sequence"].tolist()
         if verbose:
-            print(f"  [{sp_i+1}/{len(species_subset)}] {aid}: {len(sp_seqs)} promoters")
+            print(
+                f"  [{sp_i+1}/{len(species_subset)}] {aid}: "
+                f"{len(sp_prom)} promoters"
+            )
         if progress_callback:
             progress_callback("species", sp_i + 1, len(species_subset), aid)
 
-        # Pre-convert all species promoters to idx arrays once
-        sp_idx = [_seq_to_idx(s) for s in sp_seqs]
+        # Load species proteins and find orthologs for all target genes
+        try:
+            pep_path = get_pep_path(aid, ann_type)
+            sp_pep = load_species_proteins(pep_path)
+        except Exception as e:
+            warnings.warn(f"Could not load proteins for {aid}: {e}")
+            sp_pep = {}
 
-        # Scan this species with every active TF PWM
+        # ortholog_map: {sc_gene_id → sp_gene_id | None}
+        ortholog_map = find_orthologs(sc_seqs, sp_pep, all_target_ids)
+
+        # Build gene_id → pre-converted index array for fast PWM scanning
+        sp_prom_idx: dict[str, np.ndarray] = {
+            row["gene_id"]: _seq_to_idx(row["sequence"])
+            for _, row in sp_prom.iterrows()
+        }
+
+        # For each TF, check only the ortholog's promoter
         for tf in active_tfs:
             pwm = pwm_cache[tf]
-            # Has any promoter in this species a hit above threshold?
-            has_hit = any(
-                len(scores) > 0 and bool(scores.max() >= SCORE_THRESHOLD)
-                for scores in (_score_all_positions(idx, pwm) for idx in sp_idx)
-            )
             for gid in sc_targets[tf]:
+                orth_id = ortholog_map.get(gid)
+                if orth_id is None:
+                    continue   # no ortholog → exclude from denominator
+                orth_idx = sp_prom_idx.get(orth_id)
+                if orth_idx is None:
+                    continue   # ortholog found, but promoter not extracted → skip
                 scan_counts[tf][gid] += 1
-                if has_hit:
+                scores = _score_all_positions(orth_idx, pwm)
+                if len(scores) > 0 and bool(scores.max() >= SCORE_THRESHOLD):
                     hit_counts[tf][gid] += 1
 
     # ── Step 4: Build result DataFrame ───────────────────────────────
@@ -494,6 +552,7 @@ def estimate_pi3_all_tfs(
                 "target_gene_name": gname,
                 "n_genomes_scanned": n_scan,
                 "n_genomes_with_hit": n_hit,
+                "n_orthologs_found": n_scan,   # species where ortholog was located
                 "retention_fraction": round(ret, 4) if not np.isnan(ret) else None,
                 "pi3_estimate":       round(ret, 4) if not np.isnan(ret) else None,
             })
@@ -531,7 +590,6 @@ def build_pairwise_histogram(
     The pairwise_sharing_mean is the key quantity connecting to Scruse et al.:
     it estimates π̂₃ for the family under the binary inheritance model.
     """
-    # Return cached result if available and no df was supplied
     if pi3_df is None and PI3_PAIRWISE_CSV.exists():
         return pd.read_csv(PI3_PAIRWISE_CSV)
 
@@ -546,8 +604,6 @@ def build_pairwise_histogram(
         if len(ret) == 0:
             continue
 
-        # Pairwise product = Pr(both species retain) under independence assumption
-        # Use vectorized outer product mean instead of O(n^2) Python loop
         if len(ret) > 1:
             outer = np.outer(ret, ret)
             triu = outer[np.triu_indices(len(ret), k=1)]

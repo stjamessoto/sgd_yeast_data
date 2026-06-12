@@ -195,9 +195,9 @@ st.markdown("""
 }
 
 .result-box {background:#e8f5e9;border-left:4px solid #2ca02c;
-             padding:10px 14px;border-radius:4px;margin:8px 0;}
+             padding:10px 14px;border-radius:4px;margin:8px 0;color:#1e293b;}
 .warn-box   {background:#fff3e0;border-left:4px solid #ff7f0e;
-             padding:10px 14px;border-radius:4px;margin:8px 0;}
+             padding:10px 14px;border-radius:4px;margin:8px 0;color:#1e293b;}
 
 /* Intro tab cards */
 .intro-card {
@@ -1403,7 +1403,7 @@ links are inherited through gene duplication.
         pi_vec4 = comp_df["pi_ensemble"].tolist()
 
     # π bar chart (single method)
-    if "All three" not in method4:
+    if "All four" not in method4:
         fig_pi = px.bar(
             x=[f"Family {i+1}\n({g[:12]})" for i, g in enumerate(gene_names4)],
             y=pi_vec4,
@@ -1440,7 +1440,7 @@ links are inherited through gene duplication.
         x=sens_df["pi_hat"], y=sens_df["expected"],
         name="E[|M(n)|]", line=dict(color="#1f77b4", width=2),
     ))
-    if "All three" not in method4:
+    if "All four" not in method4:
         pi_hat4 = sum(pi_vec4)
         e4 = expected_partial(pi_hat4, m4, n4)
         fig_sens.add_trace(go.Scatter(
@@ -1705,6 +1705,20 @@ The Full Duplication standard deviation (σ = {result5['std_full']:.2f}) gives t
 any Partial Duplication refinement (Theorem 5).
 
 **Bottom line:** {result5['interpretation']}
+
+---
+
+**Why are the Full Duplication, Partial Duplication, and Binary Inheritance numbers so different?**
+
+Each model makes a fundamentally different assumption about what happens to regulatory links after a gene duplication event, and those assumptions lead to dramatically different expected motif counts — especially at the extremes.
+
+- **Full Duplication (π = 1, Theorem 1)** assumes every single regulatory link is perfectly copied to the new daughter gene. Expected motif count grows as Θ(nᵏ) — that is, *polynomially in n with degree equal to the motif size k*. For a 2-family motif in a network of even moderate size, this produces enormous expected counts. It represents the theoretical maximum: a world of perfect regulatory memory where nothing is ever lost.
+
+- **Partial Duplication (0 ≤ π̂ < k, Theorem 4)** is the realistic middle ground. Each link survives duplication independently with probability πᵢ, so the total inheritance π̂ = Σπᵢ controls the growth exponent. Expected count grows as Θ(n^π̂) — *sub-polynomial if π̂ < k*. Because π̂ is typically well below k (most links are not perfectly conserved), the expected count under Partial Duplication can be orders of magnitude smaller than Full Duplication. The gap between the two grows exponentially with network size n, which is why even a modest difference in π̂ produces enormous differences in expected motif count.
+
+- **Binary Inheritance (Theorem 5 / Corollary 16)** is not a separate biological model — it is a mathematical tool. Among all Partial Duplication refinements that share the same π̂, Binary Inheritance (where each πᵢ is either 0 or 1) *maximises the second moment* E[|M(n)|²]. This means it provides the *most conservative* (widest) variance bound, so the ±2σ bands shown in the chart represent a worst-case spread rather than the actual distribution width. The Binary Inheritance variance can be much larger than the Full Duplication variance because variance in this model comes from the binary all-or-nothing nature of link retention.
+
+In short: the three numbers diverge so starkly because (a) the growth exponents differ by the gap k − π̂, which magnifies with n, and (b) Binary Inheritance maximises spread while Full Duplication maximises the mean. Seeing the observed count far above the Partial Duplication expectation — as here — is a strong signal that selective pressure is actively maintaining this regulatory wiring beyond what neutral duplication-and-loss would produce.
 """)
 
             with st.expander("📋 Full result JSON"):
