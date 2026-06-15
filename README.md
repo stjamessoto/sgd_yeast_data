@@ -85,7 +85,9 @@ All functions are in [model/scruse_math.py](model/scruse_math.py).
 | 6 | π₃ — TFBS conservation | Genes sharing a TF regulator | `π₃ = (genomes with significant PWM hit) / (genomes with ortholog)` |
 | 7 | π₄ — SNP at binding sites | Same as π₃ | `π₄ = 1 − Σ IC_weight[pos] × polymorphism_rate[pos]` |
 
-π₃ and π₄ use JASPAR 2024 position weight matrices (PWMs) to score 1,000 bp upstream promoter sequences across the Y1000+ species panel. IC-weighting in π₄ means that mutations at high-information-content (critical) positions count more heavily.
+π₃ and π₄ use JASPAR 2024 position weight matrices (PWMs) to score **1,000 bp upstream of the translational start** for each gene across the Y1000+ species panel. IC-weighting in π₄ means that mutations at high-information-content (critical) positions count more heavily.
+
+The Y1000+ π Estimators tab also includes a **gene-centric upstream retention figure** that aggregates π₃ by target gene rather than by TF→gene edge: for each gene in the *S. cerevisiae* network, it plots the mean retention fraction across all TFs whose binding sites were scanned in that gene's 1,000 bp upstream window, with ±1 SD error bars across TFs. This lets you identify which genes consistently retain upstream binding sites across yeasts regardless of which TF is doing the binding.
 
 ---
 
@@ -299,9 +301,9 @@ python -m streamlit run app.py
 | **Methodology** | Mathematical background: Theorems 1–8, Pólya urn, Full vs Partial Duplication |
 | **TF Explorer** | Browse 179 TFs; evidence codes, GO terms, JASPAR PFMs, YEASTRACT consensus sequences, sequence logos, regulatory targets |
 | **Gene Families** | Family-size distributions, m/n/d parameters, Dirichlet simulation — five grouping methods |
-| **π Estimator** | Select k families; estimate π⃗ by any of the four SGD-based methods; sensitivity plot |
-| **Motif Significance** | Z-scores, p-values, null distributions; predictive forward forecast of motif growth |
-| **Y1000+ π Estimators** | π₂/π₃/π₄ results with live generation status; retention histograms; π₃ vs π₁ scatter; phylogenetic context |
+| **π Estimator** | Select k families; estimate π⃗ by any of the four SGD-based methods; sensitivity plot; expandable methodology guide explaining the Gamma-ratio formula and the biological rationale behind each estimation method |
+| **Motif Significance** | Z-scores, p-values, null distributions; predictive forward forecast of motif growth; expandable methodology guide explaining the significance framework, null model hierarchy, and the role of Binary Inheritance variance |
+| **Y1000+ π Estimators** | π₂/π₃/π₄ results with live generation status; per-TF retention histogram; per-gene upstream retention figure (1,000 bp from translational start, averaged across all targeting TFs); pairwise shared binding-site bar chart (y-axis fixed to [0,1]); π₃ vs π₁ scatter; phylogenetic context; expandable methodology guide on cross-species π inference |
 | **Glossary & References** | Definitions of all model terms and full citations |
 
 ### Sidebar settings
@@ -369,7 +371,9 @@ Core requirements: `streamlit`, `pandas`, `numpy`, `scipy`, `plotly`, `pillow`, 
 
 **Pólya urn** — The duplication process is a multi-colour Pólya urn (Theorem 8). Family proportions converge almost surely to a Dirichlet(1,…,1) distribution.
 
-**Retention fraction (π₃)** — For a TF→gene edge, the proportion of Y1000+ species that have a significant JASPAR PWM hit in the upstream promoter of the orthologous gene. Interpreted as an empirical estimate of the per-edge inheritance probability.
+**Retention fraction (π₃)** — For a TF→gene edge, the proportion of Y1000+ species that have a significant JASPAR PWM hit in the 1,000 bp upstream of the translational start of the orthologous gene. Interpreted as an empirical estimate of the per-edge inheritance probability.
+
+**Gene-centric upstream retention** — Retention fraction averaged across all TFs that target a given gene. Shown in the Y1000+ tab as a sorted bar chart, this reveals which genes consistently retain any upstream binding signal across species, independent of which specific TF is driving it.
 
 **IC-weighted polymorphism (π₄)** — Positions in a binding site are weighted by their PWM information content. A mutation at a highly conserved, high-IC position contributes more to the polymorphism score than one at a degenerate position.
 

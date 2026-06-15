@@ -1149,6 +1149,33 @@ links are inherited through gene duplication.
 
     st.markdown("Four estimation methods are available (Scruse et al. Sections 4, 6, 9.2):")
 
+    with st.expander("📖 Methodology — how and why these estimates work", expanded=False):
+        st.markdown("""
+**What are we estimating, and why does this calculation make sense?**
+
+The core quantity is **π̂ = Σπᵢ**, the total inheritance probability across all *k* gene families in a motif. Theorem 4 (Scruse et al.) shows that the *expected* number of motif instances in the GRN is:
+
+```
+E[|M(n)|] = Γ(π̂ + n)·Γ(m) / [Γ(π̂ + m)·Γ(n)]
+```
+
+This expression depends on π⃗ = (π₁, …, πₖ) **only through the scalar sum π̂** — a remarkable reduction that means all four methods below are estimating the same underlying quantity, just via different data sources.
+
+**Why the ratio-of-Gamma-functions form?**
+The gene duplication process is a multi-colour Pólya urn (Theorem 8). When the urn has *m* initial balls distributed among gene families and grows to *n* balls through *d = n − m* duplication steps, the exact probability that a specific k-tuple of genes all come from the right families involves rising factorials — which is exactly what the Gamma ratio computes. The inheritance probability π̂ "bends" the polynomial growth from Θ(nᵏ) (full duplication) to Θ(n^π̂) (partial inheritance).
+
+**Why each method gives a valid estimate of π:**
+
+| Method | Core insight | Why it works |
+|--------|-------------|--------------|
+| **Evidence-based (Method 1)** | SGD evidence codes grade how directly a regulatory relationship was verified | Higher experimental rigor → binding sites more likely to be real, stable, and conserved after duplication → higher π prior |
+| **Moment Estimation (Method 2)** | Theorem 4 inverted: given the observed motif count, find the π̂ that makes the model's expected count match | This is the Method of Moments — the most data-driven estimate, anchoring π directly to the observed network structure |
+| **SNP divergence (Method 3)** | Mutations at binding-site positions erode binding over evolutionary time | π ≈ 1 − (fraction of SNP positions) because a preserved binding site needs to be SNP-free at its specific positions; divergence accumulates proportionally to link age |
+| **Consensus-adjusted (Method 4)** | IUPAC ambiguity in binding consensus reflects how many DNA sequences are tolerated | A TF with a precise, unambiguous consensus needs an exact sequence → sites are easy to lose by mutation → lower π; a degenerate TF tolerates more variation → sites survive more mutations → higher π |
+
+All four methods produce values in [0, 1] per family and are compared on the same scale via the sensitivity analysis chart below.
+""")
+
     with st.expander("📐 About the four estimation methods — click to expand"):
         st.markdown("""
 **How we arrived at each method and what it measures:**
@@ -1517,6 +1544,46 @@ in the GRN relative to the gene duplication null model (Scruse et al. Sections 4
 
 **Z-score** = (observed − expected) / std dev  ·  **p-value** via normal approximation.
 """)
+
+        with st.expander("📖 Methodology — why this significance test makes sense", expanded=False):
+            st.markdown("""
+**The null hypothesis and why it is the right one:**
+
+The null hypothesis is that the observed count of subnetwork motif instances |M(n)| is consistent with
+the *gene duplication model* — that is, all regulatory links were inherited stochastically through
+*d = n − m* duplication events, with per-family inheritance probability πᵢ.
+
+This is a more biologically grounded null than a simple random-graph model, because it explicitly
+models how GRNs grow: not randomly, but by copying genes and (stochastically) their regulatory connections.
+
+**Two nested null models:**
+
+| Null model | Assumption | Expected count |
+|---|---|---|
+| **Full Duplication (Theorem 1)** | Every regulatory link is perfectly copied at each duplication — π = 1 | E[&#124;M&#124;] = Γ(n+k)Γ(m)/[Γ(n)Γ(m+k)] — grows as Θ(nᵏ) |
+| **Partial Duplication (Theorem 4)** | Each link survives with probability πᵢ; π̂ estimated from data | E[&#124;M&#124;] = Γ(π̂+n)Γ(m)/[Γ(π̂+m)Γ(n)] — grows as Θ(n^π̂) |
+
+Testing against **both** nulls simultaneously tells a complete story:
+
+- **Observed > Full Duplication expected**: The motif count exceeds even the maximum-inheritance null. This is biologically improbable under neutral duplication and strongly suggests *active positive selection* for this regulatory wiring pattern — perhaps because co-regulation by multiple TF families is essential for a specific cellular function.
+- **Observed between the two nulls**: The motif count is consistent with partial inheritance but not with perfect copying. This is the expected neutral scenario — some links survive, some are lost.
+- **Observed < Partial Duplication expected**: The motif count is *lower* than even a partial inheritance model predicts. This suggests *negative selection against* this wiring pattern, or that the families involved have undergone regulatory rewiring that actively dismantled these connections.
+
+**Why the normal approximation is valid:**
+
+The motif count |M(n)| is a sum of many correlated Bernoulli random variables (one per gene tuple). By the Central Limit Theorem, for reasonably large n and m, the sum converges to approximately Gaussian. The mean and variance are computed exactly from Theorems 1 and 4 (mean) and Corollaries 2 and 16 (variance), so the Z-score is:
+
+```
+Z = (observed − E[|M(n)|]) / σ
+```
+
+where σ is the standard deviation from the Binary Inheritance variance (Corollary 16).
+
+**Why Binary Inheritance for the variance?**
+
+Binary Inheritance is the refinement of Partial Duplication that *maximises* E[|M(n)|²] for any given π̂ (Theorem 5). This means its standard deviation provides a *conservative upper bound* — the widest possible ±2σ band consistent with the model. Using a conservative variance means the significance test is not artificially over-powered: if the Z-score is large even under this conservative variance, the departure from the null is real.
+""")
+
 
         with st.spinner("Loading families…"):
             fam_df5 = _load_tf_families(min_family_size, _GROUPING_KEY)
@@ -2423,6 +2490,58 @@ with tab7:
         "and JASPAR 2024 CORE yeast binding profiles."
     )
 
+    with st.expander("📖 Methodology — why cross-species data gives a better estimate of π", expanded=False):
+        st.markdown("""
+**The core idea: use 1,154 yeast genomes as an evolutionary experiment**
+
+The SGD-based methods (π₁–π₄ on the π Estimator tab) estimate the inheritance probability from a single snapshot
+of *S. cerevisiae* — one species, one time point. The fundamental problem is that we cannot directly observe
+whether a regulatory link was inherited or lost in the past; we can only infer it from current data.
+
+The Y1000+ dataset (Opulente et al. 2024, *Science*) solves this by providing 1,154 yeast genome assemblies
+spanning ~1 billion years of evolution. Each genome is an independent evolutionary replicate: if a regulatory
+link in *S. cerevisiae* is truly inherited and functionally important, it should be present in orthologous
+genes across many of these 1,154 genomes. If it is lineage-specific or recently acquired, it will be absent
+in most.
+
+**Why 1,154 genomes and not just a few?**
+
+Statistical power. A single other species gives a binary signal (present/absent). With 1,154 genomes spanning
+all major Saccharomycotina clades, we can estimate a continuous retention fraction with much lower variance.
+The 48-species representative subset used here was chosen to maximise phylogenetic diversity (not redundancy
+from closely related strains) while keeping compute tractable.
+
+**The three estimators and their biological rationale:**
+
+| Estimator | What it measures | Formula | Why it estimates π |
+|-----------|-----------------|---------|-------------------|
+| **π₂ — Sequence Homology** | Protein sequence identity between TF paralogs | π₂ = pct_identity / 100 | Higher identity → more recently diverged → less time for binding specificity to diverge → higher probability that both paralogs still bind the same sites |
+| **π₃ — TFBS Conservation** | Fraction of 1,154 genomes with a significant PWM hit in the 1,000 bp upstream of the orthologous gene | π₃ = n_genomes_with_hit / n_genomes_scanned | The retention fraction is a direct empirical measurement of inheritance: if 80% of yeast species retain a detectable binding site at the orthologous locus, π₃ = 0.80 |
+| **π₄ — SNP at Binding Sites** | IC-weighted polymorphism rate at binding-site positions | π₄ = 1 − Σ(IC_weight × poly_rate) | Sites that are under purifying selection (being actively maintained) have low polymorphism at their high-information-content positions; sites being lost have high polymorphism at the most critical nucleotides |
+
+**Why π₃ is the most direct estimator:**
+
+The scanning pipeline extracts exactly **1,000 bp upstream of the translational start** for each gene in each
+of the 48 representative genomes. For each TF with a JASPAR PWM, it scores this upstream window and
+reports whether the score exceeds a significance threshold (p < 0.001 under the position weight matrix).
+The fraction of genomes passing this threshold is the retention fraction — directly analogous to asking
+"in what fraction of evolutionary replicates did this regulatory link survive?"
+
+**Why π₄ refines the π₃ signal:**
+
+π₃ is binary (hit/no-hit). π₄ asks a subtler question: among the genomes that do have a hit, how degenerate
+are the binding-site positions? IC weighting means that a mutation at the most conserved position
+(maximum information content = 2 bits) contributes more to the polymorphism score than a mutation at a
+highly ambiguous position. A site that is detectable (π₃ counted) but accumulating mutations at its
+most critical positions (high IC-weighted poly rate → low π₄) is a site in the process of being lost.
+
+**Putting it all together:**
+
+High π₃ + high π₄ → site is present and intact across species → strong evidence of conserved inheritance.
+High π₃ + low π₄ → site is present but eroding → transitional state; may be in the process of regulatory rewiring.
+Low π₃ + any π₄ → site is absent in most species → likely lineage-specific in *S. cerevisiae* or recently gained.
+""")
+
     # ── Phylogenetic context ──────────────────────────────────────────
     _LABELED_TREE = Path(__file__).parent / "assets" / "y1000plus_species_labeled.png"
     _PHYLO_TREE   = Path(__file__).parent / "assets" / "y1000plus_phylogeny.png"
@@ -2647,6 +2766,8 @@ with tab7:
                         )
 
                 tf_edges = pi3_df[pi3_df["tf_name"] == sel_tf]
+                _n_genes = len(tf_edges)
+                _bar_height = max(320, min(520, 260 + _n_genes * 6))
                 fig_bar = px.bar(
                     tf_edges.sort_values("retention_fraction"),
                     x="target_gene_name", y="retention_fraction",
@@ -2654,9 +2775,81 @@ with tab7:
                     color="retention_fraction",
                     color_continuous_scale="Blues",
                 )
-                fig_bar.update_layout(height=320, margin=dict(t=20, b=30),
-                                      xaxis_tickangle=-45)
+                fig_bar.update_layout(
+                    height=_bar_height,
+                    margin=dict(t=20, b=90),
+                    xaxis_tickangle=-50,
+                    xaxis=dict(
+                        tickfont=dict(size=max(7, min(10, 120 // max(_n_genes, 1)))),
+                        rangeslider=dict(visible=_n_genes > 20),
+                    ),
+                    yaxis=dict(range=[0, 1.05], title="Retention fraction (π₃)"),
+                    coloraxis_showscale=False,
+                )
                 st.plotly_chart(fig_bar, use_container_width=True)
+
+            # ── Gene-centric upstream retention figure ────────────────
+            st.markdown("---")
+            st.markdown(
+                "**Retention Fraction in Upstream Regions of Genes Involved**  \n"
+                "_For each target gene, what fraction of Y1000+ species retain a significant "
+                "PWM hit in the 1,000 bp upstream of its translational start — averaged across "
+                "all TFs known to target that gene._"
+            )
+            _gene_ret = (
+                pi3_df.groupby("target_gene_name")
+                .agg(
+                    mean_retention=("retention_fraction", "mean"),
+                    n_tfs_targeting=("tf_name", "nunique"),
+                    std_retention=("retention_fraction", "std"),
+                )
+                .reset_index()
+                .sort_values("mean_retention", ascending=False)
+            )
+            _top_n_genes = st.slider(
+                "Number of genes to display (sorted by mean retention)",
+                min_value=10, max_value=min(150, len(_gene_ret)), value=min(50, len(_gene_ret)),
+                step=10, key="gene_ret_topn",
+            )
+            _gene_ret_top = _gene_ret.head(_top_n_genes)
+            fig_gene_ret = px.bar(
+                _gene_ret_top,
+                x="target_gene_name",
+                y="mean_retention",
+                error_y="std_retention",
+                color="mean_retention",
+                color_continuous_scale="Blues",
+                hover_data=["n_tfs_targeting", "std_retention"],
+                labels={
+                    "target_gene_name": "Gene",
+                    "mean_retention": "Mean retention fraction (π₃)",
+                    "n_tfs_targeting": "# TFs targeting gene",
+                    "std_retention": "Std Dev",
+                },
+            )
+            _overall_mean = pi3_df["retention_fraction"].mean()
+            fig_gene_ret.add_hline(
+                y=_overall_mean,
+                line_dash="dash",
+                line_color="red",
+                annotation_text=f"Overall mean π₃ = {_overall_mean:.3f}",
+                annotation_position="top right",
+            )
+            fig_gene_ret.update_layout(
+                height=420,
+                margin=dict(t=30, b=100),
+                xaxis_tickangle=-50,
+                xaxis=dict(tickfont=dict(size=max(7, min(10, 800 // max(_top_n_genes, 1))))),
+                coloraxis_showscale=False,
+            )
+            st.plotly_chart(fig_gene_ret, use_container_width=True)
+            st.caption(
+                "Each bar = one target gene in the S. cerevisiae regulatory network. Height = mean "
+                "retention fraction across all TFs whose JASPAR PWMs were scanned in the 1,000 bp "
+                "upstream of that gene's translational start, averaged over the Y1000+ species panel. "
+                "Error bars = ±1 SD across TFs targeting that gene. Red dashed line = overall mean π₃ "
+                "across all TF→gene edges. Genes with no error bar are targeted by only one TF in the dataset."
+            )
 
             # Interpretation
             with st.expander("🔍 What do these π₃ results mean?"):
