@@ -501,7 +501,7 @@ with tab0:
          "derives the model parameters m, n, and d = n − m."),
         ("🎲", "π Estimator",
          "Select k families to form a subnetwork motif and estimate the inheritance "
-         "probability vector π⃗ using four SGD-based methods: evidence codes, "
+         "probability vector $\\vec{\\pi}$ using four SGD-based methods: evidence codes, "
          "Moment Estimation via Theorem 4, SNP divergence at YFL039C, or YEASTRACT binding flexibility."),
         ("🧪", "Motif Significance",
          "Full significance test: compare the observed motif count against Full and "
@@ -633,7 +633,7 @@ with tab1:
             "icon": "🎲",
             "name": "π Estimator",
             "what": (
-                "Estimates the inheritance-probability vector π⃗ four ways using only SGD "
+                "Estimates the inheritance-probability vector $\\vec{\\pi}$ four ways using only SGD "
                 "data: (1) evidence-code quality, (2) Moment Estimation via Theorem 4, "
                 "(3) SNP divergence at YFL039C, (4) YEASTRACT consensus-sequence flexibility."
             ),
@@ -1159,7 +1159,7 @@ The core quantity is **π̂ = Σπᵢ**, the total inheritance probability acros
 E[|M(n)|] = Γ(π̂ + n)·Γ(m) / [Γ(π̂ + m)·Γ(n)]
 ```
 
-This expression depends on π⃗ = (π₁, …, πₖ) **only through the scalar sum π̂** — a remarkable reduction that means all four methods below are estimating the same underlying quantity, just via different data sources.
+This expression depends on $\\vec{\\pi}$ = (π₁, …, πₖ) **only through the scalar sum π̂** — a remarkable reduction that means all four methods below are estimating the same underlying quantity, just via different data sources.
 
 **Why the ratio-of-Gamma-functions form?**
 The gene duplication process is a multi-colour Pólya urn (Theorem 8). When the urn has *m* initial balls distributed among gene families and grows to *n* balls through *d = n − m* duplication steps, the exact probability that a specific k-tuple of genes all come from the right families involves rising factorials — which is exactly what the Gamma ratio computes. The inheritance probability π̂ "bends" the polynomial growth from Θ(nᵏ) (full duplication) to Θ(n^π̂) (partial inheritance).
@@ -1835,6 +1835,65 @@ further gene duplication events.
             icon="🔮",
         )
 
+        with st.expander("📖 Methodology — how the predictive forecast is computed", expanded=False):
+            st.markdown("""
+**What this tab computes and why the calculation is valid:**
+
+The Inferential Test tab works *backward* — it takes the observed motif count and fits π̂ to it.
+This tab works *forward* — it takes a π̂ estimate and projects how motif counts will grow as the
+genome expands through further duplication events.
+
+**The growth equation (Theorem 4 applied forward):**
+
+At any genome stage n, Theorem 4 gives:
+
+```
+E[|M(n)|] = Γ(π̂ + n) · Γ(m) / [Γ(π̂ + m) · Γ(n)]
+```
+
+This is evaluated at increasing values of n = n_current, n_current + 1, …, n_current + Δn to trace
+the expected motif count trajectory. The formula is exact — not an approximation — and each point
+on the curve is the theoretical mean under the Partial Duplication model at that genome size.
+
+**Why the two curves diverge:**
+
+- **Full Duplication** (blue dashed): grows as Θ(nᵏ) — a polynomial of degree k. This is the
+  maximum possible trajectory, assuming every regulatory link is perfectly copied at every duplication.
+- **Partial Duplication** (red): grows as Θ(n^π̂) — a polynomial of degree π̂. Because π̂ ≤ k,
+  this curve always stays below (or equals) the Full Duplication curve. The gap between them widens
+  exponentially with n — a small difference in growth exponent becomes enormous at large genome sizes.
+  This divergence quantifies how much regulatory structure is lost relative to a hypothetical world
+  of perfect inheritance.
+
+**What the ±2σ band means (Full Duplication only):**
+
+The shaded region around the Full Duplication curve is ±2 standard deviations computed from
+Corollary 2 (Full Duplication variance). This represents the expected *natural sampling variability*
+around the mean under Full Duplication — the range within which ~95% of observed counts would fall
+if the network truly evolved under π = 1. It is not plotted for Partial Duplication because the
+Partial Duplication variance (Binary Inheritance, Corollary 16) would dominate the chart at large n.
+
+**The inverse query — why it makes sense:**
+
+Given a target motif count T and a fixed π̂, the inverse query solves:
+
+```
+Γ(π̂ + n) · Γ(m) / [Γ(π̂ + m) · Γ(n)] = T    →    find n
+```
+
+This is solved numerically by scanning the forward trajectory and finding the first n where the
+expected count exceeds T. The result answers: *how much larger would the genome need to be, under
+continued duplication at the current inheritance rate, to generate this many motif instances on average?*
+This is useful for calibrating what π̂ estimates imply about long-term regulatory network complexity.
+
+**Key assumption — π̂ is stable over time:**
+
+The model assumes the inheritance probability vector $\\vec{\\pi}$ does not change as the genome grows.
+In reality, π may evolve: as TF paralogs diverge further in sequence, their binding specificities may
+change, potentially lowering π over time. Treat the forecast as a projection under constant selective
+pressure, not a precise biological prediction.
+""")
+
         with st.spinner("Loading families…"):
             fam_df_p = _load_tf_families(min_family_size, _GROUPING_KEY)
 
@@ -2144,7 +2203,7 @@ duplication events), derived analytically in Scruse et al.:
   Grows as Θ(nᵏ).
 
 - **Partial Duplication** (Theorem 4):
-  `E[|M(n)|; m, n, π⃗, k] = Γ(π̂+n)Γ(m) / [Γ(π̂+m)Γ(n)]`
+  `E[|M(n)|; m, n, π̂, k] = Γ(π̂+n)Γ(m) / [Γ(π̂+m)Γ(n)]`
   Depends on $\\vec{\\pi}$ only through π̂ = Σπᵢ; grows as Θ(n^π̂).
 
 These expectations form the **null model** against which an observed motif count is tested.
