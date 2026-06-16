@@ -2,20 +2,22 @@
 app.py — Streamlit frontend for the Scruse et al. (2024) inheritance probability model.
 
 Tabs (left → right as they appear in the UI):
-  0. Overview            — app map; one-card summary of every tab
-  1. Introduction        — plain-language guide: what the model does and how to navigate the app
-  2. Methodology         — mathematical framework; Theorems 1–8, Pólya urn, Full vs Partial Duplication
-  3. TF Explorer         — browse TFs, binding sites, consensus sequences, regulatory targets
-  4. Gene Families       — family size distribution and Pólya urn parameters
-  5. π Estimator         — estimate inheritance probability vector four ways
-  6. Motif Significance  — test whether a k-motif is over/under-represented
-  7. Y1000+ π Estimators — cross-species π₂, π₃, π₄ from 1,154 yeast genomes
-  8. Glossary & References — term definitions and primary citations
+  0. Overview               — app map; one-card summary of every tab
+  1. Introduction           — plain-language guide: what the model does and how to navigate the app
+  2. Methodology            — mathematical framework; Theorems 1–8, Pólya urn, Full vs Partial Duplication
+  3. TF Explorer            — browse TFs, binding sites, consensus sequences, regulatory targets
+  4. Gene Families          — family size distribution and Pólya urn parameters
+  5. π Estimator            — estimate inheritance probability vector four ways
+  6. Motif Significance     — test whether a k-motif is over/under-represented
+  7. Y1000+ π Estimators   — cross-species π₂, π₃, π₄ from 1,154 yeast genomes
+  8. Method Estimation Test — validate Methods 1/2/3/4 against known π profiles via MSE
+  9. Glossary & References  — term definitions and primary citations
 
 Run:  streamlit run app.py
 """
 
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -68,6 +70,7 @@ from model.inheritance_estimator import (
     estimate_pi_from_evidence,
     estimate_pi_from_mle,
     estimate_pi_from_snp,
+    estimate_pi_consensus_adjusted,
     estimate_pi_all_methods,
     full_significance_analysis,
     pi_sensitivity,
@@ -81,6 +84,7 @@ from model.scruse_math import (
     g_func,
     expected_bounds_partial,
     second_moment_binary,
+    estimate_pi_hat,
 )
 
 # ---------------------------------------------------------------------------
@@ -398,7 +402,7 @@ with st.sidebar:
 # Tabs
 # ---------------------------------------------------------------------------
 
-tab1, tab0, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+tab1, tab0, tab2, tab3, tab4, tab5, tab6, tab7, tab9, tab8 = st.tabs([
     "📋 Overview",
     "📘 Introduction",
     "📊 Methodology",
@@ -407,6 +411,7 @@ tab1, tab0, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
     "🎲 π Estimator",
     "🧪 Motif Significance",
     "🌍 Y1000+ π Estimators",
+    "🧮 Method Estimation Test",
     "📖 Glossary & References",
 ])
 
@@ -1194,6 +1199,53 @@ All four methods produce values in [0, 1] per family and are compared on the sam
 - Use **Method 3** when you want a sequence-divergence view anchored in real genetic variation data.
 - Use **Method 4** if you are specifically interested in how binding specificity constrains inheritance.
 - Use **All four** to compare methods and compute an ensemble mean.
+""")
+
+        st.divider()
+        st.markdown("**🧮 Method Estimation Test**")
+        st.markdown(
+            "Each method's accuracy and structural limitations are tested head-to-head "
+            "using synthetic Linear and Quadratic π profiles (k = 3 or 4, m = 7). "
+            "Click below to navigate there directly:"
+        )
+        # JavaScript tab-jump: queries Streamlit's rendered tab buttons by label text
+        # and programmatically clicks the target. Works locally and on Streamlit Cloud
+        # (same-origin iframe, so window.parent.document access is permitted).
+        # Fragility note: depends on Streamlit's internal data-baseweb="tab" attribute;
+        # may break if Streamlit changes its front-end component library.
+        components.html("""
+        <a href="#"
+           onclick="
+             (function() {
+               var tabs = window.parent.document.querySelectorAll('button[data-baseweb=tab]');
+               for (var i = 0; i < tabs.length; i++) {
+                 if (tabs[i].innerText.indexOf('Method Estimation Test') !== -1) {
+                   tabs[i].click();
+                   window.parent.scrollTo(0, 0);
+                   break;
+                 }
+               }
+             })();
+             return false;
+           "
+           style="display:inline-block; padding:7px 18px; background:#2563eb; color:white;
+                  border-radius:6px; text-decoration:none; font-size:0.88em; font-weight:500;
+                  font-family:-apple-system,BlinkMacSystemFont,sans-serif; cursor:pointer;"
+           onmouseover="this.style.background='#1d4ed8'"
+           onmouseout="this.style.background='#2563eb'">
+          🧮 Open Method Estimation Test &rarr;
+        </a>
+        """, height=48)
+
+        st.markdown("""
+**Key findings from the test:**
+- **Methods 1 & 4** are bounded by the SGD evidence-code range (~0.31–0.82) and cannot
+  represent extreme inheritance probabilities near 0 or 1.
+- **Method 2** recovers π̂ (the total) exactly via Theorem 4 inversion, but per-family
+  MSE is non-zero because it distributes π̂ uniformly — it cannot resolve which
+  individual families inherit more or less.
+- **Method 3** applies a single cross-strain mean (μ ≈ 0.59) to all families equally;
+  MSE is driven by how spread out the true profile is around that anchor point.
 """)
 
     with st.spinner("Loading families…"):
@@ -3152,3 +3204,695 @@ This is a **{pi3_level}** cross-species conservation signal: {pi3_bio}
             )
         except Exception as e:
             st.error(f"Could not load Y1000+ manifest: {e}")
+
+
+# ══════════════════════════════════════════════════════════════════════
+# TAB 9: Method Estimation Test
+# ══════════════════════════════════════════════════════════════════════
+
+_VAL_PROFILES = {
+    3: {
+        "Linear":    [0.1, 0.5, 0.9],
+        "Quadratic": [0.3, 0.5, 0.3],
+    },
+    4: {
+        "Linear":    [0.2, 0.4, 0.6, 0.8],
+        "Quadratic": [0.1, 0.5, 0.5, 0.1],
+    },
+}
+_VAL_N_VALUES = [20, 50, 100]
+_VAL_M = 7
+_PROFILE_COLORS = {"Linear": "#2563eb", "Quadratic": "#7c3aed"}
+
+
+def _val_per_family_chart(x_labels, true_pi_vec, est_pi_vec, est_label, title):
+    fig = go.Figure()
+    fig.add_bar(x=x_labels, y=true_pi_vec, name="True πᵢ", marker_color="#2563eb")
+    fig.add_bar(x=x_labels, y=est_pi_vec, name=est_label, marker_color="#f97316")
+    fig.update_layout(
+        barmode="group",
+        height=260,
+        title=title,
+        yaxis=dict(title="π", range=[0, 1.05]),
+        legend=dict(orientation="h", y=-0.3),
+        margin=dict(t=40, b=10),
+    )
+    return fig
+
+
+with tab9:
+    st.header("Method Estimation Test — Known π Recovery")
+
+    # ── Method selector ───────────────────────────────────────────────
+    val_method = st.radio(
+        "Estimation method to test",
+        [
+            "Method 1 — Evidence-based",
+            "Method 2 — Moment Estimation (Theorem 4)",
+            "Method 3 — SNP Divergence",
+            "Method 4 — Consensus-adjusted",
+        ],
+        horizontal=True,
+    )
+    use_m1 = val_method.startswith("Method 1")
+    use_m2 = val_method.startswith("Method 2")
+    use_m3 = val_method.startswith("Method 3")
+
+    _METHOD_WORKFLOWS = {
+        "Method 1 — Evidence-based": (
+            "**Workflow:** select k TFs from the SGD dataset. Method 1 maps each TF's "
+            "experimental evidence codes (IDA, IMP, IEA, …) to a π prior. The returned "
+            "per-family πᵢ values are compared directly to the true profile."
+        ),
+        "Method 2 — Moment Estimation (Theorem 4)": (
+            "**Workflow:** given a known true π vector, compute the expected motif count "
+            "via Theorem 4 (forward), feed that count into Method 2's Brent root-find to "
+            "recover π̂ (backward), then distribute π̂ uniformly across k families (π̂/k)."
+        ),
+        "Method 3 — SNP Divergence": (
+            "**Workflow:** Method 3 is calibrated on 11 strains of gene YFL039C. Each "
+            "strain's π = 1 − pct_alt/100; the cross-strain mean μ is applied to all k "
+            "families. No n or m parameters are needed."
+        ),
+        "Method 4 — Consensus-adjusted": (
+            "**Workflow:** select k TFs. Method 4 takes each TF's evidence-based π (Method 1) "
+            "and multiplies by a binding-flexibility factor derived from YEASTRACT IUPAC "
+            "consensus sequences. TFs with more ambiguous binding sequences get a higher "
+            "factor (≥ 1.0), pushing π upward. The adjusted values are compared to the profile."
+        ),
+    }
+    st.markdown(_METHOD_WORKFLOWS[val_method])
+
+    with st.expander("Parameter glossary"):
+        st.markdown(f"""
+        | Parameter | Applies to | Meaning |
+        |-----------|-----------|---------|
+        | **m = {_VAL_M}** | Method 2 only | Number of founding gene families before any duplication |
+        | **n** | Method 2 only | Total gene count after duplication; controls the Theorem 4 expected count |
+        | **k** | All | Number of gene families in the subnetwork motif; length of the π vector |
+        | **π̂ = Σπᵢ** | Method 2 | Total inheritance probability; the only quantity Theorem 4 depends on |
+        | **Evidence score** | Method 1 | Quality weight assigned to each SGD evidence code (IDA → 0.90, IEA → 0.30, …) |
+        | **pct_alt / μ** | Method 3 | Per-strain % alternative alleles at YFL039C; μ is the cross-strain mean π |
+        | **Consensus factor** | Method 4 | YEASTRACT binding-flexibility multiplier (1.02 – 1.12); higher = more ambiguous consensus = tolerates more drift |
+        | **MSE** | All | Mean squared error between true πᵢ and estimated πᵢ across k families |
+        """)
+
+    st.divider()
+
+    # ── Controls ─────────────────────────────────────────────────────
+    col_k, col_n = st.columns(2)
+    with col_k:
+        val_k = st.radio(
+            "Motif size **k**",
+            [3, 4],
+            horizontal=True,
+            help="k=3: 3-family regulatory pattern. k=4: 4-family pattern.",
+        )
+    with col_n:
+        val_n_detail = st.radio(
+            "Detail view for **n**",
+            _VAL_N_VALUES,
+            index=1,
+            horizontal=True,
+            help="Only used by Method 2. Selects which n to show in the per-family breakdown.",
+            disabled=not use_m2,
+        )
+
+    profiles = _VAL_PROFILES[val_k]
+
+    # ════════════════════════════════════════════════════════════════
+    # METHOD 1 branch — SGD evidence-based π
+    # ════════════════════════════════════════════════════════════════
+    if use_m1:
+        tfs_m1   = _load_tfs().sort_values("gene_name")
+        tf_names = tfs_m1["gene_name"].tolist()
+
+        # Defaults: k genes evenly spread across the evidence score range
+        tfs_sorted_ev = tfs_m1.sort_values("pi_prior").reset_index(drop=True)
+        indices       = [int(i * (len(tfs_sorted_ev) - 1) / (val_k - 1)) for i in range(val_k)]
+        default_genes = [tfs_sorted_ev.loc[i, "gene_name"] for i in indices]
+
+        selected_genes = st.multiselect(
+            f"Select exactly **{val_k}** TF gene names",
+            tf_names,
+            default=default_genes,
+            help=(
+                "Method 1 uses each TF's SGD evidence codes to assign a π prior. "
+                "Defaults are spread from the lowest to highest evidence score in the dataset."
+            ),
+        )
+
+        if len(selected_genes) != val_k:
+            st.warning(f"Please select exactly {val_k} genes (currently {len(selected_genes)}).")
+            st.stop()
+
+        m1_result = estimate_pi_from_evidence(selected_genes)
+        est_pi_m1 = m1_result["pi_vec"]
+        ev_scores = m1_result["evidence_scores"]
+
+        with st.expander("Evidence scores for selected genes"):
+            ev_range_lo = tfs_m1["pi_prior"].min()
+            ev_range_hi = tfs_m1["pi_prior"].max()
+            st.caption(
+                f"Evidence scores in the SGD dataset range from **{ev_range_lo:.4f}** "
+                f"(weak automated annotation) to **{ev_range_hi:.4f}** (strong direct assay). "
+                "Values outside this range — especially below 0.31 or above 0.77 — cannot "
+                "be reached by Method 1 regardless of which genes are chosen."
+            )
+            st.dataframe(
+                pd.DataFrame({
+                    "Gene":           selected_genes,
+                    "Evidence score": [round(s, 4) for s in ev_scores],
+                }).assign(
+                    **{"Range min": ev_range_lo, "Range max": ev_range_hi}
+                ),
+                use_container_width=True, hide_index=True,
+            )
+
+        st.divider()
+
+        m1_rows = []
+        for profile_name, true_pi_vec in profiles.items():
+            family_se = [(e - t) ** 2 for e, t in zip(est_pi_m1, true_pi_vec)]
+            mse       = float(np.mean(family_se))
+            m1_rows.append({
+                "Profile":        profile_name,
+                "True π̂":        round(sum(true_pi_vec), 4),
+                "Estimated π̂":   round(sum(est_pi_m1), 4),
+                "Per-family MSE": round(mse, 6),
+            })
+
+        st.subheader("Summary — all profiles")
+        st.caption(
+            f"Method 1 returns fixed evidence-score priors for the selected genes "
+            f"({', '.join(selected_genes)}). These values are compared against each profile."
+        )
+        st.dataframe(pd.DataFrame(m1_rows), use_container_width=True, hide_index=True)
+
+        st.divider()
+
+        st.subheader(f"Per-family MSE by profile (k = {val_k})")
+        fig_mse1 = px.bar(
+            pd.DataFrame(m1_rows),
+            x="Profile", y="Per-family MSE",
+            color="Profile", color_discrete_map=_PROFILE_COLORS,
+            text="Per-family MSE",
+            title=f"Per-family MSE — Method 1, k={val_k}, genes: {', '.join(selected_genes)}",
+        )
+        fig_mse1.update_traces(texttemplate="%{text:.4f}", textposition="outside")
+        fig_mse1.update_layout(height=350, showlegend=False, yaxis_title="MSE")
+        st.plotly_chart(fig_mse1, use_container_width=True)
+
+        st.divider()
+
+        st.subheader(f"Per-family breakdown — k = {val_k}")
+        st.caption("True πᵢ (blue) vs evidence-based estimate (orange). Each family maps to one selected gene.")
+
+        for profile_name, true_pi_vec in profiles.items():
+            family_se = [(e - t) ** 2 for e, t in zip(est_pi_m1, true_pi_vec)]
+            mse_val   = float(np.mean(family_se))
+
+            col_tbl, col_fig = st.columns([1, 2])
+            with col_tbl:
+                st.markdown(f"**{profile_name}** · Est. π̂ = {sum(est_pi_m1):.4f} · MSE = {mse_val:.6f}")
+                st.dataframe(
+                    pd.DataFrame({
+                        "Family":    [f"F{i+1}" for i in range(val_k)],
+                        "Gene":      selected_genes,
+                        "True πᵢ":   true_pi_vec,
+                        "Est. πᵢ":   [round(p, 4) for p in est_pi_m1],
+                        "Sq. error": [round(se, 6) for se in family_se],
+                    }),
+                    use_container_width=True, hide_index=True,
+                )
+            with col_fig:
+                st.plotly_chart(
+                    _val_per_family_chart(
+                        [f"F{i+1}\n({g})" for i, g in enumerate(selected_genes)],
+                        true_pi_vec, est_pi_m1, "Est. πᵢ (evidence)", profile_name,
+                    ),
+                    use_container_width=True,
+                )
+            st.divider()
+
+        st.markdown("""
+        **What these results mean — Method 1 accuracy**
+
+        Method 1 assigns π based on the quality of experimental evidence in SGD, not on any
+        observed network property. Its estimates are bounded between **0.31 and 0.77** by the
+        evidence-code weight table — meaning it structurally cannot represent very low (near 0)
+        or very high (near 1) inheritance probabilities.
+
+        - **High MSE on Linear:** the Linear profile has families at 0.1 and 0.9, both outside
+          Method 1's reachable range. The method compresses all estimates toward the middle,
+          underestimating strongly-inherited links and overestimating weakly-inherited ones.
+        - **Lower MSE on Quadratic:** the Quadratic profile's values cluster in the 0.3–0.5
+          range, which sits within Method 1's window. The error comes from the shape mismatch,
+          not a range violation.
+        - **Gene-dependence:** changing the selected genes shifts all estimates simultaneously.
+          No combination of SGD genes can produce estimates below ~0.31 or above ~0.77, so the
+          ceiling and floor errors on extreme profiles are irreducible.
+        - **Practical interpretation:** Method 1 is best used as a conservative *prior* —
+          a biologically-grounded starting point that reflects how well-studied each regulatory
+          link is. It should not be used alone to predict links with extreme inheritance
+          probabilities.
+        """)
+
+    # ════════════════════════════════════════════════════════════════
+    # METHOD 2 branch
+    # ════════════════════════════════════════════════════════════════
+    elif use_m2:
+        all_rows = []
+        for profile_name, true_pi_vec in profiles.items():
+            true_pi_hat = sum(true_pi_vec)
+            for n_val in _VAL_N_VALUES:
+                expected_count = expected_partial(true_pi_hat, _VAL_M, n_val)
+                est_pi_hat = estimate_pi_hat(expected_count, _VAL_M, n_val)
+                if est_pi_hat is None or np.isnan(est_pi_hat):
+                    est_pi_hat = float("nan")
+                    est_pi_vec = [float("nan")] * val_k
+                else:
+                    est_pi_vec = [est_pi_hat / val_k] * val_k
+
+                family_se = [
+                    (e - t) ** 2
+                    for e, t in zip(est_pi_vec, true_pi_vec)
+                    if not np.isnan(e)
+                ]
+                mse = float(np.mean(family_se)) if family_se else float("nan")
+                pi_hat_se = (est_pi_hat - true_pi_hat) ** 2 if not np.isnan(est_pi_hat) else float("nan")
+
+                all_rows.append({
+                    "Profile":        profile_name,
+                    "n":              n_val,
+                    "True π̂":        round(true_pi_hat, 4),
+                    "E[|M(n)|]":      round(expected_count, 6),
+                    "Estimated π̂":   round(est_pi_hat, 8) if not np.isnan(est_pi_hat) else float("nan"),
+                    "π̂ sq. error":   f"{pi_hat_se:.2e}" if not np.isnan(pi_hat_se) else "—",
+                    "Per-family MSE": round(mse, 6) if not np.isnan(mse) else float("nan"),
+                })
+
+        results_df = pd.DataFrame(all_rows)
+
+        st.subheader("Summary — all profiles × n combinations")
+        st.caption(
+            "π̂ squared error is ~0 for all rows: the Brent inversion recovers the total π̂ "
+            "exactly. Per-family MSE is non-zero because Method 2 allocates π̂ equally across "
+            "k families — this only matches a uniform true distribution."
+        )
+        st.dataframe(results_df, use_container_width=True, hide_index=True)
+
+        st.divider()
+
+        st.subheader(f"Per-family MSE by profile (k = {val_k})")
+        st.caption("MSE is the same for all n values since π̂ is always recovered exactly.")
+        mse_summary = (
+            results_df.groupby("Profile")["Per-family MSE"].mean().reset_index()
+        )
+        mse_summary["Profile"] = pd.Categorical(
+            mse_summary["Profile"], categories=["Linear", "Quadratic"], ordered=True
+        )
+        mse_summary = mse_summary.sort_values("Profile")
+
+        fig_mse = px.bar(
+            mse_summary,
+            x="Profile", y="Per-family MSE",
+            color="Profile", color_discrete_map=_PROFILE_COLORS,
+            text="Per-family MSE",
+            title=f"Per-family MSE — Method 2, k={val_k}, m={_VAL_M}, uniform allocation",
+        )
+        fig_mse.update_traces(texttemplate="%{text:.4f}", textposition="outside")
+        fig_mse.update_layout(height=350, showlegend=False, yaxis_title="MSE")
+        st.plotly_chart(fig_mse, use_container_width=True)
+
+        st.divider()
+
+        st.subheader(f"Per-family breakdown — n = {val_n_detail}, m = {_VAL_M}, k = {val_k}")
+        st.caption("True πᵢ (blue) vs uniform allocation π̂/k (orange). The gap drives the MSE.")
+
+        for profile_name, true_pi_vec in profiles.items():
+            true_pi_hat = sum(true_pi_vec)
+            expected_count = expected_partial(true_pi_hat, _VAL_M, val_n_detail)
+            est_pi_hat = estimate_pi_hat(expected_count, _VAL_M, val_n_detail)
+            if est_pi_hat is None or np.isnan(est_pi_hat):
+                est_pi_hat = float("nan")
+                est_pi_vec = [float("nan")] * val_k
+            else:
+                est_pi_vec = [est_pi_hat / val_k] * val_k
+
+            family_se = [(e - t) ** 2 for e, t in zip(est_pi_vec, true_pi_vec)]
+            mse_val = float(np.mean(family_se))
+
+            col_tbl, col_fig = st.columns([1, 2])
+            with col_tbl:
+                st.markdown(f"**{profile_name}** · π̂ = {true_pi_hat:.2f} · MSE = {mse_val:.6f}")
+                st.dataframe(
+                    pd.DataFrame({
+                        "Family":         [f"F{i+1}" for i in range(val_k)],
+                        "True πᵢ":        true_pi_vec,
+                        "Est. πᵢ (π̂/k)": [round(p, 4) for p in est_pi_vec],
+                        "Sq. error":      [round(se, 6) for se in family_se],
+                    }),
+                    use_container_width=True, hide_index=True,
+                )
+            with col_fig:
+                st.plotly_chart(
+                    _val_per_family_chart(
+                        [f"F{i+1}" for i in range(val_k)],
+                        true_pi_vec, est_pi_vec, "Est. πᵢ (π̂/k)", profile_name,
+                    ),
+                    use_container_width=True,
+                )
+            st.divider()
+
+        st.markdown("""
+        **What these results mean — Method 2 accuracy**
+
+        Method 2 inverts Theorem 4 to find the π̂ that makes the model's expected motif count
+        match the observed count. The π̂ squared error is essentially zero for every row —
+        the Brent root-find is a mathematical inversion, not an approximation.
+
+        - **The real limitation is allocation, not recovery:** once π̂ is known, Method 2
+          distributes it uniformly across k families (π̂/k each). This is the only source of
+          per-family MSE. If the true profile is heterogeneous — like Linear, where one family
+          inherits rarely and another almost always — uniform allocation misassigns π to every
+          family simultaneously.
+        - **MSE is profile-shape dependent, not n-dependent:** because π̂ is recovered exactly,
+          the per-family error is fixed regardless of whether n = 20 or n = 100. Network size
+          only matters when the observed count is noisy (a real experiment); here it is exact.
+        - **Linear MSE > Quadratic MSE:** the Linear profile has the highest within-profile
+          variance. Any constant allocation to a spread-out distribution will produce larger
+          average squared error than to a peaked one.
+        - **Practical interpretation:** Method 2 is the right tool when you have a reliable
+          observed motif count and need an aggregate π̂ for significance testing (the Motif
+          Significance tab). It should not be used to infer which specific families have higher
+          or lower inheritance without additional weighting information.
+        """)
+
+    # ════════════════════════════════════════════════════════════════
+    # METHOD 3 branch — real YFL039C calibrated estimator
+    # ════════════════════════════════════════════════════════════════
+    elif use_m3:
+        m3_result  = estimate_pi_from_snp(["YFL039C"] * val_k)
+        est_pi_vec = m3_result["pi_vec"]
+        mu         = est_pi_vec[0]
+
+        with st.expander("YFL039C calibration data (source of the estimate)"):
+            ivec_m3 = _load_inheritance()
+            st.caption(
+                f"Method 3 is calibrated on **{len(ivec_m3)} strains** of gene YFL039C. "
+                f"Each strain's π = 1 − pct_alt/100. The cross-strain mean "
+                f"(**μ = {mu:.4f}**) is applied uniformly to all k families."
+            )
+            fig_cal = px.bar(
+                ivec_m3, x="strain", y="pi_snp", color="pct_alt",
+                labels={"pi_snp": "πᵢ proxy", "pct_alt": "% alt alleles"},
+                color_continuous_scale="RdYlGn_r",
+                title="Per-strain π (YFL039C) — calibration source",
+            )
+            fig_cal.update_layout(height=280, xaxis_tickangle=-30, margin=dict(t=40, b=10))
+            fig_cal.add_hline(
+                y=mu, line_dash="dash", line_color="black",
+                annotation_text=f"μ = {mu:.4f}", annotation_position="right",
+            )
+            st.plotly_chart(fig_cal, use_container_width=True)
+            st.dataframe(
+                ivec_m3[["strain", "pct_alt", "pi_snp"]].rename(columns={"pi_snp": "π proxy"}),
+                use_container_width=True, hide_index=True, height=220,
+            )
+
+        st.divider()
+
+        m3_rows = []
+        for profile_name, true_pi_vec in profiles.items():
+            family_se = [(mu - t) ** 2 for t in true_pi_vec]
+            mse       = float(np.mean(family_se))
+            m3_rows.append({
+                "Profile":        profile_name,
+                "True π̂":        round(sum(true_pi_vec), 4),
+                "Estimated π̂":   round(sum(est_pi_vec), 4),
+                "Per-family MSE": round(mse, 6),
+            })
+
+        st.subheader("Summary — all profiles")
+        st.caption(
+            f"Method 3 applies the same calibrated estimate (μ = {mu:.4f}) to every "
+            "family. MSE is higher for profiles whose true values spread far from μ."
+        )
+        st.dataframe(pd.DataFrame(m3_rows), use_container_width=True, hide_index=True)
+
+        st.divider()
+
+        st.subheader(f"Per-family MSE by profile (k = {val_k})")
+        fig_mse3 = px.bar(
+            pd.DataFrame(m3_rows),
+            x="Profile", y="Per-family MSE",
+            color="Profile", color_discrete_map=_PROFILE_COLORS,
+            text="Per-family MSE",
+            title=f"Per-family MSE — Method 3, k={val_k}, μ = {mu:.4f}",
+        )
+        fig_mse3.update_traces(texttemplate="%{text:.4f}", textposition="outside")
+        fig_mse3.update_layout(height=350, showlegend=False, yaxis_title="MSE")
+        st.plotly_chart(fig_mse3, use_container_width=True)
+
+        st.divider()
+
+        st.subheader(f"Per-family breakdown — k = {val_k}")
+        st.caption(
+            f"True πᵢ (blue) vs Method 3 estimate μ = {mu:.4f} (orange, constant across families). "
+            "The gap at each family drives the MSE."
+        )
+
+        for profile_name, true_pi_vec in profiles.items():
+            family_se = [(mu - t) ** 2 for t in true_pi_vec]
+            mse_val   = float(np.mean(family_se))
+
+            col_tbl, col_fig = st.columns([1, 2])
+            with col_tbl:
+                st.markdown(f"**{profile_name}** · Est. π̂ = {mu * val_k:.4f} · MSE = {mse_val:.6f}")
+                st.dataframe(
+                    pd.DataFrame({
+                        "Family":    [f"F{i+1}" for i in range(val_k)],
+                        "True πᵢ":   true_pi_vec,
+                        "Est. πᵢ":   [round(mu, 4)] * val_k,
+                        "Sq. error": [round(se, 6) for se in family_se],
+                    }),
+                    use_container_width=True, hide_index=True,
+                )
+            with col_fig:
+                st.plotly_chart(
+                    _val_per_family_chart(
+                        [f"F{i+1}" for i in range(val_k)],
+                        true_pi_vec, [mu] * val_k, f"Est. πᵢ (μ={mu:.4f})", profile_name,
+                    ),
+                    use_container_width=True,
+                )
+            st.divider()
+
+        st.markdown(f"""
+        **What these results mean — Method 3 accuracy**
+
+        Method 3 derives its estimate from SNP divergence at gene YFL039C — the only locus in
+        the SGD dataset with dense per-strain variation data. The cross-strain mean
+        (μ = {mu:.4f}) is a genuine biological measurement, but it is a **scalar**: the same
+        value is applied to every family in the motif.
+
+        - **No per-family differentiation:** Method 3 cannot distinguish between a family
+          that almost always inherits its regulatory links and one that rarely does. All k
+          families receive μ regardless of their true πᵢ. The per-family bars in the chart
+          above are all identical on the orange side.
+        - **MSE is driven by profile variance around μ:** the MSE for a given profile equals
+          the variance of the true πᵢ values around μ. Quadratic profiles — whose values
+          cluster near the center — produce lower MSE than Linear profiles, whose extremes
+          (0.1 and 0.9 for k=3) are far from μ ≈ 0.59.
+        - **The estimate is well-calibrated for moderate inheritance:** μ ≈ 0.59 sits in a
+          biologically plausible range for yeast regulatory links. Strains with 0 alt alleles
+          give π = 1.0 (fully conserved site); strains with 2 alt alleles give π = 0 (fully
+          diverged). The mean reflects a mix of conserved and diverging links.
+        - **Practical interpretation:** Method 3 is best used when you have no gene-specific
+          evidence (no evidence codes, no observed motif count) and need a biologically grounded
+          single estimate. Its MSE is irreducible for heterogeneous profiles without additional
+          per-family sequence data at more loci.
+        """)
+
+    # ════════════════════════════════════════════════════════════════
+    # METHOD 4 branch — consensus-adjusted (YEASTRACT)
+    # ════════════════════════════════════════════════════════════════
+    else:
+        tfs_m4    = _load_tfs().sort_values("gene_name")
+        tf_names4 = tfs_m4["gene_name"].tolist()
+
+        # Defaults: k genes evenly spread across the evidence score range
+        tfs_sorted_ev4 = tfs_m4.sort_values("pi_prior").reset_index(drop=True)
+        indices4       = [int(i * (len(tfs_sorted_ev4) - 1) / (val_k - 1)) for i in range(val_k)]
+        default_genes4 = [tfs_sorted_ev4.loc[i, "gene_name"] for i in indices4]
+
+        selected_genes4 = st.multiselect(
+            f"Select exactly **{val_k}** TF gene names",
+            tf_names4,
+            default=default_genes4,
+            key="m4_genes",
+            help=(
+                "Method 4 starts from Method 1's evidence-based π and multiplies by a "
+                "YEASTRACT binding-flexibility factor. For genes not in the YEASTRACT "
+                "consensus dataset the factor defaults to 1.0 (no adjustment)."
+            ),
+        )
+
+        if len(selected_genes4) != val_k:
+            st.warning(f"Please select exactly {val_k} genes (currently {len(selected_genes4)}).")
+            st.stop()
+
+        m4_result   = estimate_pi_consensus_adjusted(selected_genes4)
+        est_pi_m4   = m4_result["pi_vec"]
+        base_pi_m4  = m4_result["base_pi"]
+        factors_m4  = m4_result["consensus_factors"]
+        con_stats   = m4_result["consensus_stats"]
+
+        with st.expander("Consensus factors for selected genes"):
+            from model.consensus_loader import load_tf_consensus_stats
+            all_stats    = load_tf_consensus_stats()
+            factor_range = (all_stats["pi_consensus_factor"].min(),
+                            all_stats["pi_consensus_factor"].max())
+            st.caption(
+                f"Consensus factors across all YEASTRACT TFs range from "
+                f"**{factor_range[0]:.4f}** (near-zero ambiguity, tight binding) to "
+                f"**{factor_range[1]:.4f}** (more degenerate consensus). "
+                "Genes not in YEASTRACT receive factor = 1.0."
+            )
+            st.dataframe(
+                pd.DataFrame({
+                    "Gene":           selected_genes4,
+                    "Base πᵢ (M1)":   [round(b, 4) for b in base_pi_m4],
+                    "Consensus factor":[round(f, 4) for f in factors_m4],
+                    "Adjusted πᵢ":    [round(p, 4) for p in est_pi_m4],
+                }),
+                use_container_width=True, hide_index=True,
+            )
+
+        st.divider()
+
+        m4_rows = []
+        for profile_name, true_pi_vec in profiles.items():
+            family_se = [(e - t) ** 2 for e, t in zip(est_pi_m4, true_pi_vec)]
+            mse       = float(np.mean(family_se))
+            m4_rows.append({
+                "Profile":        profile_name,
+                "True π̂":        round(sum(true_pi_vec), 4),
+                "Estimated π̂":   round(sum(est_pi_m4), 4),
+                "Per-family MSE": round(mse, 6),
+            })
+
+        st.subheader("Summary — all profiles")
+        st.caption(
+            f"Method 4 estimates for selected genes: "
+            f"{', '.join(f'{g} → {p:.4f}' for g, p in zip(selected_genes4, est_pi_m4))}."
+        )
+        st.dataframe(pd.DataFrame(m4_rows), use_container_width=True, hide_index=True)
+
+        st.divider()
+
+        st.subheader(f"Per-family MSE by profile (k = {val_k})")
+        fig_mse4 = px.bar(
+            pd.DataFrame(m4_rows),
+            x="Profile", y="Per-family MSE",
+            color="Profile", color_discrete_map=_PROFILE_COLORS,
+            text="Per-family MSE",
+            title=(
+                f"Per-family MSE — Method 4, k={val_k}, "
+                f"genes: {', '.join(selected_genes4)}"
+            ),
+        )
+        fig_mse4.update_traces(texttemplate="%{text:.4f}", textposition="outside")
+        fig_mse4.update_layout(height=350, showlegend=False, yaxis_title="MSE")
+        st.plotly_chart(fig_mse4, use_container_width=True)
+
+        st.divider()
+
+        st.subheader(f"Per-family breakdown — k = {val_k}")
+        st.caption(
+            "True πᵢ (blue) vs Method 4 consensus-adjusted estimate (orange). "
+            "Orange is always ≥ the Method 1 base (green reference line) because "
+            "the consensus factor is always ≥ 1.0."
+        )
+
+        for profile_name, true_pi_vec in profiles.items():
+            family_se = [(e - t) ** 2 for e, t in zip(est_pi_m4, true_pi_vec)]
+            mse_val   = float(np.mean(family_se))
+
+            col_tbl, col_fig = st.columns([1, 2])
+            with col_tbl:
+                st.markdown(
+                    f"**{profile_name}** · Est. π̂ = {sum(est_pi_m4):.4f} · "
+                    f"MSE = {mse_val:.6f}"
+                )
+                st.dataframe(
+                    pd.DataFrame({
+                        "Family":      [f"F{i+1}" for i in range(val_k)],
+                        "Gene":        selected_genes4,
+                        "True πᵢ":     true_pi_vec,
+                        "Base πᵢ (M1)":[round(b, 4) for b in base_pi_m4],
+                        "Factor":      [round(f, 4) for f in factors_m4],
+                        "Adj. πᵢ (M4)":[round(p, 4) for p in est_pi_m4],
+                        "Sq. error":   [round(se, 6) for se in family_se],
+                    }),
+                    use_container_width=True, hide_index=True,
+                )
+            with col_fig:
+                x_labels = [f"F{i+1}\n({g})" for i, g in enumerate(selected_genes4)]
+                fig_fam4 = go.Figure()
+                fig_fam4.add_bar(
+                    x=x_labels, y=true_pi_vec,
+                    name="True πᵢ", marker_color="#2563eb",
+                )
+                fig_fam4.add_bar(
+                    x=x_labels, y=base_pi_m4,
+                    name="Base πᵢ (M1)", marker_color="#94a3b8",
+                )
+                fig_fam4.add_bar(
+                    x=x_labels, y=est_pi_m4,
+                    name="Adj. πᵢ (M4)", marker_color="#f97316",
+                )
+                fig_fam4.update_layout(
+                    barmode="group",
+                    height=280,
+                    title=profile_name,
+                    yaxis=dict(title="π", range=[0, 1.05]),
+                    legend=dict(orientation="h", y=-0.3),
+                    margin=dict(t=40, b=10),
+                )
+                st.plotly_chart(fig_fam4, use_container_width=True)
+            st.divider()
+
+        m4_adj_range = (
+            min(est_pi_m4), max(est_pi_m4),
+            min(base_pi_m4), max(base_pi_m4),
+        )
+        st.markdown(f"""
+        **What these results mean — Method 4 accuracy**
+
+        Method 4 is built on top of Method 1: it takes the evidence-based π prior and
+        applies an upward multiplier derived from each TF's YEASTRACT binding-consensus
+        flexibility. A TF whose IUPAC consensus sequence contains many ambiguous positions
+        (N, R, Y, …) is a **promiscuous binder** — its regulatory links can survive more
+        sequence drift after duplication, so π is adjusted upward.
+
+        - **Always an upward adjustment:** the consensus factor is always ≥ 1.0, so Method 4
+          can never produce a lower estimate than Method 1 for the same gene. The selected
+          genes have base π in [{m4_adj_range[2]:.4f}, {m4_adj_range[3]:.4f}] and adjusted π
+          in [{m4_adj_range[0]:.4f}, {m4_adj_range[1]:.4f}].
+        - **Narrow factor range (1.02 – 1.12):** because YEASTRACT consensus sequences are
+          generally quite specific (low ambiguity), the adjustment is modest. Method 4 sits
+          just above Method 1 in practice — it refines the estimate rather than transforming it.
+        - **Same ceiling problem as Method 1:** the combined effect of the evidence-code floor
+          (~0.31) and the modest factor means Method 4 still cannot reach extreme π values
+          (below ~0.37 or above ~0.82). Linear profile extremes (0.1, 0.9) are out of range.
+        - **Gene-dependent and factor-dependent:** changing the gene selection changes both
+          the base and the factor simultaneously. TFs not in the YEASTRACT consensus dataset
+          receive factor = 1.0, making Method 4 identical to Method 1 for those genes.
+        - **Practical interpretation:** Method 4 is best used when you have YEASTRACT binding
+          data for your TFs and want to account for the fact that promiscuous binders are more
+          likely to maintain regulatory links after duplication. The adjustment is small but
+          biologically motivated. Use it in combination with Method 1 to see whether binding
+          specificity shifts the estimate meaningfully for your gene set.
+        """)
