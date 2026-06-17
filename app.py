@@ -2652,6 +2652,36 @@ High π₃ + high π₄ → site is present and intact across species → strong
 High π₃ + low π₄ → site is present but eroding → transitional state; may be in the process of regulatory rewiring.
 Low π₃ + any π₄ → site is absent in most species → likely lineage-specific in *S. cerevisiae* or recently gained.
 """)
+        st.divider()
+        st.markdown("**🧮 Method Estimation Test — validate these estimators**")
+        st.markdown(
+            "The Method Estimation Test tab lets you measure how accurately each estimator "
+            "(including Y1000+ π₃) recovers a known true-π profile, and compare all five "
+            "methods side by side via per-family MSE. Click below to navigate there directly:"
+        )
+        components.html("""
+        <a href="#"
+           onclick="
+             (function() {
+               var tabs = window.parent.document.querySelectorAll('button[data-baseweb=tab]');
+               for (var i = 0; i < tabs.length; i++) {
+                 if (tabs[i].innerText.indexOf('Method Estimation Test') !== -1) {
+                   tabs[i].click();
+                   window.parent.scrollTo(0, 0);
+                   break;
+                 }
+               }
+             })();
+             return false;
+           "
+           style="display:inline-block; padding:7px 18px; background:#2563eb; color:white;
+                  border-radius:6px; text-decoration:none; font-size:0.88em; font-weight:500;
+                  font-family:-apple-system,BlinkMacSystemFont,sans-serif; cursor:pointer;"
+           onmouseover="this.style.background='#1d4ed8'"
+           onmouseout="this.style.background='#2563eb'">
+          🧮 Open Method Estimation Test &rarr;
+        </a>
+        """, height=48)
 
     # ── Phylogenetic context ──────────────────────────────────────────
     _LABELED_TREE = Path(__file__).parent / "assets" / "y1000plus_species_labeled.png"
@@ -3210,6 +3240,18 @@ This is a **{pi3_level}** cross-species conservation signal: {pi3_bio}
 # TAB 9: Method Estimation Test
 # ══════════════════════════════════════════════════════════════════════
 
+@st.cache_data(show_spinner=False)
+def _val_load_pi3_for_test():
+    """Load pi3 TFBS conservation data for use in the Method Estimation Test tab."""
+    try:
+        from model.pi3_tfbs_conservation import load_pi3_results
+        return load_pi3_results(), None
+    except FileNotFoundError:
+        return None, "pi3_tfbs_conservation.csv not found — generate Y1000+ data first (Y1000+ π Estimators tab)"
+    except Exception as e:
+        return None, str(e)
+
+
 _VAL_PROFILES = {
     3: {
         "Linear":    [0.1, 0.5, 0.9],
@@ -3251,12 +3293,15 @@ with tab9:
             "Method 2 — Moment Estimation (Theorem 4)",
             "Method 3 — SNP Divergence",
             "Method 4 — Consensus-adjusted",
+            "Method 5 — Y1000+ (π₃ TFBS Conservation)",
         ],
         horizontal=True,
     )
     use_m1 = val_method.startswith("Method 1")
     use_m2 = val_method.startswith("Method 2")
     use_m3 = val_method.startswith("Method 3")
+    use_m4 = val_method.startswith("Method 4")
+    use_m5 = val_method.startswith("Method 5")
 
     _METHOD_WORKFLOWS = {
         "Method 1 — Evidence-based": (
@@ -3280,6 +3325,14 @@ with tab9:
             "consensus sequences. TFs with more ambiguous binding sequences get a higher "
             "factor (≥ 1.0), pushing π upward. The adjusted values are compared to the profile."
         ),
+        "Method 5 — Y1000+ (π₃ TFBS Conservation)": (
+            "**Workflow:** select k TFs from those available in the Y1000+ π₃ dataset. "
+            "For each TF, Method 5 computes the mean retention fraction across all its "
+            "target genes in the 48-species Y1000+ panel — the fraction of genomes retaining "
+            "a significant PWM hit in the 1,000 bp upstream of the orthologous gene. "
+            "This empirical conservation fraction is used as the per-family π estimate. "
+            "Requires Y1000+ data to be generated first."
+        ),
     }
     st.markdown(_METHOD_WORKFLOWS[val_method])
 
@@ -3294,6 +3347,7 @@ with tab9:
         | **Evidence score** | Method 1 | Quality weight assigned to each SGD evidence code (IDA → 0.90, IEA → 0.30, …) |
         | **pct_alt / μ** | Method 3 | Per-strain % alternative alleles at YFL039C; μ is the cross-strain mean π |
         | **Consensus factor** | Method 4 | YEASTRACT binding-flexibility multiplier (1.02 – 1.12); higher = more ambiguous consensus = tolerates more drift |
+        | **Retention fraction / π₃** | Method 5 | Fraction of Y1000+ genomes with a significant PWM hit upstream of the orthologous gene; averaged across all target genes per TF |
         | **MSE** | All | Mean squared error between true πᵢ and estimated πᵢ across k families |
         """)
 
@@ -3718,7 +3772,7 @@ with tab9:
     # ════════════════════════════════════════════════════════════════
     # METHOD 4 branch — consensus-adjusted (YEASTRACT)
     # ════════════════════════════════════════════════════════════════
-    else:
+    elif use_m4:
         tfs_m4    = _load_tfs().sort_values("gene_name")
         tf_names4 = tfs_m4["gene_name"].tolist()
 
@@ -3896,3 +3950,443 @@ with tab9:
           biologically motivated. Use it in combination with Method 1 to see whether binding
           specificity shifts the estimate meaningfully for your gene set.
         """)
+
+    # ════════════════════════════════════════════════════════════════
+    # METHOD 5 branch — Y1000+ TFBS Conservation (π₃)
+    # ════════════════════════════════════════════════════════════════
+    elif use_m5:
+        pi3_df5, pi3_err5 = _val_load_pi3_for_test()
+
+        if pi3_err5:
+            st.warning(
+                f"Y1000+ π₃ data not available: {pi3_err5}",
+                icon="⚠️",
+            )
+            st.stop()
+
+        tf_opts5 = sorted(pi3_df5["tf_name"].unique().tolist())
+
+        # Defaults: k TFs spread across the mean-π₃ range
+        tf_mean5 = (
+            pi3_df5.groupby("tf_name")["pi3_estimate"]
+            .mean()
+            .sort_values()
+            .reset_index()
+        )
+        idx5 = [int(i * (len(tf_mean5) - 1) / max(val_k - 1, 1)) for i in range(val_k)]
+        default_genes5 = [tf_mean5.iloc[i]["tf_name"] for i in idx5]
+
+        selected_genes5 = st.multiselect(
+            f"Select exactly **{val_k}** TFs (from those in the Y1000+ π₃ dataset)",
+            tf_opts5,
+            default=default_genes5,
+            key="m5_genes",
+            help=(
+                "Each selected TF's mean retention fraction across all its Y1000+ target-gene "
+                "edges becomes its per-family π estimate. Defaults are spread from the "
+                "lowest to the highest mean π₃ in the dataset."
+            ),
+        )
+
+        if len(selected_genes5) != val_k:
+            st.warning(f"Please select exactly {val_k} TFs (currently {len(selected_genes5)}).")
+            st.stop()
+
+        est_pi_m5 = []
+        for tf in selected_genes5:
+            tf_rows5 = pi3_df5[pi3_df5["tf_name"] == tf]
+            est_pi_m5.append(round(float(tf_rows5["pi3_estimate"].mean()), 4))
+
+        with st.expander("π₃ estimates for selected TFs (source data)"):
+            tf_summary5 = []
+            for tf, est in zip(selected_genes5, est_pi_m5):
+                tf_rows5 = pi3_df5[pi3_df5["tf_name"] == tf]
+                tf_summary5.append({
+                    "TF":             tf,
+                    "n_target_genes": len(tf_rows5),
+                    "Mean π₃ (est.)": est,
+                    "Min π₃":         round(float(tf_rows5["pi3_estimate"].min()), 4),
+                    "Max π₃":         round(float(tf_rows5["pi3_estimate"].max()), 4),
+                })
+            st.caption(
+                "For each selected TF, the mean π₃ is averaged across all its target-gene edges "
+                "in the Y1000+ dataset. This scalar is the per-family estimate used below."
+            )
+            st.dataframe(pd.DataFrame(tf_summary5), use_container_width=True, hide_index=True)
+
+        st.divider()
+
+        m5_rows = []
+        for profile_name, true_pi_vec in profiles.items():
+            family_se = [(e - t) ** 2 for e, t in zip(est_pi_m5, true_pi_vec)]
+            mse = float(np.mean(family_se))
+            m5_rows.append({
+                "Profile":        profile_name,
+                "True π̂":        round(sum(true_pi_vec), 4),
+                "Estimated π̂":   round(sum(est_pi_m5), 4),
+                "Per-family MSE": round(mse, 6),
+            })
+
+        st.subheader("Summary — all profiles")
+        st.caption(
+            f"Method 5 estimates: "
+            f"{', '.join(f'{g} → {p:.4f}' for g, p in zip(selected_genes5, est_pi_m5))}."
+        )
+        st.dataframe(pd.DataFrame(m5_rows), use_container_width=True, hide_index=True)
+
+        st.divider()
+
+        st.subheader(f"Per-family MSE by profile (k = {val_k})")
+        fig_mse5 = px.bar(
+            pd.DataFrame(m5_rows),
+            x="Profile", y="Per-family MSE",
+            color="Profile", color_discrete_map=_PROFILE_COLORS,
+            text="Per-family MSE",
+            title=f"Per-family MSE — Method 5 (Y1000+ π₃), k={val_k}, TFs: {', '.join(selected_genes5)}",
+        )
+        fig_mse5.update_traces(texttemplate="%{text:.4f}", textposition="outside")
+        fig_mse5.update_layout(height=350, showlegend=False, yaxis_title="MSE")
+        st.plotly_chart(fig_mse5, use_container_width=True)
+
+        st.divider()
+
+        st.subheader(f"Per-family breakdown — k = {val_k}")
+        st.caption(
+            "True πᵢ (blue) vs Y1000+ π₃ mean retention fraction per TF (orange). "
+            "Unlike Methods 2–3, each family receives a different estimate reflecting "
+            "that TF's specific conservation history."
+        )
+
+        for profile_name, true_pi_vec in profiles.items():
+            family_se = [(e - t) ** 2 for e, t in zip(est_pi_m5, true_pi_vec)]
+            mse_val = float(np.mean(family_se))
+
+            col_tbl, col_fig = st.columns([1, 2])
+            with col_tbl:
+                st.markdown(
+                    f"**{profile_name}** · Est. π̂ = {sum(est_pi_m5):.4f} · MSE = {mse_val:.6f}"
+                )
+                st.dataframe(
+                    pd.DataFrame({
+                        "Family":       [f"F{i+1}" for i in range(val_k)],
+                        "TF":           selected_genes5,
+                        "True πᵢ":      true_pi_vec,
+                        "Est. πᵢ (π₃)": [round(p, 4) for p in est_pi_m5],
+                        "Sq. error":    [round(se, 6) for se in family_se],
+                    }),
+                    use_container_width=True, hide_index=True,
+                )
+            with col_fig:
+                st.plotly_chart(
+                    _val_per_family_chart(
+                        [f"F{i+1}\n({g})" for i, g in enumerate(selected_genes5)],
+                        true_pi_vec, est_pi_m5, "Est. πᵢ (π₃)", profile_name,
+                    ),
+                    use_container_width=True,
+                )
+            st.divider()
+
+        overall_mean_pi3_5 = round(float(pi3_df5["pi3_estimate"].mean()), 3)
+        st.markdown(f"""
+        **What these results mean — Method 5 (Y1000+ π₃) accuracy**
+
+        Method 5 derives each family's estimate from empirical TFBS conservation data: for each
+        selected TF, the fraction of Y1000+ genomes (spanning ~1 billion years of yeast evolution)
+        retaining a significant PWM hit upstream of the orthologous gene is averaged across all of
+        that TF's target genes. This retention fraction is used directly as πᵢ.
+
+        This is qualitatively different from all four SGD-based methods. Method 5 does not
+        infer π from evidence codes, model moments, or single-gene SNP counts — it *measures*
+        how often regulatory links are retained across independent evolutionary replicates.
+
+        - **Per-family differentiation:** unlike Methods 2 and 3, each family in Method 5 gets
+          its own estimate based on its TF's evolutionary conservation history. A TF whose binding
+          sites are retained in most yeasts gets high π; a lineage-specific TF gets low π.
+        - **Overall mean π₃ = {overall_mean_pi3_5}** across all TF→gene edges in the Y1000+ dataset.
+          TFs with mean π₃ above this are better-conserved-than-average regulators.
+        - **Range: [0, 1] with no structural floor/ceiling:** unlike Methods 1/4 (bounded by
+          evidence-code range ~0.31–0.82), Method 5 can in principle recover any π value from
+          0 to 1, limited only by the diversity of the Y1000+ species panel and PWM sensitivity.
+        - **MSE reflects biological heterogeneity:** high MSE means the selected TFs' conservation
+          patterns do not align with the synthetic profile's shape. This is biologically informative —
+          it tells you how well the profile matches the evolutionary reality for those TFs.
+        - **Practical interpretation:** Method 5 is the most data-rich estimate when Y1000+ data
+          is available. Its MSE reflects real biological heterogeneity rather than structural model
+          limitations, making it the most trustworthy indicator of actual inheritance for TFs
+          with good JASPAR PWM coverage in the Y1000+ dataset.
+        """)
+
+    # ════════════════════════════════════════════════════════════════
+    # COMPARE ALL METHODS — side-by-side MSE across all 5 methods
+    # ════════════════════════════════════════════════════════════════
+    st.divider()
+
+    with st.expander("📊 Compare All Methods — which estimator is most accurate?", expanded=False):
+        st.markdown(
+            "Runs all five estimation methods against the **Linear** and **Quadratic** "
+            f"true-π profiles (k = {val_k}, m = {_VAL_M}) and computes per-family MSE "
+            "for each. Methods 1, 4, and 5 use the gene set selected below; "
+            "Methods 2 and 3 are parameterless. Method 5 requires Y1000+ data."
+        )
+
+        # Gene selector shared by M1, M4, M5
+        _cmp_tfs = _load_tfs().sort_values("pi_prior").reset_index(drop=True)
+        _cmp_tf_names = _load_tfs().sort_values("gene_name")["gene_name"].tolist()
+        _cmp_idx = [int(i * (len(_cmp_tfs) - 1) / max(val_k - 1, 1)) for i in range(val_k)]
+        _cmp_defaults = [_cmp_tfs.loc[i, "gene_name"] for i in _cmp_idx]
+
+        cmp_genes = st.multiselect(
+            f"Select **{val_k}** TFs for Methods 1, 4, and 5 (same gene set for all three):",
+            _cmp_tf_names,
+            default=_cmp_defaults,
+            key="compare_genes",
+        )
+
+        if len(cmp_genes) != val_k:
+            st.info(f"Select exactly {val_k} TFs above to run the comparison (currently {len(cmp_genes)}).")
+        else:
+            _M_COLORS = {
+                "M1 Evidence":  "#2563eb",
+                "M2 Moment":    "#16a34a",
+                "M3 SNP":       "#d97706",
+                "M4 Consensus": "#7c3aed",
+                "M5 Y1000+":    "#dc2626",
+            }
+
+            # Compute per-method estimate vectors
+            _pi_m1 = estimate_pi_from_evidence(cmp_genes)["pi_vec"]
+            _pi_m4 = estimate_pi_consensus_adjusted(cmp_genes)["pi_vec"]
+            _mu_m3 = estimate_pi_from_snp(["YFL039C"] * val_k)["pi_vec"][0]
+            _pi_m3 = [_mu_m3] * val_k
+
+            _pi3_cmp, _pi3_cmp_err = _val_load_pi3_for_test()
+            if _pi3_cmp is not None:
+                _overall_m5 = float(_pi3_cmp["pi3_estimate"].mean())
+                _pi_m5 = []
+                for _tf in cmp_genes:
+                    _rows = _pi3_cmp[_pi3_cmp["tf_name"] == _tf]
+                    _pi_m5.append(
+                        float(_rows["pi3_estimate"].mean()) if not _rows.empty else _overall_m5
+                    )
+            else:
+                _pi_m5 = None
+
+            cmp_rows = []
+            for profile_name, true_pi_vec in profiles.items():
+                # M1
+                _se_m1 = float(np.mean([(e - t) ** 2 for e, t in zip(_pi_m1, true_pi_vec)]))
+                # M2 — Brent inversion with n=50, uniform allocation
+                _ph = sum(true_pi_vec)
+                _exp = expected_partial(_ph, _VAL_M, 50)
+                _est_ph = estimate_pi_hat(_exp, _VAL_M, 50)
+                if _est_ph and not np.isnan(_est_ph):
+                    _pi_m2 = [_est_ph / val_k] * val_k
+                    _se_m2 = float(np.mean([(e - t) ** 2 for e, t in zip(_pi_m2, true_pi_vec)]))
+                else:
+                    _se_m2 = float("nan")
+                # M3
+                _se_m3 = float(np.mean([(_mu_m3 - t) ** 2 for t in true_pi_vec]))
+                # M4
+                _se_m4 = float(np.mean([(e - t) ** 2 for e, t in zip(_pi_m4, true_pi_vec)]))
+                # M5
+                _se_m5 = (
+                    float(np.mean([(e - t) ** 2 for e, t in zip(_pi_m5, true_pi_vec)]))
+                    if _pi_m5 else float("nan")
+                )
+
+                cmp_rows.append({
+                    "Profile":      profile_name,
+                    "M1 Evidence":  round(_se_m1, 6),
+                    "M2 Moment":    round(_se_m2, 6) if not np.isnan(_se_m2) else float("nan"),
+                    "M3 SNP":       round(_se_m3, 6),
+                    "M4 Consensus": round(_se_m4, 6),
+                    "M5 Y1000+":    round(_se_m5, 6) if not np.isnan(_se_m5) else float("nan"),
+                })
+
+            cmp_df = pd.DataFrame(cmp_rows)
+            st.dataframe(cmp_df, use_container_width=True, hide_index=True)
+
+            # Grouped bar chart
+            _cmp_long = cmp_df.melt(id_vars="Profile", var_name="Method", value_name="Per-family MSE")
+            _cmp_long = _cmp_long.dropna(subset=["Per-family MSE"])
+            fig_cmp_all = px.bar(
+                _cmp_long,
+                x="Method", y="Per-family MSE",
+                color="Method", color_discrete_map=_M_COLORS,
+                facet_col="Profile",
+                text="Per-family MSE",
+                title=f"Per-family MSE — all methods, k={val_k}, m={_VAL_M} (n=50 for M2)",
+                height=430,
+            )
+            fig_cmp_all.update_traces(texttemplate="%{text:.4f}", textposition="outside")
+            fig_cmp_all.update_layout(showlegend=True)
+            st.plotly_chart(fig_cmp_all, use_container_width=True)
+
+            # Winner summary
+            _method_cols = ["M1 Evidence", "M2 Moment", "M3 SNP", "M4 Consensus", "M5 Y1000+"]
+            _avg_mse = {
+                m: float(cmp_df[m].mean())
+                for m in _method_cols
+                if m in cmp_df.columns and not cmp_df[m].isna().all()
+            }
+            if _avg_mse:
+                _avg_sorted = sorted(_avg_mse.items(), key=lambda x: x[1])
+                _best = _avg_sorted[0]
+                st.success(
+                    f"**{_best[0]}** achieves the lowest average MSE "
+                    f"({_best[1]:.6f}) across profiles for this gene set and k = {val_k}.",
+                    icon="🏆",
+                )
+                _rank_df = pd.DataFrame(
+                    [{"Method": m, "Avg MSE across profiles": round(v, 6)} for m, v in _avg_sorted]
+                )
+                st.dataframe(_rank_df, use_container_width=True, hide_index=True)
+                st.caption(
+                    "Average MSE is computed over Linear and Quadratic profiles. "
+                    "Results for Methods 1, 4, and 5 depend on which TFs are selected above — "
+                    "try different gene combinations to see how rankings change. "
+                    "Method 5 is omitted from ranking if Y1000+ data is not yet generated. "
+                    "M2 uses n = 50 for this comparison."
+                )
+
+                # ── Per-method accuracy explanation ───────────────────────────────────
+                st.subheader("Why does each method have this level of accuracy?")
+
+                # Build live per-profile strings for each method
+                def _profile_mse_str(col):
+                    parts = []
+                    for r in cmp_rows:
+                        if not np.isnan(r.get(col, float("nan"))):
+                            parts.append(f"{r['Profile']} MSE = {r[col]:.4f}")
+                    return "; ".join(parts) if parts else "data not available"
+
+                _lin_mse  = {col: next((r[col] for r in cmp_rows if r["Profile"]=="Linear"), float("nan"))
+                             for col in _method_cols if col in _avg_mse}
+                _quad_mse = {col: next((r[col] for r in cmp_rows if r["Profile"]=="Quadratic"), float("nan"))
+                             for col in _method_cols if col in _avg_mse}
+
+                # M1 explanation
+                if "M1 Evidence" in _avg_mse:
+                    _m1_lin  = _lin_mse.get("M1 Evidence", float("nan"))
+                    _m1_quad = _quad_mse.get("M1 Evidence", float("nan"))
+                    _m1_rank = next(i+1 for i,(m,_) in enumerate(_avg_sorted) if m=="M1 Evidence")
+                    st.markdown(f"""
+**M1 — Evidence-based** (ranked #{_m1_rank}, avg MSE = {_avg_mse['M1 Evidence']:.6f})
+
+Method 1 maps each TF's SGD experimental evidence codes to a π prior using a fixed quality-weight
+table (IDA → 0.90, IEA → 0.30, …). This imposes a hard structural range of roughly **0.31 – 0.77**
+on every estimate — no combination of TF selections can push a family's πᵢ outside that window.
+
+- **Linear profile** (MSE = {_m1_lin:.4f}): high error because the Linear profile contains values
+  at both extremes (e.g. 0.1 and 0.9 for k=3), which Method 1 physically cannot reach. All families
+  are pulled toward the middle, simultaneously underestimating the high-π families and overestimating
+  the low-π ones.
+- **Quadratic profile** (MSE = {_m1_quad:.4f}): lower error because the Quadratic values cluster
+  closer to the centre of Method 1's reachable range. The residual error comes from shape mismatch,
+  not a range violation.
+- **Bottom line:** the accuracy ceiling for Method 1 is set by the evidence-code weight table, not
+  by the amount of data or the choice of gene. It is best treated as a conservative prior rather
+  than a precise point estimate.
+""")
+
+                # M2 explanation
+                if "M2 Moment" in _avg_mse:
+                    _m2_lin  = _lin_mse.get("M2 Moment", float("nan"))
+                    _m2_quad = _quad_mse.get("M2 Moment", float("nan"))
+                    _m2_rank = next(i+1 for i,(m,_) in enumerate(_avg_sorted) if m=="M2 Moment")
+                    st.markdown(f"""
+**M2 — Moment Estimation / Theorem 4** (ranked #{_m2_rank}, avg MSE = {_avg_mse['M2 Moment']:.6f})
+
+Method 2 inverts Theorem 4 (`E[|M(n)|] = Γ(π̂+n)Γ(m)/[Γ(π̂+m)Γ(n)]`) via Brent root-finding to
+recover the total π̂ = Σπᵢ. The inversion is mathematically exact — the squared error on π̂ itself
+is essentially zero. The **only** source of per-family error is the allocation step: once π̂ is
+known, Method 2 distributes it uniformly (π̂/k to every family), because Theorem 4 gives no
+information about how inheritance is distributed *within* the motif.
+
+- **Linear profile** (MSE = {_m2_lin:.4f}): high per-family error because the Linear profile is
+  maximally heterogeneous — one family has low π and another has high π. A flat allocation of π̂/k
+  misses every family simultaneously; the total is right but the shape is wrong.
+- **Quadratic profile** (MSE = {_m2_quad:.4f}): lower error because the Quadratic profile is
+  symmetric and closer to uniform, so π̂/k is a better approximation of each πᵢ.
+- **Bottom line:** Method 2's per-family MSE equals the variance of the true profile around its
+  mean (π̂/k). It is the right tool for aggregate significance tests (the Motif Significance tab)
+  where only π̂ matters, but cannot distinguish which specific families inherit more or less.
+""")
+
+                # M3 explanation
+                if "M3 SNP" in _avg_mse:
+                    _m3_lin  = _lin_mse.get("M3 SNP", float("nan"))
+                    _m3_quad = _quad_mse.get("M3 SNP", float("nan"))
+                    _m3_rank = next(i+1 for i,(m,_) in enumerate(_avg_sorted) if m=="M3 SNP")
+                    st.markdown(f"""
+**M3 — SNP Divergence** (ranked #{_m3_rank}, avg MSE = {_avg_mse['M3 SNP']:.6f})
+
+Method 3 is calibrated on the 11 sequenced strains of gene YFL039C: for each strain,
+π = 1 − pct_alt/100, and the cross-strain mean (μ ≈ {_mu_m3:.4f}) is applied to **every** family
+in the motif. Like Method 2's uniform allocation, this produces a single constant across all k
+families — the MSE for any profile equals the variance of the true πᵢ values around μ.
+
+- **Linear profile** (MSE = {_m3_lin:.4f}): the Linear profile's extreme values (e.g. 0.1 and 0.9)
+  are far from μ ≈ {_mu_m3:.2f}, so each family contributes large squared deviation.
+- **Quadratic profile** (MSE = {_m3_quad:.4f}): the Quadratic values cluster nearer to μ, yielding
+  lower squared deviations on average.
+- **Bottom line:** Method 3's irreducible error comes from the fact that a single-gene SNP dataset
+  can only produce a scalar estimate. Its accuracy improves as the true profile concentrates near
+  μ ≈ {_mu_m3:.2f}, and worsens as the profile spreads away from that anchor. It is most useful
+  when no gene-specific evidence is available and a biologically grounded central estimate is needed.
+""")
+
+                # M4 explanation
+                if "M4 Consensus" in _avg_mse:
+                    _m4_lin  = _lin_mse.get("M4 Consensus", float("nan"))
+                    _m4_quad = _quad_mse.get("M4 Consensus", float("nan"))
+                    _m4_rank = next(i+1 for i,(m,_) in enumerate(_avg_sorted) if m=="M4 Consensus")
+                    st.markdown(f"""
+**M4 — Consensus-adjusted** (ranked #{_m4_rank}, avg MSE = {_avg_mse['M4 Consensus']:.6f})
+
+Method 4 builds on Method 1 by multiplying each TF's evidence-based π by a YEASTRACT
+binding-flexibility factor (range 1.02 – 1.12). TFs whose IUPAC consensus sequences contain
+many ambiguous positions are treated as more promiscuous binders whose regulatory links can
+survive more sequence drift after duplication, so their π is nudged upward.
+
+- **Why it closely tracks M1:** the factor range is narrow (1.02 – 1.12), so Method 4 sits
+  just above Method 1 in practice. It inherits the same structural floor (~0.37 adjusted) and
+  ceiling (~0.82 adjusted), meaning it still cannot represent very low or very high inheritance.
+- **Linear profile** (MSE = {_m4_lin:.4f}): essentially the same problem as M1 — the adjusted
+  range still doesn't reach 0.1 or 0.9, so extreme families are mis-estimated.
+- **Quadratic profile** (MSE = {_m4_quad:.4f}): similar to M1 but with a slight upward shift.
+  Whether this helps or hurts depends on where the Quadratic values sit relative to the adjusted range.
+- **Bottom line:** Method 4 adds biological nuance (promiscuous binders retain links more easily)
+  without fundamentally changing the range problem. It is most useful when YEASTRACT data is
+  available and you want to account for binding-specificity differences between TFs in the same family.
+""")
+
+                # M5 explanation
+                if "M5 Y1000+" in _avg_mse:
+                    _m5_lin  = _lin_mse.get("M5 Y1000+", float("nan"))
+                    _m5_quad = _quad_mse.get("M5 Y1000+", float("nan"))
+                    _m5_rank = next(i+1 for i,(m,_) in enumerate(_avg_sorted) if m=="M5 Y1000+")
+                    st.markdown(f"""
+**M5 — Y1000+ π₃ TFBS Conservation** (ranked #{_m5_rank}, avg MSE = {_avg_mse['M5 Y1000+']:.6f})
+
+Method 5 is the only method that gives each family a *different* estimate derived from real
+cross-species data. For each selected TF, the mean retention fraction across all its target
+genes in the Y1000+ 48-species panel becomes πᵢ. This means:
+
+- **No structural floor or ceiling:** unlike Methods 1 and 4, Method 5 can in principle reach
+  any π value from 0 to 1, limited only by the conservation patterns actually observed in the
+  1,154-genome Y1000+ dataset.
+- **Per-family differentiation:** a TF whose binding sites are retained in most yeast species
+  gets a high πᵢ; a lineage-specific TF gets a low one. This matches what Methods 2 and 3
+  structurally cannot do.
+- **Linear profile** (MSE = {_m5_lin:.4f}): error depends on how well the selected TFs'
+  real conservation spread matches the profile's spread. If TFs with low and high mean π₃
+  were chosen, Method 5 can approximate the Linear shape better than Methods 1–4.
+- **Quadratic profile** (MSE = {_m5_quad:.4f}): similarly depends on match between TF
+  conservation patterns and the symmetric Quadratic shape.
+- **Bottom line:** Method 5's accuracy is primarily constrained by the *choice of TFs*, not
+  by model structure. If you select TFs whose evolutionary conservation patterns happen to
+  mirror the true profile shape, Method 5 will outperform all SGD-based methods. If the
+  selected TFs are uniformly well- or poorly-conserved, it behaves similarly to Method 3.
+  It is the most trustworthy method for TFs with broad JASPAR PWM coverage in Y1000+.
+""")
