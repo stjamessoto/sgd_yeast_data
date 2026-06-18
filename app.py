@@ -1314,7 +1314,7 @@ All four methods produce values in [0, 1] per family and are compared on the sam
     )
 
     st.divider()
-    st.subheader("Step 2 — Estimate $\\vec{\\pi}$")
+    st.markdown("### Step 2 — Estimate $\\vec{\\pi}$")
 
     # Method selection
     method4 = st.radio(
@@ -1348,6 +1348,56 @@ All four methods produce values in [0, 1] per family and are compared on the sam
                 "motif count implies."
             )
 
+        with st.expander("📖 How Method 1 works — step by step"):
+            st.markdown("""
+**Step 1 — Map evidence codes to reliability weights**
+
+For every TF→gene regulatory relationship in SGD, the evidence code is mapped to a
+numerical weight reflecting how directly that relationship was experimentally established:
+
+| Code | Type | Weight |
+|------|------|--------|
+| IDA | Inferred from Direct Assay (ChIP, EMSA) | 0.90 |
+| IMP | Inferred from Mutant Phenotype | 0.80 |
+| IGI | Inferred from Genetic Interaction | 0.70 |
+| IPI | Inferred from Physical Interaction | 0.65 |
+| EXP | Inferred from Experiment (general) | 0.60 |
+| IEP | Inferred from Expression Pattern | 0.50 |
+| HTP | High-Throughput Experiment | 0.40 |
+| IEA | Inferred from Electronic Annotation | 0.10 |
+
+**Step 2 — Adjust for DNA-binding and activator status**
+
+Each TF's weight is scaled by two biological factors from SGD annotations:
+- **DNA-binding status**: TFs with confirmed DNA-binding domains get a multiplier > 1; TFs
+  lacking a confirmed domain are downweighted (less likely to have stable, inheritable binding sites).
+- **Activator role**: Transcriptional activators score slightly higher than repressors or
+  dual-function TFs, because activator binding sites tend to be more experimentally characterised.
+
+**Step 3 — Average within each gene family**
+
+The k gene families in the selected motif each contain one or more TFs. For each family, πᵢ
+is the mean adjusted weight across all TFs in that family. This gives a per-family inheritance
+probability in [0, 1], reflecting the average experimental-evidence quality for the regulatory
+relationships in that family.
+
+**Step 4 — Sum to π̂**
+
+π̂ = π₁ + π₂ + ··· + πₖ. This total feeds into Theorem 4 to give the model's expected motif count.
+
+---
+
+**What Method 1 is and is not**
+
+Method 1 is a **prior** — it summarises the quality of evidence for each regulatory link *before*
+looking at how many motif instances actually exist in the network. It cannot detect whether the
+network is over- or under-represented relative to the duplication model's prediction. Use Method 2
+to see how this prior compares to the network-anchored estimate.
+
+The evidence-code range available in SGD (~0.10–0.90) means Method 1 cannot produce extreme
+estimates near 0 or 1 — it is bounded by the available annotation quality.
+""")
+
     elif "Method 2" in method4:
         obs_input = st.number_input(
             "Observed motif count |M(n)|",
@@ -1374,6 +1424,72 @@ All four methods produce values in [0, 1] per family and are compared on the sam
                 "(nearly full inheritance). If well below, π̂ < k indicates partial loss."
             )
 
+        with st.expander("📖 How Method 2 works — step by step"):
+            st.markdown(f"""
+**Step 1 — Estimating π̂ (the total inheritance probability)**
+
+Theorem 4 (Scruse et al.) gives the *expected* motif count under Partial Duplication as a function of
+the sum π̂ = π₁ + π₂ + ··· + π_k:
+
+```
+E[|M(n)|] = Γ(π̂ + n) · Γ(m) / [Γ(π̂ + m) · Γ(n)]
+```
+
+This equation is **monotone increasing in π̂**, so given the observed count `c`, there is at most one
+π̂ ∈ [0, k] satisfying it. The code finds that root numerically (Brent's method) by solving:
+
+```
+f(π̂) = Γ(π̂+n)Γ(m)/[Γ(π̂+m)Γ(n)] − c = 0
+```
+
+This is **Method of Moments** — match the theoretical first moment to the observed count. It is not
+MLE (which would require maximising the full likelihood of the count distribution).
+
+**Compatibility with Theorem 1 (Full Duplication):** Theorem 4 *is* Theorem 1 when π̂ = k (all
+links perfectly inherited). So if the observed count equals the Full Duplication expectation, the
+inversion returns π̂ = k and every πᵢ = 1 — correctly recovering the Full Duplication boundary.
+
+---
+
+**Step 2 — Distributing π̂ to individual πᵢ values**
+
+Theorem 4 depends on $\\vec{{\\pi}}$ **only through its sum π̂** — the individual πᵢ values are invisible to it.
+This means the inversion in Step 1 cannot determine how π̂ is split across the k families; there are
+infinitely many vectors $\\vec{{\\pi}}$ with the same sum.
+
+To produce per-family values the code distributes π̂ proportionally to a weight vector:
+
+```
+πᵢ = π̂ · wᵢ / Σwᵢ,   clamped to [0, 1]
+```
+
+The weights wᵢ default to the **Method 1 evidence scores** (SGD experimental evidence codes). This
+means the *shape* of the πᵢ distribution across families comes entirely from Method 1; Method 2
+contributes only the *magnitude* of π̂, calibrated to the observed network count.
+
+---
+
+**Why n barely changes the accuracy**
+
+Method 2 uses a **single observation** of |M(n)| — the count of motif instances in the current
+network. By the delta method, the standard error of the recovered π̂ is approximately:
+
+```
+Std(π̂_hat) ≈ Std(|M(n)|) / |∂E/∂π̂|
+            ≈ Θ(n^π̂) / [Θ(n^π̂) · ln(n/m)]
+            = 1 / ln(n/m)
+```
+
+because both the noise (Std of the count, from Corollary 16) and the signal (∂E/∂π̂, the slope of
+Theorem 4) grow at the same rate Θ(n^π̂), leaving only the logarithmic factor ln(n/m) in the
+denominator. For yeast (n ≈ {n4:,}, m ≈ {m4:,}), ln(n/m) ≈ {np.log(max(n4, 2) / max(m4, 1)):.1f}.
+Doubling the genome size would increase this by ln(2) ≈ 0.69 — a negligible gain.
+
+The practical consequence is that **Method 2's uncertainty is set by the single-observation nature
+of the problem, not by genome size**. Methods 5–7 (Y1000+ cross-species) escape this by averaging
+across 1,154 independent genomes, which gives 1/√1154 ≈ 3% standard error on the retention fraction.
+""")
+
     elif "Method 3" in method4:
         result4 = estimate_pi_from_snp(gene_names4)
         st.markdown('<div class="result-box">', unsafe_allow_html=True)
@@ -1393,6 +1509,55 @@ All four methods produce values in [0, 1] per family and are compared on the sam
                 "π̂ used here is the mean across strains. Strains with more alternative "
                 "alleles at binding-site positions yield lower π (more divergence)."
             )
+
+        with st.expander("📖 How Method 3 works — step by step"):
+            st.markdown("""
+**The core idea: binding-site divergence as a proxy for inheritance**
+
+If a regulatory link (TF binding to a target gene) is truly inherited after gene duplication,
+the binding site sequence must remain intact in both daughter copies. Single-nucleotide
+polymorphisms (SNPs) at binding-site positions erode binding over time. A site with many
+alternative alleles across strains is actively diverging — and therefore less likely to have
+been faithfully inherited.
+
+**Step 1 — Load per-strain SNP data for YFL039C**
+
+SGD provides SNP calls across many *S. cerevisiae* strains for the YFL039C locus. This locus
+was chosen because it has dense, well-curated per-strain variation data and is regulated by
+multiple well-characterised TFs.
+
+**Step 2 — Compute the alternative allele fraction per strain**
+
+For each strain, `pct_alt` = (number of alternative alleles at TF binding positions) /
+(total positions scored) × 100. A strain where every position matches the S288C reference
+gets pct_alt = 0; a fully diverged strain gets pct_alt = 100.
+
+**Step 3 — Convert to a per-strain π**
+
+```
+π₃(strain) = 1 − pct_alt / 100
+```
+
+This is the fraction of binding-site positions that are still reference-identical in that strain —
+a direct measure of how much of the binding site has been preserved.
+
+**Step 4 — Average across strains → π̂**
+
+The mean of π₃(strain) over all sampled strains is the family-level estimate. This mean is
+then applied uniformly to all k families in the selected motif.
+
+---
+
+**Important limitations**
+
+- **Single locus:** All k families receive the same π̂ value because YFL039C is one calibration
+  point — Method 3 cannot distinguish which family inherits more or less.
+- **S. cerevisiae strains only:** This is within-species variation, not cross-species conservation.
+  The Y1000+ π₃ estimator (tab 7) uses 1,154 species for a far stronger signal.
+- **One TF's binding site:** The pct_alt is computed for a specific TF's binding-site positions
+  at YFL039C. TFs with different binding-site lengths or sequence requirements may diverge at
+  different rates.
+""")
 
         st.subheader("YFL039C per-strain pi estimates")
         ivec = _load_inheritance()
@@ -1429,6 +1594,61 @@ All four methods produce values in [0, 1] per family and are compared on the sam
                 "The scatter plot below illustrates the relationship: TFs in the upper-left "
                 "(few sequences, low ambiguity) have higher π; those in the lower-right have lower π."
             )
+
+        with st.expander("📖 How Method 4 works — step by step"):
+            st.markdown("""
+**The core idea: binding specificity constrains inheritance**
+
+A TF with a highly precise, unambiguous binding consensus requires an exact DNA sequence. After
+gene duplication, a single point mutation at a critical position can abolish binding entirely —
+so inheritance probability is low. Conversely, a TF with a degenerate consensus (many tolerated
+bases at each position) can still bind after mutations — so inheritance probability is higher.
+
+YEASTRACT provides IUPAC consensus sequences for each TF. The IUPAC code encodes ambiguity:
+`A/T/G/C` = fully specified; `R/Y/W/S/M/K` = two-fold ambiguous; `B/D/H/V` = three-fold;
+`N` = fully degenerate. More ambiguous positions = less constraint on the binding site.
+
+**Step 1 — Load IUPAC consensus sequences from YEASTRACT**
+
+For each TF, YEASTRACT provides one or more consensus sequences. Multiple consensus sequences
+indicate that the TF can bind several distinct sequence variants.
+
+**Step 2 — Compute mean IUPAC ambiguity per TF**
+
+For each consensus sequence, count the fraction of positions that are ambiguous IUPAC characters
+(anything other than A, T, G, or C). Average across all positions and all consensus sequences
+for that TF → `mean_ambiguity` ∈ [0, 1].
+
+**Step 3 — Combine sequence count and ambiguity into a π factor**
+
+Two signals are combined:
+- **n_consensuses** (how many distinct sequence variants the TF recognises): more variants →
+  easier to find a tolerated sequence after mutation → higher π
+- **mean_ambiguity** (how degenerate each consensus is): more ambiguity → more mutation-tolerant
+  → higher π
+
+The π factor is a calibrated combination of both, normalised to the [0.1, 0.9] range of
+observable YEASTRACT data.
+
+**Step 4 — Average within each gene family**
+
+Each gene family may contain multiple TFs. The family's πᵢ is the mean π factor across all TFs
+in that family. Families dominated by highly specific TFs get lower πᵢ; families with degenerate
+TFs get higher πᵢ.
+
+---
+
+**What this method captures and misses**
+
+Method 4 captures the *mutational robustness* of the binding site — how many point mutations
+the binding site can tolerate while remaining functional. It is independent of both experimental
+evidence quality (Method 1) and the observed network structure (Method 2).
+
+It does **not** capture whether binding sites are actually conserved across species (see π₃,
+Y1000+ tab) or whether they have already diverged in existing strains (Method 3). A TF with
+a degenerate consensus has high Method 4 π — but if its regulatory targets in *S. cerevisiae*
+happen to have low sequence conservation, the actual inheritance probability could still be low.
+""")
 
         # Show consensus stats per family
         st.markdown("**Per-family consensus binding statistics:**")
@@ -1477,6 +1697,48 @@ All four methods produce values in [0, 1] per family and are compared on the sam
 - **Agreement across methods** (bars at similar height) means the estimate is robust — the biological and sequence-level evidence are mutually consistent.
 - **Disagreement** (e.g., Method 1 high but Method 3 low) suggests the evidence-code quality and the actual genetic divergence tell different stories. Method 2 (Moment Estimation) is the most data-driven; Method 1 is the most conservative prior.
 - The **ensemble mean** (red bar) averages all four methods and is the recommended value to carry into the Motif Significance tab.
+""")
+
+        with st.expander("📖 How the ensemble comparison works — all four methods"):
+            st.markdown("""
+**Why compare four methods at all?**
+
+Each method estimates π from a different data source and encodes different biological assumptions.
+No single method is always correct — they are complementary:
+
+| Method | Data source | What it encodes | Key limitation |
+|--------|------------|----------------|----------------|
+| **M1 — Evidence-based** | SGD evidence codes | Experimental confidence in each regulatory link | Bounded by annotation quality (range ~0.1–0.9); ignores network structure |
+| **M2 — Moment Estimation** | Observed motif count | How much network structure is explained by duplication | Cannot distinguish per-family differences; high uncertainty from single observation |
+| **M3 — SNP divergence** | YFL039C strain SNPs | Within-species sequence divergence at a calibration locus | All families get the same π; within-species variation only |
+| **M4 — Consensus-adjusted** | YEASTRACT IUPAC sequences | Mutational robustness of binding sites | Does not measure whether sites are actually conserved across species |
+
+**How the ensemble mean is computed**
+
+For each gene family i, the ensemble mean is simply:
+```
+πᵢ_ensemble = (πᵢ_M1 + πᵢ_M2 + πᵢ_M3 + πᵢ_M4) / 4
+```
+
+and π̂_ensemble = Σ πᵢ_ensemble.
+
+**How to read disagreement**
+
+- **M1 high, M2 low:** SGD annotations suggest strong regulatory relationships, but the observed
+  network has fewer motif instances than expected if π were that high. This could mean the evidence
+  is biased toward well-studied TFs, or that some links are not preserved after duplication despite
+  strong evidence.
+- **M2 high, M1 low:** The network structure implies high inheritance, but evidence codes are weak.
+  This suggests regulatory links that are functionally preserved but experimentally undercharacterised.
+- **M3 diverges from M1/M2:** Within-species variation at YFL039C tells a different story than
+  either the evidence quality or the network count. Could indicate that YFL039C is atypical, or
+  that the motif families have different divergence histories.
+- **M4 low, others high:** The TFs have highly specific, constrained binding sequences —
+  so the binding sites are easily disrupted by mutation — but may still be conserved in practice
+  (other methods). Specificity constrains maintenance but does not preclude it.
+
+**The ensemble mean is a conservative starting point.** For publication-quality analysis, report
+all four methods and note where they agree or disagree.
 """)
 
         fig_comp = go.Figure()
@@ -3047,6 +3309,73 @@ This is a **{pi3_level}** cross-species conservation signal: {pi3_bio}
 **Why might retention fractions be low for some TFs?** (1) The JASPAR PWM may not generalise to diverged species; (2) ortholog assignment across ~1 billion years of yeast evolution is imperfect; (3) some binding sites are genuinely lineage-specific innovations. Low π₃ for a TF does **not** necessarily mean the TF is non-functional — it may have acquired different targets in other species.
 """)
 
+            with st.expander("📖 How π₃ is computed — step by step"):
+                st.markdown("""
+**The π₃ pipeline: counting how many yeast genomes retain a TF binding site**
+
+π₃ is the most direct of all seven estimators — it directly counts evolutionary replicates
+where a regulatory link is retained, rather than inferring retention from proxy signals.
+
+**Step 1 — Identify all TF→gene edges in *S. cerevisiae* S288C**
+
+Starting from the SGD regulatory network, collect all experimentally supported TF→gene
+regulatory relationships. Each edge is a (TF, target gene) pair with a known direction.
+
+**Step 2 — Retrieve a JASPAR PWM for each TF**
+
+For each TF, retrieve its position weight matrix (PWM) from JASPAR 2024 CORE (yeast). The
+PWM encodes the probability of each base (A/T/G/C) at each position of the binding motif.
+TFs without a JASPAR PWM are excluded from π₃ analysis.
+
+**Step 3 — Extract upstream sequences across 48 representative Y1000+ genomes**
+
+From each of 48 phylogenetically diverse Y1000+ genomes (selected to maximise clade
+coverage across Saccharomycotina, ~1 billion years of evolution):
+1. Identify the ortholog of each S. cerevisiae target gene
+2. Extract the 1,000 bp immediately upstream of its translational start codon
+3. This upstream window is the putative promoter region where TF binding sites reside
+
+**Step 4 — Score each upstream region with the TF's PWM**
+
+The JASPAR PWM is scanned across the 1,000 bp window. A hit is reported if any position
+scores at **p < 0.001** relative to the background nucleotide distribution. This threshold
+was chosen to balance sensitivity (not missing real sites) against specificity (not counting
+random matches).
+
+**Step 5 — Compute the retention fraction**
+
+```
+π₃(TF→gene) = n_genomes_with_hit / n_genomes_scanned
+```
+
+If 38 of 48 genomes have a significant PWM hit in the orthologous upstream region,
+π₃ = 38/48 ≈ 0.79.
+
+**Step 6 — Aggregate to the gene family level**
+
+For a TF family (all paralogs of a given TF), the family-level π̂₃ is the mean pairwise
+sharing across all pairs of target genes in the family — the "pairwise sharing mean" shown
+in the histogram above.
+
+---
+
+**Why 48 genomes rather than all 1,154?**
+
+The 48-genome panel was selected to maximise phylogenetic diversity. Using all 1,154 genomes
+would dramatically oversample closely related strains (especially *S. cerevisiae* and its
+nearest relatives), biasing the retention fraction upward for lineage-specific sites.
+The 48 representative genomes span all major Saccharomycotina clades at roughly equal branch
+lengths, giving each evolutionary lineage equal weight in the retention fraction.
+
+**What a low π₃ means**
+
+Low π₃ for a TF→gene edge does not necessarily mean the regulatory link is non-functional.
+Possible explanations: (1) the JASPAR PWM doesn't generalise to diverged species; (2) ortholog
+assignment across ~1 billion years of evolution is imperfect; (3) the link is genuinely
+*S. cerevisiae*-specific (a recent regulatory innovation). Use π₃ alongside π₁ and π₄ to
+get a fuller picture.
+""")
+
             # Full table
             with st.expander("Full π₃ table"):
                 st.dataframe(
@@ -3126,6 +3455,60 @@ This is a **{pi3_level}** cross-species conservation signal: {pi3_bio}
 - π₂ is the most conservative (sequence-based) estimate. It does not directly measure whether binding sites are retained — use π₃ for a direct TFBS measurement.
 """)
 
+            with st.expander("📖 How π₂ is computed — step by step"):
+                st.markdown("""
+**The π₂ pipeline: paralog sequence identity as a proxy for regulatory divergence**
+
+π₂ is the simplest of the Y1000+ estimators. It does not scan upstream sequences at all —
+it uses protein sequence divergence as a proxy for how likely binding specificity has been
+preserved after gene duplication.
+
+**Biological rationale**
+
+A regulatory link is inherited when, after gene duplication, one daughter gene still encodes
+a TF that recognises the same binding sites as the ancestral gene. TF binding specificity is
+determined largely by the DNA-binding domain. If two TF paralogs are nearly identical in
+protein sequence, their binding domains are also nearly identical, and they very likely bind
+the same sites — so the regulatory link is inherited. If the paralogs have diverged substantially
+(e.g., 40% identity), their binding domains may have different specificities, and the regulatory
+link may have been lost or rewired.
+
+**Step 1 — Identify TF paralog pairs**
+
+In *S. cerevisiae*, TF paralogs are identified by sequence clustering. Three identity thresholds
+are available (30%, 50%, 80%), defining progressively stricter family definitions:
+- 80%: only very recent duplicates in the same tight family
+- 50%: the standard threshold (captures most post-WGD pairs)
+- 30%: includes more ancient duplications
+
+**Step 2 — Align paralog pairs**
+
+Each pair of TF sequences is aligned using BLASTP (or equivalent). The alignment identity
+`pct_identity` is the fraction of aligned positions with identical residues.
+
+**Step 3 — Convert to π₂**
+
+```
+π₂ = pct_identity / 100
+```
+
+This is a linear mapping. A pair with 75% identity gets π₂ = 0.75.
+
+**Step 4 — Aggregate to the family level**
+
+For a TF family, the family-level π̂₂ is the mean pairwise identity across all TF pairs within
+that family at the chosen threshold.
+
+---
+
+**Key limitation**
+
+π₂ assumes a linear relationship between sequence identity and regulatory inheritance, but this
+is a simplification. Binding specificity can be maintained even at 40% identity (if key contact
+residues are conserved) or lost even at 90% identity (if one key residue changes). π₂ is best
+treated as a rough prior; use π₃ for a direct measurement of TFBS conservation.
+""")
+
             with st.expander("Full π₂ table"):
                 st.dataframe(pi2_df, use_container_width=True)
 
@@ -3190,6 +3573,73 @@ This is a **{pi3_level}** cross-species conservation signal: {pi3_bio}
 **Why does this differ from π₃?** π₃ counts binary presence/absence of a PWM hit. π₄ measures the *quality* of retained sites — a site may be detectable by PWM scan (π₃ counted) but have elevated polymorphism at key positions (π₄ lower), indicating the site is eroding. Together, high π₃ and high π₄ give the strongest evidence of conserved, functional inheritance.
 
 **Why are some polymorphism rates high?** (1) Genuine positive selection driving binding site divergence; (2) the Y1000+ species are very broadly sampled (spanning ~1 billion years) — some variation is expected even at constrained sites; (3) ortholog-region misalignment can introduce apparent polymorphism.
+""")
+
+            with st.expander("📖 How π₄ is computed — step by step"):
+                st.markdown("""
+**The π₄ pipeline: IC-weighted polymorphism at binding-site positions**
+
+π₄ refines the signal from π₃. While π₃ asks "is a binding site present in other species?",
+π₄ asks "among sites that are present, how intact are the most critical positions?"
+
+**Why information content (IC) weighting?**
+
+A TF binding site has positions with very different diagnostic value. Some positions are nearly
+invariant across all binding sites — mutations there always abolish binding (high IC, up to 2 bits).
+Other positions tolerate any nucleotide — mutations there are essentially silent (IC ≈ 0). A naive
+polymorphism rate would count all positions equally; IC weighting ensures that mutations at
+biologically critical positions count more.
+
+**Step 1 — Identify TF binding-site sequences**
+
+For each TF→gene edge with a π₃ PWM hit, extract the actual binding-site sequence (the specific
+window in the upstream region that scored highest under the JASPAR PWM scan).
+
+**Step 2 — Compute per-position information content**
+
+For each position j in the PWM, IC(j) = 2 − H(j), where H(j) is the Shannon entropy of the
+base distribution at that position in the JASPAR matrix. IC(j) ranges from 0 (fully degenerate)
+to 2 bits (completely invariant — one base only).
+
+**Step 3 — Compute per-position polymorphism rate across Y1000+ species**
+
+For each position j in the binding site of a TF→gene edge, scan the same position across the
+orthologous upstream sequences in all Y1000+ genomes. The polymorphism rate at position j is:
+
+```
+poly_rate(j) = fraction of Y1000+ genomes where base at position j ≠ S. cerevisiae S288C base
+```
+
+**Step 4 — IC-weighted average polymorphism**
+
+```
+weighted_poly_rate = Σ_j [IC(j) × poly_rate(j)] / Σ_j IC(j)
+```
+
+This is the average polymorphism rate, weighted so that high-IC positions dominate.
+
+**Step 5 — Convert to π₄**
+
+```
+π₄ = 1 − weighted_poly_rate
+```
+
+A binding site where the most critical positions are never polymorphic across 1,154 genomes
+gets π₄ ≈ 1. A site where critical positions are frequently polymorphic gets π₄ → 0.
+
+---
+
+**π₃ vs π₄: what each adds**
+
+| | π₃ | π₄ |
+|---|---|---|
+| **What it counts** | Binary: hit/no-hit per genome | Continuous: mutation rate at key positions |
+| **What high values mean** | Site is present in most genomes | Site is intact at its most critical positions |
+| **What low values mean** | Site absent in most genomes | Site is eroding at its most critical positions |
+| **Best combined interpretation** | High π₃ + high π₄ = site present and intact | Low π₃ but high π₄ = site absent but structurally stable where it does appear |
+
+Sites in a transitional state (being lost) often show moderate π₃ with declining π₄ as key
+positions accumulate mutations before the site drops below the PWM detection threshold.
 """)
 
             with st.expander("Full π₄ table"):
