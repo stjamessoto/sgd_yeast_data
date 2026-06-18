@@ -613,9 +613,9 @@ with tab1:
             "icon": "🔬",
             "name": "TF Explorer",
             "what": (
-                "Browse all 127 YEASTRACT transcription factors: their evidence codes, "
-                "GO annotations, binding consensus sequences, JASPAR profiles, and "
-                "regulatory targets."
+                "Browse all 179 transcription factors in the combined JASPAR 2024 ∪ YEASTRACT "
+                "curated set: evidence codes, GO annotations, binding consensus sequences, "
+                "JASPAR PWM profiles, and regulatory targets."
             ),
             "data": (
                 "sgd_transcription_factors.csv · sgd_tf_go_annotations.csv · "
@@ -664,16 +664,38 @@ with tab1:
             "icon": "🌍",
             "name": "Y1000+ π Estimators",
             "what": (
-                "Three new cross-species estimators derived from 1,154 yeast genomes "
+                "Three cross-species estimators derived from 1,154 yeast genomes "
                 "(Opulente et al. 2024): π₂ (protein sequence identity), "
-                "π₃ (TFBS conservation via PWM scanning), and π₄ (IC-weighted SNP rate "
-                "at binding site positions)."
+                "π₃ (TFBS conservation via PWM scanning across a 48-species panel), "
+                "and π₄ (IC-weighted SNP rate at binding site positions). "
+                "The methodology expander includes a clickable link to the "
+                "Method Estimation Test tab to benchmark π₃ against known profiles."
             ),
             "data": (
                 "Y1000+ GFF3 + genome FASTAs · JASPAR 2024 PWMs · "
                 "Pre-computed CSVs: pi2/pi3/pi4_*.csv (generate once via CLI)"
             ),
             "question": "How conserved are S. cerevisiae regulatory links across all yeasts?",
+        },
+        {
+            "icon": "🧮",
+            "name": "Method Estimation Test",
+            "what": (
+                "Benchmark all five π estimation methods against known true-π profiles. "
+                "Choose a method (M1 Evidence-based, M2 Moment Estimation, M3 SNP Divergence, "
+                "M4 Consensus-adjusted, or M5 Y1000+ π₃ TFBS Conservation), a motif size "
+                "k = 3 or 4, and — for M1/M4/M5 — a set of k TFs. The app computes "
+                "per-family MSE against Linear and Quadratic synthetic true-π profiles and "
+                "shows exactly where each method's structural limitations cause error. "
+                "The 📊 Compare All Methods expander runs all five methods simultaneously, "
+                "ranks them by average MSE, and explains why each method achieves its "
+                "accuracy level given its underlying data source."
+            ),
+            "data": (
+                "SGD evidence codes (M1/M4) · YFL039C SNP strains (M3) · "
+                "YEASTRACT consensus sequences (M4) · Y1000+ π₃ CSV (M5, requires generation)"
+            ),
+            "question": "How accurately does each estimation method recover a known π value, and why?",
         },
         {
             "icon": "📖",
@@ -714,7 +736,7 @@ with tab2:
     - **Identify** transcription factors (TFs) and their regulatory targets in the
       *S. cerevisiae* GRN from SGD data.
     - **Estimate** the per-family inheritance probability vector **$\\vec{\\pi}$ = (π₁, …, πₖ)**
-      using three data-driven methods.
+      using five data-driven methods (four SGD-based, one cross-species from Y1000+).
     - **Test significance** of subnetwork motifs against the Partial Duplication null model.
     """)
 
