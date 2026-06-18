@@ -44,8 +44,8 @@ This project estimates **$\vec{\pi}$ = (π₁, …, πₖ)**, the per-family inh
 4. Consensus-adjusted: adjusts π by YEASTRACT binding-sequence flexibility
 
 **Y1000+ cross-species methods** (generated automatically in the background):
-5. **π₂ — Sequence homology**: pairwise protein identity between TF paralogs
-6. **π₃ — TFBS conservation**: fraction of 1,154 yeast genomes that retain a significant PWM hit upstream of the orthologous gene
+5. **π₃ — TFBS conservation**: fraction of 1,154 yeast genomes that retain a significant PWM hit upstream of the orthologous gene
+6. **π₂ — Sequence homology**: pairwise protein identity between TF paralogs
 7. **π₄ — SNP at binding sites**: IC-weighted polymorphism rate at the exact binding site positions
 
 ---
@@ -81,8 +81,8 @@ All functions are in [model/scruse_math.py](model/scruse_math.py).
 
 | # | Name | Family definition | Formula |
 |---|------|-------------------|---------|
-| 5 | π₂ — Sequence homology | Protein identity clusters (30/50/80%) | `π₂ = pct_identity / 100` |
-| 6 | π₃ — TFBS conservation | Genes sharing a TF regulator | `π₃ = (genomes with significant PWM hit) / (genomes with ortholog)` |
+| 5 | π₃ — TFBS conservation | Genes sharing a TF regulator | `π₃ = (genomes with significant PWM hit) / (genomes with ortholog)` |
+| 6 | π₂ — Sequence homology | Protein identity clusters (30/50/80%) | `π₂ = pct_identity / 100` |
 | 7 | π₄ — SNP at binding sites | Same as π₃ | `π₄ = 1 − Σ IC_weight[pos] × polymorphism_rate[pos]` |
 
 ### Per-family ensemble — getting individual πᵢ from all signals
@@ -323,7 +323,7 @@ python -m streamlit run app.py
 | **π Estimator** | Select k families; estimate $\vec{\pi}$ by any of the four SGD-based methods; sensitivity plot; expandable methodology guide explaining the Gamma-ratio formula and the biological rationale behind each estimation method |
 | **Motif Significance** | Z-scores, p-values, null distributions; predictive forward forecast of motif growth; expandable methodology guide explaining the significance framework, null model hierarchy, and the role of Binary Inheritance variance |
 | **Y1000+ π Estimators** | π₂/π₃/π₄ results with live generation status; per-TF retention histogram; per-gene upstream retention figure (1,000 bp from translational start, averaged across all targeting TFs); pairwise shared binding-site bar chart (y-axis fixed to [0,1]); π₃ vs π₁ scatter; phylogenetic context; expandable methodology guide on cross-species π inference with a **clickable button** linking to the Method Estimation Test tab |
-| **Method Estimation Test** | Synthetic validation of all five estimation methods against known π profiles. Select a method (Method 1 – Evidence-based, Method 2 – Moment Estimation, Method 3 – SNP Divergence, Method 4 – Consensus-adjusted, or **Method 5 – Y1000+ π₃ TFBS Conservation**), a motif size k (3 or 4), and — for Methods 1, 4, and 5 — a set of k TFs. Each method estimates π from its real data source and the result is compared against Linear and Quadratic true-π profiles via per-family MSE. Every method includes a written interpretation of how the test works in context, what the MSE reveals about accuracy, and what structural limitations constrain recovery. A **📊 Compare All Methods** expander at the bottom runs all five methods with the same gene set, displays a grouped bar chart and rank table, highlights the winner, and includes a live per-method explanation of *why* each method achieves its accuracy level — referencing the actual computed MSE values and each method's structural constraints. Both the π Estimator tab and the Y1000+ π Estimators tab contain **clickable buttons** (JavaScript tab-jump) that navigate here directly; work both locally and on Streamlit Cloud. |
+| **Method Estimation Test** | Synthetic validation of all seven estimation methods plus the multi-signal ensemble against known π profiles. Select a method (Method 1 – Evidence-based, Method 2 – Moment Estimation, Method 3 – SNP Divergence, Method 4 – Consensus-adjusted, **Method 5 – Y1000+ π₃ TFBS Conservation**, **Method 6 – Y1000+ π₂ Sequence Homology**, **Method 7 – Y1000+ π₄ Binding-site SNPs**, or **Multi-signal Ensemble**), a motif size k (3 or 4), and — for Methods 1, 4, 5, 6, 7, and Ensemble — a set of k TFs. Each method estimates π from its real data source and the result is compared against Linear and Quadratic true-π profiles via per-family MSE. Every method includes a written interpretation of how the test works in context, what the MSE reveals about accuracy, and what structural limitations constrain recovery. A **📊 Compare All Methods** expander at the bottom runs all methods with the same gene set, displays a grouped bar chart and rank table, highlights the winner, and includes a live per-method explanation of *why* each method achieves its accuracy level. Both the π Estimator tab and the Y1000+ π Estimators tab contain **clickable buttons** (JavaScript tab-jump) that navigate here directly; work both locally and on Streamlit Cloud. |
 | **Glossary & References** | Definitions of all model terms and full citations |
 
 ### Sidebar settings

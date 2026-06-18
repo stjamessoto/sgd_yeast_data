@@ -3725,6 +3725,30 @@ def _val_load_pi3_for_test():
         return None, str(e)
 
 
+@st.cache_data(show_spinner=False)
+def _val_load_pi2_for_test():
+    """Load pi2 sequence homology data for use in the Method Estimation Test tab."""
+    try:
+        from model.pi2_sequence_homology import load_pi2_results
+        return load_pi2_results(), None
+    except FileNotFoundError:
+        return None, "pi2_sequence_homology.csv not found — generate Y1000+ data first (Y1000+ π Estimators tab)"
+    except Exception as e:
+        return None, str(e)
+
+
+@st.cache_data(show_spinner=False)
+def _val_load_pi4_for_test():
+    """Load pi4 binding-site SNP data for use in the Method Estimation Test tab."""
+    try:
+        from model.pi4_snp_binding import load_pi4_results
+        return load_pi4_results(), None
+    except FileNotFoundError:
+        return None, "pi4_snp_binding_sites.csv not found — generate Y1000+ data first (Y1000+ π Estimators tab)"
+    except Exception as e:
+        return None, str(e)
+
+
 _VAL_PROFILES = {
     3: {
         "Linear":    [0.1, 0.5, 0.9],
@@ -3767,6 +3791,8 @@ with tab9:
             "Method 3 — SNP Divergence",
             "Method 4 — Consensus-adjusted",
             "Method 5 — Y1000+ (π₃ TFBS Conservation)",
+            "Method 6 — Y1000+ (π₂ Sequence Homology)",
+            "Method 7 — Y1000+ (π₄ Binding-site SNPs)",
             "Multi-signal Ensemble — per-family πᵢ",
         ],
         horizontal=True,
@@ -3776,6 +3802,8 @@ with tab9:
     use_m3  = val_method.startswith("Method 3")
     use_m4  = val_method.startswith("Method 4")
     use_m5  = val_method.startswith("Method 5")
+    use_m6  = val_method.startswith("Method 6")
+    use_m7  = val_method.startswith("Method 7")
     use_ens = val_method.startswith("Multi-signal")
 
     _METHOD_WORKFLOWS = {
@@ -3807,6 +3835,20 @@ with tab9:
             "a significant PWM hit in the 1,000 bp upstream of the orthologous gene. "
             "This empirical conservation fraction is used as the per-family π estimate. "
             "Requires Y1000+ data to be generated first."
+        ),
+        "Method 6 — Y1000+ (π₂ Sequence Homology)": (
+            "**Workflow:** select k TFs from the full TF list. For each TF, Method 6 "
+            "computes its mean pairwise protein sequence identity with all other TFs in "
+            "the Y1000+ dataset (π₂ = pct_identity / 100). A TF with high average identity "
+            "to its paralogs is more likely to share regulatory targets after duplication. "
+            "Requires Y1000+ data to be generated first."
+        ),
+        "Method 7 — Y1000+ (π₄ Binding-site SNPs)": (
+            "**Workflow:** select k TFs from those available in the Y1000+ π₄ dataset. "
+            "For each TF, Method 7 computes the mean IC-weighted polymorphism rate at the "
+            "exact binding-site positions across Y1000+ genomes: π₄ = 1 − Σ IC_weight[pos] × "
+            "polymorphism_rate[pos]. Positions with high information content (critical positions) "
+            "contribute more to the score. Requires Y1000+ data to be generated first."
         ),
         "Multi-signal Ensemble — per-family πᵢ": (
             "**Workflow:** select k TFs. The ensemble runs Methods 1, 3, 4, 5, 6, and 7 "
@@ -4600,6 +4642,315 @@ with tab9:
           is available. Its MSE reflects real biological heterogeneity rather than structural model
           limitations, making it the most trustworthy indicator of actual inheritance for TFs
           with good JASPAR PWM coverage in the Y1000+ dataset.
+        """)
+    # ════════════════════════════════════════════════════════════════
+    # METHOD 6 branch — Y1000+ Sequence Homology (π₂)
+    # ════════════════════════════════════════════════════════════════
+    elif use_m6:
+        pi2_df6, pi2_err6 = _val_load_pi2_for_test()
+
+        if pi2_err6:
+            st.warning(f"Y1000+ π₂ data not available: {pi2_err6}", icon="⚠️")
+            st.stop()
+
+        all_tfs6 = sorted(set(pi2_df6["gene1"].tolist() + pi2_df6["gene2"].tolist()))
+
+        def _mean_pi2(tf, df):
+            rows = df[(df["gene1"] == tf) | (df["gene2"] == tf)]
+            if rows.empty:
+                return float("nan")
+            return float(rows["pi2_estimate"].mean())
+
+        tf_mean6 = pd.DataFrame({
+            "tf_name":  all_tfs6,
+            "mean_pi2": [_mean_pi2(tf, pi2_df6) for tf in all_tfs6],
+        }).sort_values("mean_pi2").reset_index(drop=True)
+
+        idx6 = [int(i * (len(tf_mean6) - 1) / max(val_k - 1, 1)) for i in range(val_k)]
+        default_genes6 = [tf_mean6.iloc[i]["tf_name"] for i in idx6]
+
+        selected_genes6 = st.multiselect(
+            f"Select exactly **{val_k}** TFs (from those in the Y1000+ π₂ dataset)",
+            all_tfs6,
+            default=default_genes6,
+            key="m6_genes",
+            help=(
+                "Each selected TF's mean pairwise protein sequence identity with all other "
+                "TFs in the dataset becomes its per-family π estimate (π₂ = pct_identity / 100). "
+                "Defaults are spread from the lowest to the highest mean π₂."
+            ),
+        )
+
+        if len(selected_genes6) != val_k:
+            st.warning(f"Please select exactly {val_k} TFs (currently {len(selected_genes6)}).")
+            st.stop()
+
+        est_pi_m6 = [round(_mean_pi2(tf, pi2_df6), 4) for tf in selected_genes6]
+
+        with st.expander("π₂ estimates for selected TFs (source data)"):
+            tf_summary6 = []
+            for tf, est in zip(selected_genes6, est_pi_m6):
+                rows6 = pi2_df6[(pi2_df6["gene1"] == tf) | (pi2_df6["gene2"] == tf)]
+                tf_summary6.append({
+                    "TF":             tf,
+                    "n_pairs":        len(rows6),
+                    "Mean π₂ (est.)": est,
+                    "Min π₂":         round(float(rows6["pi2_estimate"].min()), 4),
+                    "Max π₂":         round(float(rows6["pi2_estimate"].max()), 4),
+                })
+            st.caption(
+                "For each selected TF, the mean π₂ is averaged across all pairwise alignments "
+                "in which the TF appears. This scalar is the per-family estimate used below."
+            )
+            st.dataframe(pd.DataFrame(tf_summary6), use_container_width=True, hide_index=True)
+
+        st.divider()
+
+        m6_rows = []
+        for profile_name, true_pi_vec in profiles.items():
+            family_se = [(e - t) ** 2 for e, t in zip(est_pi_m6, true_pi_vec)]
+            mse = float(np.mean(family_se))
+            m6_rows.append({
+                "Profile":        profile_name,
+                "True π̂":        round(sum(true_pi_vec), 4),
+                "Estimated π̂":   round(sum(est_pi_m6), 4),
+                "Per-family MSE": round(mse, 6),
+            })
+
+        st.subheader("Summary — all profiles")
+        st.caption(
+            f"Method 6 estimates: "
+            f"{', '.join(f'{g} → {p:.4f}' for g, p in zip(selected_genes6, est_pi_m6))}."
+        )
+        st.dataframe(pd.DataFrame(m6_rows), use_container_width=True, hide_index=True)
+
+        st.divider()
+
+        st.subheader(f"Per-family MSE by profile (k = {val_k})")
+        fig_mse6 = px.bar(
+            pd.DataFrame(m6_rows),
+            x="Profile", y="Per-family MSE",
+            color="Profile", color_discrete_map=_PROFILE_COLORS,
+            text="Per-family MSE",
+            title=f"Per-family MSE — Method 6 (Y1000+ π₂), k={val_k}, TFs: {', '.join(selected_genes6)}",
+        )
+        fig_mse6.update_traces(texttemplate="%{text:.4f}", textposition="outside")
+        fig_mse6.update_layout(height=350, showlegend=False, yaxis_title="MSE")
+        st.plotly_chart(fig_mse6, use_container_width=True)
+
+        st.divider()
+
+        st.subheader(f"Per-family breakdown — k = {val_k}")
+        st.caption(
+            "True πᵢ (blue) vs Y1000+ π₂ mean pairwise identity per TF (orange). "
+            "Each family receives a different estimate reflecting its TF's average "
+            "sequence similarity to all other TFs in the dataset."
+        )
+
+        for profile_name, true_pi_vec in profiles.items():
+            family_se = [(e - t) ** 2 for e, t in zip(est_pi_m6, true_pi_vec)]
+            mse_val = float(np.mean(family_se))
+            col_tbl, col_fig = st.columns([1, 2])
+            with col_tbl:
+                st.markdown(
+                    f"**{profile_name}** · Est. π̂ = {sum(est_pi_m6):.4f} · MSE = {mse_val:.6f}"
+                )
+                st.dataframe(
+                    pd.DataFrame({
+                        "Family":       [f"F{i+1}" for i in range(val_k)],
+                        "TF":           selected_genes6,
+                        "True πᵢ":      true_pi_vec,
+                        "Est. πᵢ (π₂)": [round(p, 4) for p in est_pi_m6],
+                        "Sq. error":    [round(se, 6) for se in family_se],
+                    }),
+                    use_container_width=True, hide_index=True,
+                )
+            with col_fig:
+                st.plotly_chart(
+                    _val_per_family_chart(
+                        [f"F{i+1}\n({g})" for i, g in enumerate(selected_genes6)],
+                        true_pi_vec, est_pi_m6, "Est. πᵢ (π₂)", profile_name,
+                    ),
+                    use_container_width=True,
+                )
+            st.divider()
+
+        overall_mean_pi2_6 = round(float(pi2_df6["pi2_estimate"].mean()), 3)
+        st.markdown(f"""
+        **What these results mean — Method 6 (Y1000+ π₂) accuracy**
+
+        Method 6 measures how similar each TF's protein sequence is to every other TF
+        in the Y1000+ dataset on average. A TF with high mean pairwise identity (π₂ close to 1)
+        is structurally very similar to its paralogs, suggesting regulatory links would be
+        retained across duplication. A TF with low mean identity (π₂ near 0) has diverged
+        substantially — regulatory links are less likely to survive.
+
+        - **Protein proxy, not binding proxy:** π₂ does not directly measure binding site
+          retention. A TF can have high sequence identity but bind different sites after
+          duplication. Method 5 (TFBS conservation) is more direct for TFs with JASPAR coverage.
+        - **Broadest coverage:** π₂ is available for every TF with a Y1000+ FASTA entry — no
+          JASPAR PWM is required. For TFs without PWM data (not scorable by Methods 5/7), π₂
+          is often the only cross-species estimate available.
+        - **Overall mean π₂ = {overall_mean_pi2_6}** across all pairwise TF comparisons.
+          TFs above this are more structurally conserved relative to their paralogs.
+        - **Practical interpretation:** use Method 6 as a cross-species baseline when JASPAR
+          data is unavailable, or as a structural complement to the binding-site-focused
+          Methods 5 and 7 for TFs where all three are available.
+        """)
+
+    # ════════════════════════════════════════════════════════════════
+    # METHOD 7 branch — Y1000+ Binding-site SNPs (π₄)
+    # ════════════════════════════════════════════════════════════════
+    elif use_m7:
+        pi4_df7, pi4_err7 = _val_load_pi4_for_test()
+
+        if pi4_err7:
+            st.warning(f"Y1000+ π₄ data not available: {pi4_err7}", icon="⚠️")
+            st.stop()
+
+        tf_opts7 = sorted(pi4_df7["tf_name"].unique().tolist())
+
+        tf_mean7 = (
+            pi4_df7.groupby("tf_name")["pi4_estimate"]
+            .mean()
+            .sort_values()
+            .reset_index()
+        )
+        idx7 = [int(i * (len(tf_mean7) - 1) / max(val_k - 1, 1)) for i in range(val_k)]
+        default_genes7 = [tf_mean7.iloc[i]["tf_name"] for i in idx7]
+
+        selected_genes7 = st.multiselect(
+            f"Select exactly **{val_k}** TFs (from those in the Y1000+ π₄ dataset)",
+            tf_opts7,
+            default=default_genes7,
+            key="m7_genes",
+            help=(
+                "Each selected TF's mean IC-weighted polymorphism rate across all its "
+                "target genes becomes its per-family π estimate "
+                "(π₄ = 1 − Σ IC_weight[pos] × polymorphism_rate[pos]). "
+                "Defaults are spread from the lowest to the highest mean π₄."
+            ),
+        )
+
+        if len(selected_genes7) != val_k:
+            st.warning(f"Please select exactly {val_k} TFs (currently {len(selected_genes7)}).")
+            st.stop()
+
+        est_pi_m7 = []
+        for tf in selected_genes7:
+            tf_rows7 = pi4_df7[pi4_df7["tf_name"] == tf]
+            est_pi_m7.append(round(float(tf_rows7["pi4_estimate"].mean()), 4))
+
+        with st.expander("π₄ estimates for selected TFs (source data)"):
+            tf_summary7 = []
+            for tf, est in zip(selected_genes7, est_pi_m7):
+                tf_rows7 = pi4_df7[pi4_df7["tf_name"] == tf]
+                tf_summary7.append({
+                    "TF":             tf,
+                    "n_target_genes": len(tf_rows7),
+                    "Mean π₄ (est.)": est,
+                    "Min π₄":         round(float(tf_rows7["pi4_estimate"].min()), 4),
+                    "Max π₄":         round(float(tf_rows7["pi4_estimate"].max()), 4),
+                })
+            st.caption(
+                "For each selected TF, mean π₄ is averaged across all its target-gene edges. "
+                "π₄ = 1 − Σ IC_weight[pos] × polymorphism_rate[pos]: positions with high "
+                "information content are weighted more heavily."
+            )
+            st.dataframe(pd.DataFrame(tf_summary7), use_container_width=True, hide_index=True)
+
+        st.divider()
+
+        m7_rows = []
+        for profile_name, true_pi_vec in profiles.items():
+            family_se = [(e - t) ** 2 for e, t in zip(est_pi_m7, true_pi_vec)]
+            mse = float(np.mean(family_se))
+            m7_rows.append({
+                "Profile":        profile_name,
+                "True π̂":        round(sum(true_pi_vec), 4),
+                "Estimated π̂":   round(sum(est_pi_m7), 4),
+                "Per-family MSE": round(mse, 6),
+            })
+
+        st.subheader("Summary — all profiles")
+        st.caption(
+            f"Method 7 estimates: "
+            f"{', '.join(f'{g} → {p:.4f}' for g, p in zip(selected_genes7, est_pi_m7))}."
+        )
+        st.dataframe(pd.DataFrame(m7_rows), use_container_width=True, hide_index=True)
+
+        st.divider()
+
+        st.subheader(f"Per-family MSE by profile (k = {val_k})")
+        fig_mse7 = px.bar(
+            pd.DataFrame(m7_rows),
+            x="Profile", y="Per-family MSE",
+            color="Profile", color_discrete_map=_PROFILE_COLORS,
+            text="Per-family MSE",
+            title=f"Per-family MSE — Method 7 (Y1000+ π₄), k={val_k}, TFs: {', '.join(selected_genes7)}",
+        )
+        fig_mse7.update_traces(texttemplate="%{text:.4f}", textposition="outside")
+        fig_mse7.update_layout(height=350, showlegend=False, yaxis_title="MSE")
+        st.plotly_chart(fig_mse7, use_container_width=True)
+
+        st.divider()
+
+        st.subheader(f"Per-family breakdown — k = {val_k}")
+        st.caption(
+            "True πᵢ (blue) vs Y1000+ π₄ IC-weighted polymorphism rate per TF (orange). "
+            "Each family gets a separate estimate from its TF's binding-site mutation "
+            "rate across Y1000+ genomes."
+        )
+
+        for profile_name, true_pi_vec in profiles.items():
+            family_se = [(e - t) ** 2 for e, t in zip(est_pi_m7, true_pi_vec)]
+            mse_val = float(np.mean(family_se))
+            col_tbl, col_fig = st.columns([1, 2])
+            with col_tbl:
+                st.markdown(
+                    f"**{profile_name}** · Est. π̂ = {sum(est_pi_m7):.4f} · MSE = {mse_val:.6f}"
+                )
+                st.dataframe(
+                    pd.DataFrame({
+                        "Family":       [f"F{i+1}" for i in range(val_k)],
+                        "TF":           selected_genes7,
+                        "True πᵢ":      true_pi_vec,
+                        "Est. πᵢ (π₄)": [round(p, 4) for p in est_pi_m7],
+                        "Sq. error":    [round(se, 6) for se in family_se],
+                    }),
+                    use_container_width=True, hide_index=True,
+                )
+            with col_fig:
+                st.plotly_chart(
+                    _val_per_family_chart(
+                        [f"F{i+1}\n({g})" for i, g in enumerate(selected_genes7)],
+                        true_pi_vec, est_pi_m7, "Est. πᵢ (π₄)", profile_name,
+                    ),
+                    use_container_width=True,
+                )
+            st.divider()
+
+        overall_mean_pi4_7 = round(float(pi4_df7["pi4_estimate"].mean()), 3)
+        st.markdown(f"""
+        **What these results mean — Method 7 (Y1000+ π₄) accuracy**
+
+        Method 7 estimates inheritance probability from the mutation rate at the exact
+        binding-site positions of each TF's target genes across Y1000+ genomes. Positions
+        with high information content (IC) — most critical to binding specificity — are
+        up-weighted. A conserved binding site gets high π₄; a rapidly mutating site gets low π₄.
+
+        - **Mechanistic precision:** unlike π₂ (whole-protein homology) or π₃ (site
+          presence/absence), π₄ captures *which positions* within the binding site are under
+          selection. This is the most mechanistically precise of the three Y1000+ methods.
+        - **PWM required:** only available for TFs with a JASPAR 2024 PWM entry. TFs not in
+          JASPAR cannot be scored with this method.
+        - **Complements π₃:** Method 5 asks "is there any binding site here?" while Method 7
+          asks "how conserved are the specific positions?" A site can be present (high π₃)
+          but diverging at critical positions (low π₄).
+        - **Overall mean π₄ = {overall_mean_pi4_7}** across all TF→gene edges in the dataset.
+        - **Practical interpretation:** Method 7 is best when you need position-level resolution
+          to detect subtle binding-site erosion not visible in site-presence/absence data.
+          Use alongside Method 5 for a complete picture of binding-site evolution.
         """)
 
     # ════════════════════════════════════════════════════════════════
