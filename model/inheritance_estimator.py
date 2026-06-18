@@ -716,6 +716,134 @@ def estimate_pi_from_snp_binding_sites(
 
 
 # ---------------------------------------------------------------------------
+# Per-family ensemble estimator
+# ---------------------------------------------------------------------------
+
+def estimate_pi_per_family_ensemble(gene_names: List[str]) -> Dict:
+    """
+    Per-family ensemble: combine all methods that produce independent per-family
+    πᵢ signals — Methods 1, 3, 4, 5, 6, 7.
+
+    Method 2 is deliberately excluded. Theorem 4's expected-count formula
+    depends only on π̂ = Σπᵢ, so inverting it recovers the total but gives no
+    information about how inheritance is distributed across individual families.
+
+    For M5 and M7, each TF's mean retention/polymorphism across all its target
+    genes is used as that family's estimate.  For M6, each TF's mean pairwise
+    sequence identity with all other TFs in the dataset is used (not the global
+    average across all k selected TFs).
+
+    Returns
+    -------
+    Dict with:
+      pi_vec             — per-family ensemble mean
+      pi_hat             — Σπᵢ
+      per_family_details — list of dicts with per-signal breakdown per family
+      all_signals        — dict mapping signal label → per-family list
+    """
+    k = len(gene_names)
+
+    # M1: evidence-based (always available)
+    m1_vec = estimate_pi_from_evidence(gene_names)["pi_vec"]
+
+    # M3: SNP divergence (same constant for genes not in YFL039C dataset)
+    m3_vec = estimate_pi_from_snp(gene_names)["pi_vec"]
+
+    # M4: consensus-adjusted (always available)
+    m4_vec = estimate_pi_consensus_adjusted(gene_names)["pi_vec"]
+
+    # M5: π₃ TFBS conservation — per-TF mean retention across all target genes
+    m5_vec: List[Optional[float]] = []
+    for gene in gene_names:
+        r = estimate_pi_from_tfbs_conservation(gene)
+        if r.get("pi_vec"):
+            m5_vec.append(round(float(np.mean(r["pi_vec"])), 4))
+        else:
+            m5_vec.append(None)
+
+    # M6: π₂ sequence homology — per-TF mean pairwise identity with all other TFs
+    m6_vec: List[Optional[float]] = []
+    try:
+        from .pi2_sequence_homology import load_pi2_results
+        _pi2_df = load_pi2_results()
+        for gene in gene_names:
+            mask = (
+                _pi2_df["gene1_name"].str.upper() == gene.upper()
+            ) | (
+                _pi2_df["gene2_name"].str.upper() == gene.upper()
+            )
+            rows = _pi2_df[mask]
+            m6_vec.append(
+                round(float(rows["pi2_estimate"].mean()), 4) if not rows.empty else None
+            )
+    except (FileNotFoundError, Exception):
+        m6_vec = [None] * k
+
+    # M7: π₄ binding-site SNPs — per-TF mean IC-weighted polymorphism
+    m7_vec: List[Optional[float]] = []
+    for gene in gene_names:
+        r = estimate_pi_from_snp_binding_sites(gene)
+        if r.get("pi_vec"):
+            m7_vec.append(round(float(np.mean(r["pi_vec"])), 4))
+        else:
+            m7_vec.append(None)
+
+    all_signals = {
+        "M1 Evidence":          m1_vec,
+        "M3 SNP Divergence":    m3_vec,
+        "M4 Consensus":         m4_vec,
+        "M5 TFBS Conservation": m5_vec,
+        "M6 Seq. Homology":     m6_vec,
+        "M7 Binding-site SNPs": m7_vec,
+    }
+
+    ensemble_pi: List[float] = []
+    per_family_details: List[Dict] = []
+    for i, gene in enumerate(gene_names):
+        signals: Dict[str, float] = {}
+        for label, vec in all_signals.items():
+            if vec and i < len(vec) and vec[i] is not None:
+                v = float(vec[i])
+                if not np.isnan(v):
+                    signals[label] = round(v, 4)
+
+        if signals:
+            vals = list(signals.values())
+            mean_val = round(float(np.mean(vals)), 4)
+            std_val  = round(float(np.std(vals)), 4) if len(vals) > 1 else 0.0
+        else:
+            mean_val = float("nan")
+            std_val  = float("nan")
+
+        ensemble_pi.append(mean_val)
+        per_family_details.append({
+            "gene":        gene,
+            "pi_ensemble": mean_val,
+            "pi_std":      std_val,
+            "n_signals":   len(signals),
+            **signals,
+        })
+
+    valid = [v for v in ensemble_pi if not np.isnan(v)]
+    pi_hat = round(float(sum(valid)), 4) if valid else float("nan")
+
+    return {
+        "method":             "per_family_ensemble",
+        "gene_names":         gene_names,
+        "pi_vec":             ensemble_pi,
+        "pi_hat":             pi_hat,
+        "weights":            ensemble_pi,
+        "per_family_details": per_family_details,
+        "all_signals":        all_signals,
+        "description": (
+            "Per-family ensemble: averages M1, M3, M4, M5, M6, M7 for each family. "
+            "M2 excluded: Theorem 4 only identifies π̂ = Σπᵢ, not individual πᵢ. "
+            "Y1000+ signals (M5, M6, M7) require pre-generated data."
+        ),
+    }
+
+
+# ---------------------------------------------------------------------------
 # Consensus estimator: combine all available methods
 # ---------------------------------------------------------------------------
 

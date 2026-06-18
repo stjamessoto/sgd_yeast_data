@@ -85,6 +85,25 @@ All functions are in [model/scruse_math.py](model/scruse_math.py).
 | 6 | π₃ — TFBS conservation | Genes sharing a TF regulator | `π₃ = (genomes with significant PWM hit) / (genomes with ortholog)` |
 | 7 | π₄ — SNP at binding sites | Same as π₃ | `π₄ = 1 − Σ IC_weight[pos] × polymorphism_rate[pos]` |
 
+### Per-family ensemble — getting individual πᵢ from all signals
+
+Methods 1–7 estimate inheritance probability from different biological angles. Methods 2 and 3 produce only a single scalar that applies to all families in the motif (Method 2 recovers π̂ = Σπᵢ via Theorem 4 inversion; Method 3 applies the cross-strain YFL039C mean uniformly). The remaining five methods — 1, 4, 5, 6, 7 — each produce an independent per-family estimate.
+
+The **per-family ensemble** (implemented in `estimate_pi_per_family_ensemble` in [model/inheritance_estimator.py](model/inheritance_estimator.py)) averages Methods 1, 3, 4, 5, 6, and 7 independently for each gene family:
+
+| Signal | What it measures | Per-family? |
+|--------|-----------------|-------------|
+| M1 Evidence | Experimental confirmation quality | Yes |
+| M3 SNP divergence | Sequence drift at YFL039C | Constant across families unless gene is in YFL039C dataset |
+| M4 Consensus | Binding-sequence flexibility | Yes |
+| M5 TFBS conservation | Mean retention fraction across 1,154 yeasts | Yes — per TF |
+| M6 Sequence homology | Mean pairwise protein identity per TF | Yes — per TF |
+| M7 Binding-site SNPs | IC-weighted polymorphism at binding positions | Yes — per TF |
+
+Method 2 is deliberately excluded: Theorem 4 identifies only π̂ = Σπᵢ. Distributing π̂ uniformly across families would dilute the per-family signal from the other methods without adding biological information.
+
+The ensemble πᵢ for each family is the unweighted mean of all available signals. A per-signal breakdown (including ±σ across signals) is shown in the **Multi-signal Ensemble** option of the Method Estimation Test tab.
+
 π₃ and π₄ use JASPAR 2024 position weight matrices (PWMs) to score **1,000 bp upstream of the translational start** for each gene across the Y1000+ species panel. IC-weighting in π₄ means that mutations at high-information-content (critical) positions count more heavily.
 
 The Y1000+ π Estimators tab also includes a **gene-centric upstream retention figure** that aggregates π₃ by target gene rather than by TF→gene edge: for each gene in the *S. cerevisiae* network, it plots the mean retention fraction across all TFs whose binding sites were scanned in that gene's 1,000 bp upstream window, with ±1 SD error bars across TFs. This lets you identify which genes consistently retain upstream binding sites across yeasts regardless of which TF is doing the binding.

@@ -72,6 +72,7 @@ from model.inheritance_estimator import (
     estimate_pi_from_snp,
     estimate_pi_consensus_adjusted,
     estimate_pi_all_methods,
+    estimate_pi_per_family_ensemble,
     full_significance_analysis,
     pi_sensitivity,
 )
@@ -3766,14 +3767,16 @@ with tab9:
             "Method 3 — SNP Divergence",
             "Method 4 — Consensus-adjusted",
             "Method 5 — Y1000+ (π₃ TFBS Conservation)",
+            "Multi-signal Ensemble — per-family πᵢ",
         ],
         horizontal=True,
     )
-    use_m1 = val_method.startswith("Method 1")
-    use_m2 = val_method.startswith("Method 2")
-    use_m3 = val_method.startswith("Method 3")
-    use_m4 = val_method.startswith("Method 4")
-    use_m5 = val_method.startswith("Method 5")
+    use_m1  = val_method.startswith("Method 1")
+    use_m2  = val_method.startswith("Method 2")
+    use_m3  = val_method.startswith("Method 3")
+    use_m4  = val_method.startswith("Method 4")
+    use_m5  = val_method.startswith("Method 5")
+    use_ens = val_method.startswith("Multi-signal")
 
     _METHOD_WORKFLOWS = {
         "Method 1 — Evidence-based": (
@@ -3805,6 +3808,15 @@ with tab9:
             "This empirical conservation fraction is used as the per-family π estimate. "
             "Requires Y1000+ data to be generated first."
         ),
+        "Multi-signal Ensemble — per-family πᵢ": (
+            "**Workflow:** select k TFs. The ensemble runs Methods 1, 3, 4, 5, 6, and 7 "
+            "independently for each family and averages the available signals into a single "
+            "πᵢ per family. **Method 2 is deliberately excluded** — Theorem 4's expected-count "
+            "formula depends only on π̂ = Σπᵢ, so inverting it recovers the total inheritance "
+            "probability but cannot distinguish how it is distributed across individual families. "
+            "Y1000+ signals (M5, M6, M7) are included when the data has been generated; SGD "
+            "signals (M1, M3, M4) are always available."
+        ),
     }
     st.markdown(_METHOD_WORKFLOWS[val_method])
 
@@ -3821,6 +3833,8 @@ with tab9:
         | **Consensus factor** | Method 4 | YEASTRACT binding-flexibility multiplier (1.02 – 1.12); higher = more ambiguous consensus = tolerates more drift |
         | **Retention fraction / π₃** | Method 5 | Fraction of Y1000+ genomes with a significant PWM hit upstream of the orthologous gene; averaged across all target genes per TF |
         | **MSE** | All | Mean squared error between true πᵢ and estimated πᵢ across k families |
+        | **Signal** | Ensemble | One independent per-family πᵢ estimate contributed by a single method; the ensemble mean is the unweighted average of all available signals |
+        | **n_signals** | Ensemble | How many of the 6 eligible methods contributed a non-missing estimate for this family; higher is more reliable |
         """)
 
     st.divider()
@@ -4589,26 +4603,264 @@ with tab9:
         """)
 
     # ════════════════════════════════════════════════════════════════
-    # COMPARE ALL METHODS — side-by-side MSE across all 5 methods
+    # ENSEMBLE branch — per-family multi-signal ensemble
+    # ════════════════════════════════════════════════════════════════
+    elif use_ens:
+        st.subheader("Why a per-family ensemble?")
+        st.markdown("""
+Every method in this tab makes a different biological assumption about what
+drives regulatory inheritance:
+
+| Signal | What it measures |
+|--------|-----------------|
+| **M1 — Evidence** | How well-confirmed the TF's regulatory role is in *S. cerevisiae* |
+| **M3 — SNP Divergence** | How much sequence has drifted at gene YFL039C across strains |
+| **M4 — Consensus** | Whether the TF's binding sequence is flexible enough to tolerate drift |
+| **M5 — TFBS Conservation** | How often the binding site is retained in 1,154 yeast genomes |
+| **M6 — Seq. Homology** | How similar the TF's protein sequence is to its paralogs |
+| **M7 — Binding-site SNPs** | How many mutations have accumulated at the exact binding positions |
+
+No single method is complete. Evidence codes say nothing about cross-species
+conservation. Sequence homology doesn't capture whether the binding *site*
+survived. TFBS conservation doesn't account for how easy it is to bind in the
+first place. By averaging across all available signals, the ensemble reduces the
+impact of any one method's blind spots.
+
+**Why is Method 2 excluded?** Theorem 4 gives the expected number of motif
+instances as a function of *π̂ = Σπᵢ only*. Inverting it recovers the total
+inheritance probability perfectly — but tells you nothing about whether that
+total is concentrated in one family or spread evenly across all of them.
+Feeding a uniform π̂/k allocation into the ensemble would just anchor every
+family toward the same value and dilute the per-family signal from the other
+methods.
+""")
+
+        tfs_ens      = _load_tfs().sort_values("gene_name")
+        tf_names_ens = tfs_ens["gene_name"].tolist()
+        tfs_srt_ens  = tfs_ens.sort_values("pi_prior").reset_index(drop=True)
+        idx_ens      = [int(i * (len(tfs_srt_ens) - 1) / max(val_k - 1, 1)) for i in range(val_k)]
+        default_ens  = [tfs_srt_ens.loc[i, "gene_name"] for i in idx_ens]
+
+        selected_ens = st.multiselect(
+            f"Select exactly **{val_k}** TF gene names",
+            tf_names_ens,
+            default=default_ens,
+            key="ens_genes",
+            help=(
+                "Each selected TF is treated as one gene family. The ensemble runs "
+                "all six eligible methods for every family and averages the results."
+            ),
+        )
+
+        if len(selected_ens) != val_k:
+            st.warning(f"Please select exactly {val_k} genes (currently {len(selected_ens)}).")
+            st.stop()
+
+        with st.spinner("Running all signals…"):
+            ens_result  = estimate_pi_per_family_ensemble(selected_ens)
+
+        est_pi_ens  = ens_result["pi_vec"]
+        details     = ens_result["per_family_details"]
+        all_signals = ens_result["all_signals"]
+
+        # ── Per-family signal breakdown ───────────────────────────────────
+        st.subheader("Per-family signal breakdown")
+        st.caption(
+            "Each row is one gene family. Columns show the estimate from each method. "
+            "The ensemble mean is the unweighted average of all non-missing values. "
+            "±σ shows how much the methods disagree — a large spread means conflicting "
+            "signals and the estimate should be treated with more caution."
+        )
+        signal_labels = list(all_signals.keys())
+        detail_rows = []
+        for d in details:
+            row = {"Gene": d["gene"]}
+            for lbl in signal_labels:
+                row[lbl] = d.get(lbl, None)
+            row["Ensemble πᵢ"] = d["pi_ensemble"]
+            row["±σ"]          = d["pi_std"]
+            row["# signals"]   = d["n_signals"]
+            detail_rows.append(row)
+        detail_df = pd.DataFrame(detail_rows)
+        st.dataframe(
+            detail_df.style.format(
+                {c: "{:.4f}" for c in detail_df.columns if c not in ("Gene", "# signals")}
+            ),
+            use_container_width=True, hide_index=True,
+        )
+
+        with st.expander("Which signals are missing?"):
+            st.markdown(
+                "M5, M6, and M7 require Y1000+ data (generate it in the Y1000+ tab). "
+                "M3 returns the dataset-wide YFL039C mean for genes not in that file, "
+                "so it will look identical across all families if none of the selected "
+                "TFs are in the YFL039C SNP dataset."
+            )
+            avail_rows = []
+            for lbl, vec in all_signals.items():
+                n_avail = sum(
+                    1 for v in vec
+                    if v is not None and not np.isnan(float(v))
+                )
+                avail_rows.append({"Signal": lbl, "Available for": f"{n_avail} / {val_k} families"})
+            st.dataframe(pd.DataFrame(avail_rows), use_container_width=True, hide_index=True)
+
+        st.divider()
+
+        # ── Per-signal bar chart with ensemble overlay ────────────────────
+        st.subheader("Signal comparison — all families")
+        x_labels_ens = [f"F{i+1}\n({g})" for i, g in enumerate(selected_ens)]
+        fig_ens_sig = go.Figure()
+        _sig_colors = {
+            "M1 Evidence":          "#94a3b8",
+            "M3 SNP Divergence":    "#64748b",
+            "M4 Consensus":         "#475569",
+            "M5 TFBS Conservation": "#0ea5e9",
+            "M6 Seq. Homology":     "#7c3aed",
+            "M7 Binding-site SNPs": "#10b981",
+        }
+        for lbl, color in _sig_colors.items():
+            vec = all_signals.get(lbl, [])
+            y_vals = [
+                v if (v is not None and not np.isnan(float(v))) else None
+                for v in vec
+            ]
+            if any(v is not None for v in y_vals):
+                fig_ens_sig.add_bar(
+                    x=x_labels_ens, y=y_vals,
+                    name=lbl, marker_color=color, opacity=0.75,
+                )
+        fig_ens_sig.add_scatter(
+            x=x_labels_ens, y=est_pi_ens,
+            mode="markers+lines",
+            name="Ensemble πᵢ",
+            marker=dict(color="#d62728", size=10, symbol="diamond"),
+            line=dict(color="#d62728", width=2, dash="dash"),
+        )
+        fig_ens_sig.update_layout(
+            barmode="group", height=380,
+            title="Per-family estimates from each signal + ensemble mean",
+            yaxis=dict(title="π", range=[0, 1.05]),
+            legend=dict(orientation="h", y=-0.4),
+            margin=dict(t=40, b=10),
+        )
+        st.plotly_chart(fig_ens_sig, use_container_width=True)
+
+        st.divider()
+
+        # ── MSE against synthetic profiles ────────────────────────────────
+        st.subheader(f"Accuracy against synthetic profiles (k = {val_k})")
+        ens_rows = []
+        for profile_name, true_pi_vec in profiles.items():
+            family_se = [(e - t) ** 2 for e, t in zip(est_pi_ens, true_pi_vec)]
+            mse = float(np.mean(family_se))
+            ens_rows.append({
+                "Profile":        profile_name,
+                "True π̂":        round(sum(true_pi_vec), 4),
+                "Estimated π̂":   round(sum(v for v in est_pi_ens if not np.isnan(v)), 4),
+                "Per-family MSE": round(mse, 6),
+            })
+        st.dataframe(pd.DataFrame(ens_rows), use_container_width=True, hide_index=True)
+
+        fig_mse_ens = px.bar(
+            pd.DataFrame(ens_rows),
+            x="Profile", y="Per-family MSE",
+            color="Profile", color_discrete_map=_PROFILE_COLORS,
+            text="Per-family MSE",
+            title=f"Per-family MSE — Ensemble, k={val_k}, genes: {', '.join(selected_ens)}",
+        )
+        fig_mse_ens.update_traces(texttemplate="%{text:.4f}", textposition="outside")
+        fig_mse_ens.update_layout(height=350, showlegend=False, yaxis_title="MSE")
+        st.plotly_chart(fig_mse_ens, use_container_width=True)
+
+        st.divider()
+        st.subheader(f"Per-family breakdown — k = {val_k}")
+        for profile_name, true_pi_vec in profiles.items():
+            family_se = [(e - t) ** 2 for e, t in zip(est_pi_ens, true_pi_vec)]
+            mse_val   = float(np.mean(family_se))
+            col_tbl, col_fig = st.columns([1, 2])
+            with col_tbl:
+                st.markdown(
+                    f"**{profile_name}** · Est. π̂ = "
+                    f"{sum(v for v in est_pi_ens if not np.isnan(v)):.4f} · "
+                    f"MSE = {mse_val:.6f}"
+                )
+                st.dataframe(
+                    pd.DataFrame({
+                        "Family":      [f"F{i+1}" for i in range(val_k)],
+                        "Gene":        selected_ens,
+                        "True πᵢ":     true_pi_vec,
+                        "Ensemble πᵢ": [round(p, 4) for p in est_pi_ens],
+                        "Sq. error":   [round(se, 6) for se in family_se],
+                    }),
+                    use_container_width=True, hide_index=True,
+                )
+            with col_fig:
+                st.plotly_chart(
+                    _val_per_family_chart(
+                        x_labels_ens, true_pi_vec, est_pi_ens,
+                        "Ensemble πᵢ", profile_name,
+                    ),
+                    use_container_width=True,
+                )
+            st.divider()
+
+        n_sgd_only = sum(1 for d in details if d["n_signals"] <= 3)
+        st.markdown(f"""
+**What these results mean — Multi-signal Ensemble accuracy**
+
+The ensemble is the most data-rich per-family estimate available. Because it
+combines up to six independent biological signals, it is less likely than any
+single method to be systematically wrong in one direction.
+
+**How to read the signal breakdown table:**
+- A family with **6 signals** has the most reliable estimate — all data sources contribute.
+- A family with **3 signals** uses only the SGD-based methods (M1, M3, M4). This is still
+  useful but misses the cross-species perspective from Y1000+.
+- A family with a **high ±σ** means the methods disagree. That conflict is itself
+  informative: a TF well-established in *S. cerevisiae* but poorly conserved across
+  yeasts will show high M1/M4 and low M5/M7, signalling a recent or species-specific
+  regulatory link.
+
+**Why the ensemble is not always the best on MSE:**
+- Against a **Linear profile** (maximally spread π values), the ensemble is only as
+  differentiated as its best per-family signals (M5 and M7). If Y1000+ data is missing,
+  M1/M3/M4 all tend toward a similar range and the ensemble may not outperform M1 alone.
+- Against a **Quadratic profile** (values clustered near the centre), the SGD signals
+  already do well, and adding cross-species signals may increase variance without
+  reducing bias.
+
+**Practical recommendation:** use the ensemble πᵢ as your default per-family estimate.
+Use the per-signal breakdown table to understand *why* a family's estimate is high or
+low — that breakdown is more informative than the final number alone.
+
+Currently **{n_sgd_only} of {val_k}** selected {"TF" if n_sgd_only == 1 else "TFs"} have
+only SGD signals (Y1000+ data missing or gene not covered). Generate the Y1000+ data in
+the **Y1000+ π Estimators** tab to unlock M5, M6, and M7 for those families.
+""")
+
+    # ════════════════════════════════════════════════════════════════
+    # COMPARE ALL METHODS — side-by-side MSE across all methods
     # ════════════════════════════════════════════════════════════════
     st.divider()
 
     with st.expander("📊 Compare All Methods — which estimator is most accurate?", expanded=False):
         st.markdown(
-            "Runs all five estimation methods against the **Linear** and **Quadratic** "
+            "Runs all estimation methods against the **Linear** and **Quadratic** "
             f"true-π profiles (k = {val_k}, m = {_VAL_M}) and computes per-family MSE "
-            "for each. Methods 1, 4, and 5 use the gene set selected below; "
-            "Methods 2 and 3 are parameterless. Method 5 requires Y1000+ data."
+            "for each. Methods 1, 4, 5, and Ensemble use the gene set selected below; "
+            "Methods 2 and 3 are parameterless. Method 5 and Ensemble Y1000+ signals "
+            "require Y1000+ data."
         )
 
-        # Gene selector shared by M1, M4, M5
+        # Gene selector shared by M1, M4, M5, Ensemble
         _cmp_tfs = _load_tfs().sort_values("pi_prior").reset_index(drop=True)
         _cmp_tf_names = _load_tfs().sort_values("gene_name")["gene_name"].tolist()
         _cmp_idx = [int(i * (len(_cmp_tfs) - 1) / max(val_k - 1, 1)) for i in range(val_k)]
         _cmp_defaults = [_cmp_tfs.loc[i, "gene_name"] for i in _cmp_idx]
 
         cmp_genes = st.multiselect(
-            f"Select **{val_k}** TFs for Methods 1, 4, and 5 (same gene set for all three):",
+            f"Select **{val_k}** TFs for Methods 1, 4, 5, and Ensemble (same gene set):",
             _cmp_tf_names,
             default=_cmp_defaults,
             key="compare_genes",
@@ -4623,6 +4875,7 @@ with tab9:
                 "M3 SNP":       "#d97706",
                 "M4 Consensus": "#7c3aed",
                 "M5 Y1000+":    "#dc2626",
+                "Ensemble":     "#0f172a",
             }
 
             # Compute per-method estimate vectors
@@ -4642,6 +4895,10 @@ with tab9:
                     )
             else:
                 _pi_m5 = None
+
+            with st.spinner("Running ensemble…"):
+                _ens_cmp = estimate_pi_per_family_ensemble(cmp_genes)
+            _pi_ens = _ens_cmp["pi_vec"]
 
             cmp_rows = []
             for profile_name, true_pi_vec in profiles.items():
@@ -4665,6 +4922,8 @@ with tab9:
                     float(np.mean([(e - t) ** 2 for e, t in zip(_pi_m5, true_pi_vec)]))
                     if _pi_m5 else float("nan")
                 )
+                # Ensemble
+                _se_ens = float(np.mean([(e - t) ** 2 for e, t in zip(_pi_ens, true_pi_vec)]))
 
                 cmp_rows.append({
                     "Profile":      profile_name,
@@ -4673,6 +4932,7 @@ with tab9:
                     "M3 SNP":       round(_se_m3, 6),
                     "M4 Consensus": round(_se_m4, 6),
                     "M5 Y1000+":    round(_se_m5, 6) if not np.isnan(_se_m5) else float("nan"),
+                    "Ensemble":     round(_se_ens, 6),
                 })
 
             cmp_df = pd.DataFrame(cmp_rows)
@@ -4695,7 +4955,7 @@ with tab9:
             st.plotly_chart(fig_cmp_all, use_container_width=True)
 
             # Winner summary
-            _method_cols = ["M1 Evidence", "M2 Moment", "M3 SNP", "M4 Consensus", "M5 Y1000+"]
+            _method_cols = ["M1 Evidence", "M2 Moment", "M3 SNP", "M4 Consensus", "M5 Y1000+", "Ensemble"]
             _avg_mse = {
                 m: float(cmp_df[m].mean())
                 for m in _method_cols
@@ -4861,4 +5121,36 @@ genes in the Y1000+ 48-species panel becomes πᵢ. This means:
   mirror the true profile shape, Method 5 will outperform all SGD-based methods. If the
   selected TFs are uniformly well- or poorly-conserved, it behaves similarly to Method 3.
   It is the most trustworthy method for TFs with broad JASPAR PWM coverage in Y1000+.
+""")
+
+                # Ensemble explanation
+                if "Ensemble" in _avg_mse:
+                    _ens_lin  = _lin_mse.get("Ensemble", float("nan"))
+                    _ens_quad = _quad_mse.get("Ensemble", float("nan"))
+                    _ens_rank = next(i+1 for i,(m,_) in enumerate(_avg_sorted) if m=="Ensemble")
+                    st.markdown(f"""
+**Ensemble — Multi-signal per-family** (ranked #{_ens_rank}, avg MSE = {_avg_mse['Ensemble']:.6f})
+
+The ensemble averages Methods 1, 3, 4, 5, 6, and 7 for each family independently. Method 2 is
+excluded because Theorem 4 only recovers π̂ = Σπᵢ and cannot distinguish how inheritance is
+distributed across families — including it would dilute the per-family signal.
+
+- **When Y1000+ data is available:** the ensemble has access to M5 (TFBS conservation), M6
+  (sequence homology), and M7 (binding-site SNPs) in addition to the three SGD signals. These
+  cross-species signals provide per-family differentiation that M1–4 alone cannot reach, so
+  the ensemble typically outperforms any single SGD-based method on heterogeneous profiles.
+- **When only SGD data is available:** the ensemble falls back to M1, M3, M4. M3 returns a
+  near-constant across families (YFL039C mean), so it adds little differentiation. The ensemble
+  then behaves similarly to a weighted average of M1 and M4 — better than M2/M3 alone but
+  constrained by the same evidence-code range as M1.
+- **Linear profile** (MSE = {_ens_lin:.4f}): accuracy depends heavily on Y1000+ availability.
+  With cross-species signals the ensemble can reach extreme π values (near 0 or 1); without
+  them it inherits the structural floor/ceiling of the SGD methods.
+- **Quadratic profile** (MSE = {_ens_quad:.4f}): the Quadratic profile clusters near the
+  middle of the reachable range, so all three SGD signals contribute meaningfully and the
+  ensemble tends to do well even without Y1000+ data.
+- **Bottom line:** use the ensemble as your default per-family πᵢ estimate. Its MSE ranking
+  depends on the gene set and data availability, but its per-signal breakdown table (visible
+  in the Ensemble tab) is always informative — conflicting signals flag biologically interesting
+  TFs whose inheritance pattern is not uniform across scales of evidence.
 """)
