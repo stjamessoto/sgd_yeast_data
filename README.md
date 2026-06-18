@@ -35,7 +35,7 @@ The app opens at `http://localhost:8501`. Cross-species data (π₂, π₃, π�
 
 Gene duplication is how genomes grow in complexity. When a gene duplicates, its regulatory relationships — which transcription factors bind to it, and control its expression — may or may not be inherited by the new copy. The probability of that inheritance is **π** (pi).
 
-This project estimates **π⃗ = (π₁, …, πₖ)**, the per-family inheritance probability vector, using seven complementary methods across two data tiers:
+This project estimates **$\vec{\pi}$ = (π₁, …, πₖ)**, the per-family inheritance probability vector, using seven complementary methods across two data tiers:
 
 **SGD-based methods** (run instantly, no extra data needed):
 1. Evidence-based: maps SGD experimental evidence codes to a π prior
@@ -56,7 +56,7 @@ All functions are in [model/scruse_math.py](model/scruse_math.py).
 
 | Result | Equation | What it gives you |
 |--------|----------|-------------------|
-| **Theorem 1** | E[&#124;M(n)&#124;] = Γ(n+k)Γ(m) / [Γ(n)Γ(m+k)] | Expected motif count under **Full Duplication** (π⃗ = 1) |
+| **Theorem 1** | E[&#124;M(n)&#124;] = Γ(n+k)Γ(m) / [Γ(n)Γ(m+k)] | Expected motif count under **Full Duplication** ($\vec{\pi}$ = 1) |
 | **Theorem 4** | E[&#124;M(n)&#124;] = Γ(π̂+n)Γ(m) / [Γ(π̂+m)Γ(n)] | Expected count under **Partial Duplication**; depends only on π̂ = Σπᵢ |
 | **Corollary 2** | Var = E[&#124;M&#124;²] − E[&#124;M&#124;]² | Variance under Full Duplication |
 | **Corollary 16** | Binary Inheritance variance | Drives the significance z-score |
@@ -301,7 +301,7 @@ python -m streamlit run app.py
 | **Methodology** | Mathematical background: Theorems 1–8, Pólya urn, Full vs Partial Duplication |
 | **TF Explorer** | Browse 179 TFs; evidence codes, GO terms, JASPAR PFMs, YEASTRACT consensus sequences, sequence logos, regulatory targets |
 | **Gene Families** | Family-size distributions, m/n/d parameters, Dirichlet simulation — five grouping methods |
-| **π Estimator** | Select k families; estimate π⃗ by any of the four SGD-based methods; sensitivity plot; expandable methodology guide explaining the Gamma-ratio formula and the biological rationale behind each estimation method |
+| **π Estimator** | Select k families; estimate $\vec{\pi}$ by any of the four SGD-based methods; sensitivity plot; expandable methodology guide explaining the Gamma-ratio formula and the biological rationale behind each estimation method |
 | **Motif Significance** | Z-scores, p-values, null distributions; predictive forward forecast of motif growth; expandable methodology guide explaining the significance framework, null model hierarchy, and the role of Binary Inheritance variance |
 | **Y1000+ π Estimators** | π₂/π₃/π₄ results with live generation status; per-TF retention histogram; per-gene upstream retention figure (1,000 bp from translational start, averaged across all targeting TFs); pairwise shared binding-site bar chart (y-axis fixed to [0,1]); π₃ vs π₁ scatter; phylogenetic context; expandable methodology guide on cross-species π inference with a **clickable button** linking to the Method Estimation Test tab |
 | **Method Estimation Test** | Synthetic validation of all five estimation methods against known π profiles. Select a method (Method 1 – Evidence-based, Method 2 – Moment Estimation, Method 3 – SNP Divergence, Method 4 – Consensus-adjusted, or **Method 5 – Y1000+ π₃ TFBS Conservation**), a motif size k (3 or 4), and — for Methods 1, 4, and 5 — a set of k TFs. Each method estimates π from its real data source and the result is compared against Linear and Quadratic true-π profiles via per-family MSE. Every method includes a written interpretation of how the test works in context, what the MSE reveals about accuracy, and what structural limitations constrain recovery. A **📊 Compare All Methods** expander at the bottom runs all five methods with the same gene set, displays a grouped bar chart and rank table, highlights the winner, and includes a live per-method explanation of *why* each method achieves its accuracy level — referencing the actual computed MSE values and each method's structural constraints. Both the π Estimator tab and the Y1000+ π Estimators tab contain **clickable buttons** (JavaScript tab-jump) that navigate here directly; work both locally and on Streamlit Cloud. |
@@ -342,7 +342,7 @@ python main.py <command> [options]
 | `tfs` | `python main.py tfs --dna-binding --min-evidence 0.7` | List TFs with filters |
 | `families` | `python main.py families --min-size 2 --limit 10` | Show gene families |
 | `binding` | `python main.py binding --tf GAL4` | Describe what a TF's binding sites regulate |
-| `estimate` | `python main.py estimate --genes GAL4 GCN4 --method evidence` | Estimate π⃗ |
+| `estimate` | `python main.py estimate --genes GAL4 GCN4 --method evidence` | Estimate $\vec{\pi}$ |
 | `significance` | `python main.py significance --k 2 --strategy largest` | Full significance test |
 
 Options for `--method`: `evidence` | `mle` | `snp` | `consensus`
@@ -364,9 +364,9 @@ Core requirements: `streamlit`, `pandas`, `numpy`, `scipy`, `plotly`, `pillow`, 
 
 **Subnetwork motif** — A labelled regulatory substructure. Two topologically identical patterns involving different gene families are distinct subnetwork motifs (unlike classical network motifs which are defined up to isomorphism).
 
-**Full Duplication (π⃗ = 1)** — All regulatory links are deterministically inherited. `|M(n)| = c₁ × c₂ × … × cₖ`.
+**Full Duplication ($\vec{\pi}$ = 1)** — All regulatory links are deterministically inherited. `|M(n)| = c₁ × c₂ × … × cₖ`.
 
-**Partial Duplication (0 ≤ π⃗ ≤ 1)** — Each link is inherited independently with probability πᵢ. Expected count follows Theorem 4.
+**Partial Duplication (0 ≤ $\vec{\pi}$ ≤ 1)** — Each link is inherited independently with probability πᵢ. Expected count follows Theorem 4.
 
 **Binary Inheritance** — A refinement where all instances sharing a common gene inherit or fail together. Theorem 5 proves this maximises `E[|M(n)|²]`, making it the canonical variance model for the significance test.
 
