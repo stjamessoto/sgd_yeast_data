@@ -1,0 +1,14 @@
+# Normalize all text files to LF in the repository
+* text=auto eol=lf
+
+# Explicitly mark Python files as text
+*.py text eol=lf
+
+# Binary files — never convert
+*.pyc binary
+*.csv binary
+*.zip binary
+*.tar.gz binary
+*.png binary
+*.jpg binary
+*.pdf binary

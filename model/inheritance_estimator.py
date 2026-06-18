@@ -42,6 +42,8 @@ All SGD methods produce:
 The result dict feeds directly into scruse_math functions.
 """
 
+_VERSION = "2.0"  # added estimate_pi_per_family_ensemble
+
 from __future__ import annotations
 
 import numpy as np
