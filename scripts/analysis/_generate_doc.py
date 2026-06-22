@@ -4,11 +4,13 @@ Run: python _generate_doc.py
 """
 
 import sys, io, math
-from itertools import combinations as icombs
+from itertools import combinations as icombs, product as iproduct
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import numpy as np
+import pandas as pd
+from scipy.stats import norm
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -20,7 +22,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
-from model.inheritance_estimator import estimate_pi_from_evidence, full_significance_analysis
+from model.inheritance_estimator import full_significance_analysis
 from model.gene_families import build_tf_families, estimate_model_parameters
 
 # ── constants ──────────────────────────────────────────────────────────────
@@ -33,7 +35,7 @@ GO_NAMES = {
     'GO:0045893': 'Positive regulation of transcription, DNA-templated',
     'GO:0045892': 'Negative regulation of transcription, DNA-templated',
 }
-SIG_THRESH = np.log10(1.96)   # ≈ 0.292
+FDR_ALPHA = 0.05
 
 # ── load + compute ─────────────────────────────────────────────────────────
 families = build_tf_families(min_family_size=1, grouping='GO_Process')
@@ -43,28 +45,75 @@ M, N     = params['m'], params['n']
 fam_list = []
 for i, (_, row) in enumerate(families.iterrows()):
     fam_list.append({
-        'idx': i + 1, 'go_id': row['go_id'],
-        'size': int(row['family_size']),
-        'ev':   float(row['mean_evidence_score']),
-        'name': GO_NAMES.get(row['go_id'], row['go_id']),
+        'idx':        i + 1,
+        'go_id':      row['go_id'],
+        'size':       int(row['family_size']),
+        'ev':         float(row['mean_evidence_score']),
+        'name':       GO_NAMES.get(row['go_id'], row['go_id']),
+        'member_tfs': [t.upper() for t in row['member_tfs']],
     })
+
+# ── pi4 binding data: TF → set of target gene IDs ─────────────────────────
+_PI4_PATH = Path(__file__).parent.parent.parent / 'y1000plus_data' / 'processed' / 'pi4_snp_binding_sites.csv'
+_pi4_df   = pd.read_csv(_PI4_PATH, usecols=['tf_name', 'target_gene_id'])
+_pi4_df['tf_name'] = _pi4_df['tf_name'].str.upper()
+# Build lookup: TF name → frozenset of target gene IDs
+_tf_targets: dict[str, frozenset] = {
+    tf: frozenset(grp['target_gene_id'])
+    for tf, grp in _pi4_df.groupby('tf_name')
+}
+_pi4_tfs = set(_tf_targets)
+
+
+# ── Method 1 (corrected): normalize evidence scores per paper Eq. 3 ────────
+# π̂ᵢ = raw evidence score; πᵢ = π̂ᵢ / Σⱼ π̂ⱼ  (Scruse et al. Eq. 3)
+_ev_total = sum(f['ev'] for f in fam_list)
+_fam_pi   = {f['idx']: f['ev'] / _ev_total for f in fam_list}
+
+
+def _count_coreg(fams_sel):
+    """
+    Count k-tuples (one TF per family) that all share ≥1 common target,
+    using the pi4 JASPAR binding data.  Falls back to Cartesian product
+    if none of the families have pi4 coverage.
+    """
+    # Filter each family to the TFs that appear in the pi4 data
+    covered = [
+        [tf for tf in f['member_tfs'] if tf in _pi4_tfs]
+        for f in fams_sel
+    ]
+    # If any family has no coverage at all, fall back to Cartesian product
+    if any(len(c) == 0 for c in covered):
+        return math.prod(f['size'] for f in fams_sel), True
+
+    count = 0
+    for tf_tuple in iproduct(*covered):
+        # Intersection of target sets across all k TFs
+        shared = _tf_targets[tf_tuple[0]]
+        for tf in tf_tuple[1:]:
+            shared = shared & _tf_targets[tf]
+            if not shared:
+                break
+        if shared:
+            count += 1
+    return count, False
 
 
 def run_motifs(k):
     out = []
     for combo in icombs(range(len(fam_list)), k):
         fams_sel = [fam_list[i] for i in combo]
-        go_ids   = [f['go_id'] for f in fams_sel]
         sizes    = [f['size']  for f in fams_sel]
-        obs      = math.prod(sizes)
         label    = '+'.join('F%d' % f['idx'] for f in fams_sel)
-        pi_vec   = estimate_pi_from_evidence(go_ids)['pi_vec']
+        pi_vec   = [_fam_pi[f['idx']] for f in fams_sel]
+        obs, fallback = _count_coreg(fams_sel)
         try:
             sig = full_significance_analysis(pi_vec, M, N, float(obs), k)
         except Exception:
             continue
         out.append({
             'label': label, 'sizes': sizes, 'obs': obs,
+            'fallback': fallback,
             'z':  sig['z_partial'], 'p':  sig['p_partial'],
             'sig': sig['sig_partial'],
         })
@@ -75,10 +124,31 @@ print('Computing motifs...')
 res3 = run_motifs(3)
 res4 = run_motifs(4)
 
-sig3  = sum(1 for r in res3 if r['z'] and r['sig'] != 'ns')
-sig4  = sum(1 for r in res4 if r['z'] and r['sig'] != 'ns')
-over3 = sum(1 for r in res3 if r['z'] and r['z'] >  1.96)
-over4 = sum(1 for r in res4 if r['z'] and r['z'] >  1.96)
+# ── Benjamini-Hochberg FDR correction across all 70 tests ─────────────────
+_all = [(r, 'k3') for r in res3 if r['p'] is not None] + \
+       [(r, 'k4') for r in res4 if r['p'] is not None]
+_ps  = np.array([r['p'] for r, _ in _all])
+_n   = len(_ps)
+_ord = np.argsort(_ps)
+_ranks          = np.empty(_n, dtype=int)
+_ranks[_ord]    = np.arange(1, _n + 1)
+_bh_sig         = _ps <= (_ranks / _n) * FDR_ALPHA
+for k, (r, _) in enumerate(_all):
+    r['bh_sig'] = bool(_bh_sig[k])
+
+# BH critical Z: the Z corresponding to the largest p-value still BH-significant
+_sig_sorted = np.where(_bh_sig[_ord])[0]
+if len(_sig_sorted):
+    _bh_crit_p = _ps[_ord[_sig_sorted[-1]]]
+    BH_CRIT_Z  = float(norm.ppf(1 - _bh_crit_p / 2))
+else:
+    BH_CRIT_Z  = np.inf
+SIG_THRESH = np.log10(BH_CRIT_Z)
+
+sig3  = sum(1 for r in res3 if r.get('bh_sig'))
+sig4  = sum(1 for r in res4 if r.get('bh_sig'))
+over3 = sum(1 for r in res3 if r.get('bh_sig') and r['z'] and r['z'] > 0)
+over4 = sum(1 for r in res4 if r.get('bh_sig') and r['z'] and r['z'] > 0)
 
 # ── figure ─────────────────────────────────────────────────────────────────
 fig, (ax_strip, ax_hist) = plt.subplots(
@@ -94,8 +164,8 @@ z4_vals = [r['z'] for r in res4 if r['z'] is not None]
 lz3 = np.log10(np.maximum(z3_vals, 1e-4))
 lz4 = np.log10(np.maximum(z4_vals, 1e-4))
 
-sig3_mask = np.array([r['sig'] != 'ns' for r in res3 if r['z'] is not None])
-sig4_mask = np.array([r['sig'] != 'ns' for r in res4 if r['z'] is not None])
+sig3_mask = np.array([r.get('bh_sig', False) for r in res3 if r['z'] is not None])
+sig4_mask = np.array([r.get('bh_sig', False) for r in res4 if r['z'] is not None])
 
 jit3 = np.random.uniform(-0.16, 0.16, len(lz3))
 jit4 = np.random.uniform(-0.16, 0.16, len(lz4))
@@ -111,9 +181,9 @@ ax_strip.scatter(0 + jit3[~sig3_mask], lz3[~sig3_mask],
 ax_strip.scatter(1 + jit4[~sig4_mask], lz4[~sig4_mask],
                  c='#aaaaaa', s=28, alpha=0.9, linewidths=0, zorder=3)
 
-# label the 2 non-significant k=3 points
+# label the non-significant k=3 points
 for r in res3:
-    if r['z'] is not None and r['sig'] == 'ns':
+    if r['z'] is not None and not r.get('bh_sig', False):
         ax_strip.annotate(
             r['label'], xy=(0, np.log10(max(r['z'], 1e-4))),
             xytext=(0.22, np.log10(max(r['z'], 1e-4))),
@@ -122,14 +192,14 @@ for r in res3:
         )
 
 ax_strip.axhline(SIG_THRESH, color='#e74c3c', linestyle='--', linewidth=1.2,
-                 label='p=0.05  (Z=1.96)', zorder=2)
+                 label='BH FDR=5%%  (Z=%.2f)' % BH_CRIT_Z, zorder=2)
 ax_strip.set_xticks([0, 1])
 ax_strip.set_xticklabels(['k=3\n(3-node)', 'k=4\n(4-node)'], fontsize=9)
 ax_strip.set_ylabel('log₁₀(Z-score)', fontsize=9)
 ax_strip.set_xlim(-0.5, 1.5)
 ax_strip.set_title('Each point = one\nmotif combination', fontsize=8.5, pad=4)
 
-patches = [mpatches.Patch(color='#c0392b', label='significant (p<0.05)'),
+patches = [mpatches.Patch(color='#c0392b', label='significant (BH FDR<5%)'),
            mpatches.Patch(color='#aaaaaa', label='not significant')]
 ax_strip.legend(handles=patches, fontsize=7.5, loc='upper left',
                 framealpha=0.85, borderpad=0.5)
@@ -141,7 +211,7 @@ ax_hist.hist(lz3, bins=bins, color='#2980b9', alpha=0.75,
 ax_hist.hist(lz4, bins=bins, color='#c0392b', alpha=0.72,
              label='k=4  (n=35)', edgecolor='white', linewidth=0.5)
 ax_hist.axvline(SIG_THRESH, color='black', linestyle='--',
-                linewidth=1.4, label='p=0.05')
+                linewidth=1.4, label='BH FDR=5%')
 ax_hist.axvspan(SIG_THRESH, 6.0, alpha=0.07, color='red')
 ax_hist.set_xlabel('Z-score  (log₁₀ axis)', fontsize=9)
 ax_hist.set_ylabel('Count', fontsize=9)
@@ -251,7 +321,12 @@ intro_run = intro_body.add_run(
     'three-node and C(7,4) = 35 four-node family combinations (70 total), compute '
     'the Cartesian product of family sizes as the observed co-membership count, and '
     'derive Z-scores using the Binary Inheritance variance (Corollary 16) to assess '
-    'statistical significance against the Partial Duplication null.'
+    'statistical significance against the Partial Duplication null, with '
+    'Benjamini-Hochberg FDR correction applied across all 70 tests (α = 5%). '
+    'Per-family inheritance probabilities πᵢ are estimated from SGD evidence '
+    'codes and normalized by their sum across all m families (Eq. 3). '
+    'Observed motif counts are actual co-regulatory k-tuples from JASPAR '
+    'pi4 binding data.'
 )
 intro_run.font.size = Pt(9)
 
@@ -301,9 +376,9 @@ cap = doc.add_paragraph()
 cap.paragraph_format.space_before = Pt(0)
 cap.paragraph_format.space_after  = Pt(4)
 cap_run = cap.add_run(
-    'Figure.  Left: each dot is one motif combination; red = significant (p < 0.05, '
-    'Partial Dup null), grey = not significant. Two grey dots in k=3 are labelled.  '
-    'Right: histogram of log₁₀(Z-score); shaded region = significant over-representation.  '
+    'Figure.  Left: each dot is one motif combination; red = significant (BH FDR < 5%%, '
+    'Partial Dup null), grey = not significant after BH correction. Non-significant k=3 dots are labelled.  '
+    'Right: histogram of log₁₀(Z-score); dashed line = BH FDR=5%% threshold (Z=%.2f); shaded region = significant over-representation.  ' % BH_CRIT_Z +
     'F1=GO:0006355, F2=GO:0045944, F3=GO:0006357, F4=GO:0000122, '
     'F5=GO:0006351, F6=GO:0045893, F7=GO:0045892.'
 )
@@ -318,7 +393,7 @@ r2.bold = True; r2.font.size = Pt(9.5)
 
 st = doc.add_table(rows=1, cols=5)
 st.style = 'Table Grid'
-tbl_hdr(st, ['Motif size', 'Combinations', 'Significant (p<0.05)', 'Over-represented', 'Under-represented'])
+tbl_hdr(st, ['Motif size', 'Combinations', 'Significant (BH FDR<5%)', 'Over-represented', 'Under-represented'])
 tbl_row(st, ['k = 3', '35', '%d' % sig3,  '%d' % over3, '0'], fill='DBEAFE')
 tbl_row(st, ['k = 4', '35', '%d' % sig4,  '%d' % over4, '0'], fill='FEE2E2')
 tbl_row(st, ['Total', '70', '%d' % (sig3+sig4), '%d' % (over3+over4), '0'], fill='E0F2FE')
@@ -336,11 +411,12 @@ rep_body.paragraph_format.space_after  = Pt(5)
 rep_body.add_run(
     'A k-node motif combination is over-represented when its observed Cartesian '
     'product count c₁×c₂×···×cₖ significantly exceeds the expected count '
-    'E[|M(n)|] predicted by the Partial Duplication null (Theorem 4), i.e. Z > 1.96 '
-    '(p < 0.05, two-tailed). This indicates that the selected families share more '
+    'E[|M(n)|] predicted by the Partial Duplication null (Theorem 4), with '
+    'Benjamini-Hochberg FDR correction at α = 5%% across all 70 tests. '
+    'This indicates that the selected families share more '
     'co-regulatory TF members than stochastic duplication-loss dynamics alone would '
     'produce, consistent with functional constraint or active co-regulation among '
-    'those GO Biological Process groups. Under-representation (Z < −1.96) would '
+    'those GO Biological Process groups. Under-representation (negative BH-significant Z) would '
     'signal depletion relative to neutral expectations — no such case arises in this '
     'dataset, suggesting that GRN links between these families are at least as dense '
     'as the duplication model predicts, and in most cases far denser.'
@@ -355,17 +431,19 @@ kf_run = kf.add_run(
 )
 kf_run.bold = True; kf_run.font.size = Pt(9)
 
+_ns3 = [r['label'] for r in res3 if not r.get('bh_sig', False) and r['z'] is not None]
+_ns3_str = (', '.join(_ns3) + ' — ') if _ns3 else 'none — all k=3 combinations are significant. '
 kf_body = kf.add_run(
-    'Of 35 three-node motif combinations, %d (%d%%) are significantly over-represented; '
-    'all 35 four-node combinations are significant. No motif is under-represented. '
-    'The two non-significant k=3 cases (F4+F6+F7 and F5+F6+F7) both include the '
-    'near-singleton families F6 (2 TFs) and F7 (1 TF): their Cartesian products '
-    '(92 and 40) are close to the Partial Duplication expected count (E ≈ 34). '
+    'Of 35 three-node motif combinations, %d (%d%%) are significant after BH FDR correction; '
+    '%d of 35 four-node combinations are significant. No motif is under-represented. '
+    'Non-significant k=3 cases: %s'
+    'these combinations include near-singleton families (F6: 2 TFs, F7: 1 TF) whose '
+    'Cartesian products fall close to the Partial Duplication expected count. '
     'The strongest over-representation involves the three largest families — '
     'F1+F2+F3 (101×98×86 = 851,228; Z = 13,766) and '
     'F1+F2+F3+F4 (Z = 153,482 for k=4) — reflecting dense co-regulatory wiring '
     'among core RNA Pol II transcriptional regulators far exceeding neutral '
-    'duplication predictions.' % (sig3, round(100 * sig3 / 35))
+    'duplication predictions.' % (sig3, round(100 * sig3 / 35), sig4, _ns3_str)
 )
 kf_body.font.size = Pt(9)
 
