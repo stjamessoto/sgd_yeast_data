@@ -10,7 +10,7 @@ Tabs (left → right as they appear in the UI):
   5. π Estimator            — estimate inheritance probability vector four ways
   6. Motif Significance     — test whether a k-motif is over/under-represented
   7. Y1000+ π Estimators   — cross-species π₂, π₃, π₄ from 1,154 yeast genomes
-  8. Method Estimation Test — validate Methods 1/2/3/4 against known π profiles via MSE
+  8. Method Estimation Test — validate all 7 methods + ensemble against known π profiles via MSE
   9. Glossary & References  — term definitions and primary citations
 
 Run:  streamlit run app.py
@@ -507,17 +507,25 @@ with tab0:
          "derives the model parameters m, n, and d = n − m."),
         ("🎲", "π Estimator",
          "Select k families to form a subnetwork motif and estimate the inheritance "
-         "probability vector $\\vec{\\pi}$ using four SGD-based methods: evidence codes, "
-         "Moment Estimation via Theorem 4, SNP divergence at YFL039C, or YEASTRACT binding flexibility."),
+         "probability vector $\\vec{\\pi}$ using seven complementary methods: four SGD-based "
+         "(evidence codes, Moment Estimation via Theorem 4, SNP divergence at YFL039C, "
+         "YEASTRACT binding flexibility) and three Y1000+ cross-species methods "
+         "(π₂ sequence homology, π₃ TFBS conservation, π₄ IC-weighted SNP at binding sites)."),
         ("🧪", "Motif Significance",
          "Full significance test: compare the observed motif count against Full and "
          "Partial Duplication null models. Outputs Z-scores, p-values, and a "
          "predictive forward forecast of motif count growth."),
         ("🌍", "Y1000+ π Estimators",
-         "Three new cross-species estimators using 1,154 yeast genomes: "
+         "Three cross-species estimators using 1,154 yeast genomes: "
          "π₂ (protein sequence identity), π₃ (TFBS conservation via PWM scanning), "
          "π₄ (IC-weighted SNP rate at binding site positions). "
          "Data is generated automatically in the background on first launch."),
+        ("🧮", "Method Estimation Test",
+         "Benchmark all seven estimation methods plus the multi-signal ensemble against "
+         "known synthetic true-π profiles (Linear and Quadratic). Each method's MSE is "
+         "computed analytically; Method 2 additionally shows a 1,000-replica Poisson "
+         "simulation to capture count-observation noise. A **Compare All Methods** "
+         "expander runs all methods side-by-side and ranks them by average MSE."),
         ("📖", "Glossary & References",
          "Definitions of all mathematical terms (π, m, n, d, k-motif, Pólya urn, …) "
          "and full citations for the paper, datasets, and databases. "
@@ -639,13 +647,15 @@ with tab1:
             "icon": "🎲",
             "name": "π Estimator",
             "what": (
-                "Estimates the inheritance-probability vector $\\vec{\\pi}$ four ways using only SGD "
-                "data: (1) evidence-code quality, (2) Moment Estimation via Theorem 4, "
-                "(3) SNP divergence at YFL039C, (4) YEASTRACT consensus-sequence flexibility."
+                "Estimates the inheritance-probability vector $\\vec{\\pi}$ using seven complementary methods: "
+                "four SGD-based — (1) evidence-code quality, (2) Moment Estimation via Theorem 4, "
+                "(3) SNP divergence at YFL039C, (4) YEASTRACT consensus-sequence flexibility — "
+                "and three Y1000+ cross-species methods: (5) π₃ TFBS conservation, "
+                "(6) π₂ protein sequence homology, (7) π₄ IC-weighted SNP at binding sites."
             ),
             "data": (
                 "sgd_transcription_factors.csv · sgd_YFL039C_inheritance_vectors.csv · "
-                "yeastract_consensus.csv"
+                "yeastract_consensus.csv · Y1000+ π₂/π₃/π₄ CSVs (auto-generated)"
             ),
             "question": "What is the probability that a regulatory link survives duplication?",
         },
@@ -682,19 +692,20 @@ with tab1:
             "icon": "🧮",
             "name": "Method Estimation Test",
             "what": (
-                "Benchmark all five π estimation methods against known true-π profiles. "
-                "Choose a method (M1 Evidence-based, M2 Moment Estimation, M3 SNP Divergence, "
-                "M4 Consensus-adjusted, or M5 Y1000+ π₃ TFBS Conservation), a motif size "
-                "k = 3 or 4, and — for M1/M4/M5 — a set of k TFs. The app computes "
-                "per-family MSE against Linear and Quadratic synthetic true-π profiles and "
-                "shows exactly where each method's structural limitations cause error. "
-                "The 📊 Compare All Methods expander runs all five methods simultaneously, "
+                "Benchmark all seven π estimation methods plus the multi-signal ensemble against "
+                "known synthetic true-π profiles (Linear and Quadratic). "
+                "Choose a method (M1–M7 or Ensemble), a motif size k = 3 or 4, and — for "
+                "M1/M4/M5/M6/M7/Ensemble — a set of k TFs. The app computes per-family MSE "
+                "analytically; Method 2 also shows a **1,000-replica Poisson simulation** "
+                "to capture count-observation noise. "
+                "The 📊 Compare All Methods expander runs all seven methods simultaneously, "
                 "ranks them by average MSE, and explains why each method achieves its "
                 "accuracy level given its underlying data source."
             ),
             "data": (
                 "SGD evidence codes (M1/M4) · YFL039C SNP strains (M3) · "
-                "YEASTRACT consensus sequences (M4) · Y1000+ π₃ CSV (M5, requires generation)"
+                "YEASTRACT consensus sequences (M4) · "
+                "Y1000+ π₃ CSV (M5) · Y1000+ π₂ CSV (M6) · Y1000+ π₄ CSV (M7, all require generation)"
             ),
             "question": "How accurately does each estimation method recover a known π value, and why?",
         },
@@ -737,7 +748,7 @@ with tab2:
     - **Identify** transcription factors (TFs) and their regulatory targets in the
       *S. cerevisiae* GRN from SGD data.
     - **Estimate** the per-family inheritance probability vector **$\\vec{\\pi}$ = (π₁, …, πₖ)**
-      using five data-driven methods (four SGD-based, one cross-species from Y1000+).
+      using seven data-driven methods (four SGD-based, three cross-species from Y1000+).
     - **Test significance** of subnetwork motifs against the Partial Duplication null model.
     """)
 
@@ -2420,6 +2431,40 @@ with tab8:
         "that underpin this model."
     )
 
+    # ── Reference document ────────────────────────────────────────────
+    st.subheader("📄 Method Reference Document")
+    with st.container(border=True):
+        st.markdown(
+            "**Estimation Methods for Regulatory Inheritance Probability in Yeast Gene Duplication**  \n"
+            "A self-contained reference covering all seven estimation methods (M1–M7) and the "
+            "multi-signal ensemble: notation tables, data sources, strengths & limitations, "
+            "accuracy rankings (per-family πᵢ and aggregate π̂), and practical recommendations "
+            "for choosing an estimator."
+        )
+        _pdf_path = Path(__file__).parent / "static" / "Pi_estimation.pdf"
+        if _pdf_path.exists():
+            _pdf_mtime = int(_pdf_path.stat().st_mtime)
+            _col_dl, _col_open = st.columns(2)
+            with _col_dl:
+                with open(_pdf_path, "rb") as _pdf_fh:
+                    st.download_button(
+                        label="⬇️ Download Pi_estimation.pdf",
+                        data=_pdf_fh.read(),
+                        file_name="Pi_estimation.pdf",
+                        mime="application/pdf",
+                        use_container_width=True,
+                    )
+            with _col_open:
+                st.link_button(
+                    "↗️ Open in new tab",
+                    f"/app/static/Pi_estimation.pdf?v={_pdf_mtime}",
+                    use_container_width=True,
+                )
+        else:
+            st.warning("Pi_estimation.pdf not found in static/.", icon="⚠️")
+
+    st.divider()
+
     # ── References ────────────────────────────────────────────────────
     st.subheader("📚 Primary References")
 
@@ -3967,7 +4012,10 @@ with tab9:
         st.subheader("Summary — all profiles")
         st.caption(
             f"Method 1 returns fixed evidence-score priors for the selected genes "
-            f"({', '.join(selected_genes)}). These values are compared against each profile."
+            f"({', '.join(selected_genes)}). These values are compared against each profile. "
+            f"MSE is computed analytically over **2 test profiles** (Linear, Quadratic), each with "
+            f"**k = {val_k}** synthetic true-πᵢ values. No partial duplication simulation is needed "
+            f"— Method 1's estimate comes from SGD evidence codes, not from observed motif counts."
         )
         st.dataframe(pd.DataFrame(m1_rows), use_container_width=True, hide_index=True)
 
@@ -4080,7 +4128,11 @@ with tab9:
         st.caption(
             "π̂ squared error is ~0 for all rows: the Brent inversion recovers the total π̂ "
             "exactly. Per-family MSE is non-zero because Method 2 allocates π̂ equally across "
-            "k families — this only matches a uniform true distribution."
+            f"k families — this only matches a uniform true distribution. "
+            f"Analytical MSE is shown over **2 test profiles × {len(_VAL_N_VALUES)} n values** "
+            f"({', '.join(str(n) for n in _VAL_N_VALUES)}) = "
+            f"**{2 * len(_VAL_N_VALUES)} test combinations**, each with k = {val_k} families. "
+            f"See the **1,000-replica Poisson simulation** section below for noise-aware MSE."
         )
         st.dataframe(results_df, use_container_width=True, hide_index=True)
 
@@ -4147,6 +4199,52 @@ with tab9:
                 )
             st.divider()
 
+        # ── Simulation-based MSE (N=1000 Poisson replicas) ──────────────────
+        st.divider()
+        st.subheader("Simulation-based MSE — 1,000 Poisson replicas of partial duplication")
+        st.caption(
+            "Unlike all other methods, Method 2 takes an *observed motif count* as input. "
+            "In real experiments this count is Poisson-noisy. Below, 1,000 counts are sampled "
+            f"from Poisson(λ = E[|M(n)|]) for each profile × n combination (λ from Theorem 4). "
+            "Method 2 inverts each sampled count to get π̂, allocates uniformly, and per-family "
+            "MSE is averaged over all 1,000 replicas."
+        )
+
+        _N_SIM = 1000
+        rng = np.random.default_rng(42)
+        sim_rows = []
+        for profile_name, true_pi_vec in profiles.items():
+            true_pi_hat_s = sum(true_pi_vec)
+            for n_val in _VAL_N_VALUES:
+                lam = expected_partial(true_pi_hat_s, _VAL_M, n_val)
+                sim_counts = rng.poisson(lam, size=_N_SIM)
+                mse_list = []
+                for cnt in sim_counts:
+                    ph = estimate_pi_hat(float(cnt), _VAL_M, n_val)
+                    if ph is None or np.isnan(ph):
+                        continue
+                    pv = [ph / val_k] * val_k
+                    mse_list.append(float(np.mean([(e - t) ** 2 for e, t in zip(pv, true_pi_vec)])))
+                sim_rows.append({
+                    "Profile":            profile_name,
+                    "n":                  n_val,
+                    "λ (E[|M(n)|])":      round(lam, 4),
+                    "True π̂":            round(true_pi_hat_s, 4),
+                    f"Mean MSE ({_N_SIM} sims)": round(float(np.mean(mse_list)), 6) if mse_list else float("nan"),
+                    "Std MSE":            round(float(np.std(mse_list)), 6) if mse_list else float("nan"),
+                    "n_converged":        len(mse_list),
+                })
+
+        sim_df = pd.DataFrame(sim_rows)
+        st.dataframe(sim_df, use_container_width=True, hide_index=True)
+        st.caption(
+            f"**{_N_SIM} Poisson replicas** per (profile × n) combination "
+            f"({_N_SIM} × {2 * len(_VAL_N_VALUES)} = {_N_SIM * 2 * len(_VAL_N_VALUES):,} total inversions). "
+            "Mean MSE across replicas is higher than the analytical MSE above because Poisson "
+            "noise adds estimation error on top of the allocation error. "
+            "'n_converged' is the number of replicas where Brent root-find converged."
+        )
+
         st.markdown("""
         **What these results mean — Method 2 accuracy**
 
@@ -4162,6 +4260,10 @@ with tab9:
         - **MSE is profile-shape dependent, not n-dependent:** because π̂ is recovered exactly,
           the per-family error is fixed regardless of whether n = 20 or n = 100. Network size
           only matters when the observed count is noisy (a real experiment); here it is exact.
+        - **Simulation MSE > analytical MSE:** the 1,000-replica simulation adds Poisson
+          observation noise to the exact expected count. The gap between simulation and
+          analytical MSE quantifies how much error comes from count stochasticity versus
+          the structural uniform-allocation limitation.
         - **Linear MSE > Quadratic MSE:** the Linear profile has the highest within-profile
           variance. Any constant allocation to a spread-out distribution will produce larger
           average squared error than to a peaked one.
@@ -4219,7 +4321,10 @@ with tab9:
         st.subheader("Summary — all profiles")
         st.caption(
             f"Method 3 applies the same calibrated estimate (μ = {mu:.4f}) to every "
-            "family. MSE is higher for profiles whose true values spread far from μ."
+            f"family. MSE is higher for profiles whose true values spread far from μ. "
+            f"MSE is computed analytically over **2 test profiles** (Linear, Quadratic) with "
+            f"**k = {val_k}** families. No partial duplication simulation is needed — "
+            f"Method 3's estimate comes from YFL039C SNP data, not from observed motif counts."
         )
         st.dataframe(pd.DataFrame(m3_rows), use_container_width=True, hide_index=True)
 
@@ -4368,7 +4473,10 @@ with tab9:
         st.subheader("Summary — all profiles")
         st.caption(
             f"Method 4 estimates for selected genes: "
-            f"{', '.join(f'{g} → {p:.4f}' for g, p in zip(selected_genes4, est_pi_m4))}."
+            f"{', '.join(f'{g} → {p:.4f}' for g, p in zip(selected_genes4, est_pi_m4))}. "
+            f"MSE is computed analytically over **2 test profiles** (Linear, Quadratic) with "
+            f"**k = {val_k}** families. No partial duplication simulation is needed — "
+            f"Method 4's estimate comes from YEASTRACT consensus data, not from observed motif counts."
         )
         st.dataframe(pd.DataFrame(m4_rows), use_container_width=True, hide_index=True)
 
@@ -4558,7 +4666,10 @@ with tab9:
         st.subheader("Summary — all profiles")
         st.caption(
             f"Method 5 estimates: "
-            f"{', '.join(f'{g} → {p:.4f}' for g, p in zip(selected_genes5, est_pi_m5))}."
+            f"{', '.join(f'{g} → {p:.4f}' for g, p in zip(selected_genes5, est_pi_m5))}. "
+            f"MSE is computed analytically over **2 test profiles** (Linear, Quadratic) with "
+            f"**k = {val_k}** families. No partial duplication simulation is needed — "
+            f"Method 5's estimate comes from Y1000+ TFBS retention data, not from observed motif counts."
         )
         st.dataframe(pd.DataFrame(m5_rows), use_container_width=True, hide_index=True)
 
@@ -4720,7 +4831,10 @@ with tab9:
         st.subheader("Summary — all profiles")
         st.caption(
             f"Method 6 estimates: "
-            f"{', '.join(f'{g} → {p:.4f}' for g, p in zip(selected_genes6, est_pi_m6))}."
+            f"{', '.join(f'{g} → {p:.4f}' for g, p in zip(selected_genes6, est_pi_m6))}. "
+            f"MSE is computed analytically over **2 test profiles** (Linear, Quadratic) with "
+            f"**k = {val_k}** families. No partial duplication simulation is needed — "
+            f"Method 6's estimate comes from Y1000+ protein sequence identity data, not from observed motif counts."
         )
         st.dataframe(pd.DataFrame(m6_rows), use_container_width=True, hide_index=True)
 
@@ -4875,7 +4989,10 @@ with tab9:
         st.subheader("Summary — all profiles")
         st.caption(
             f"Method 7 estimates: "
-            f"{', '.join(f'{g} → {p:.4f}' for g, p in zip(selected_genes7, est_pi_m7))}."
+            f"{', '.join(f'{g} → {p:.4f}' for g, p in zip(selected_genes7, est_pi_m7))}. "
+            f"MSE is computed analytically over **2 test profiles** (Linear, Quadratic) with "
+            f"**k = {val_k}** families. No partial duplication simulation is needed — "
+            f"Method 7's estimate comes from Y1000+ IC-weighted SNP data, not from observed motif counts."
         )
         st.dataframe(pd.DataFrame(m7_rows), use_container_width=True, hide_index=True)
 
@@ -5101,6 +5218,12 @@ methods.
 
         # ── MSE against synthetic profiles ────────────────────────────────
         st.subheader(f"Accuracy against synthetic profiles (k = {val_k})")
+        st.caption(
+            f"MSE is computed analytically over **2 test profiles** (Linear, Quadratic) with "
+            f"**k = {val_k}** families. No partial duplication simulation is needed — "
+            "the ensemble averages M1, M3, M4, M5, M6, and M7, none of which use observed motif counts. "
+            "The number of contributing signals per family is shown in the breakdown table above (# signals)."
+        )
         ens_rows = []
         for profile_name, true_pi_vec in profiles.items():
             family_se = [(e - t) ** 2 for e, t in zip(est_pi_ens, true_pi_vec)]
@@ -5197,21 +5320,21 @@ the **Y1000+ π Estimators** tab to unlock M5, M6, and M7 for those families.
 
     with st.expander("📊 Compare All Methods — which estimator is most accurate?", expanded=False):
         st.markdown(
-            "Runs all estimation methods against the **Linear** and **Quadratic** "
-            f"true-π profiles (k = {val_k}, m = {_VAL_M}) and computes per-family MSE "
-            "for each. Methods 1, 4, 5, and Ensemble use the gene set selected below; "
-            "Methods 2 and 3 are parameterless. Method 5 and Ensemble Y1000+ signals "
-            "require Y1000+ data."
+            "Runs all 7 estimation methods plus the Ensemble against the **Linear** and **Quadratic** "
+            f"true-π profiles (k = {val_k}, m = {_VAL_M}) and computes per-family MSE for each. "
+            "Methods 1, 4, 5, 6, 7, and Ensemble use the gene set selected below; "
+            "Methods 2 and 3 are parameterless (M2 uses n = 50). "
+            "Methods 5, 6, 7, and Ensemble Y1000+ signals require pre-generated Y1000+ data."
         )
 
-        # Gene selector shared by M1, M4, M5, Ensemble
+        # Gene selector shared by M1, M4, M5, M6, M7, Ensemble
         _cmp_tfs = _load_tfs().sort_values("pi_prior").reset_index(drop=True)
         _cmp_tf_names = _load_tfs().sort_values("gene_name")["gene_name"].tolist()
         _cmp_idx = [int(i * (len(_cmp_tfs) - 1) / max(val_k - 1, 1)) for i in range(val_k)]
         _cmp_defaults = [_cmp_tfs.loc[i, "gene_name"] for i in _cmp_idx]
 
         cmp_genes = st.multiselect(
-            f"Select **{val_k}** TFs for Methods 1, 4, 5, and Ensemble (same gene set):",
+            f"Select **{val_k}** TFs for Methods 1, 4, 5, 6, 7, and Ensemble (same gene set):",
             _cmp_tf_names,
             default=_cmp_defaults,
             key="compare_genes",
@@ -5221,12 +5344,14 @@ the **Y1000+ π Estimators** tab to unlock M5, M6, and M7 for those families.
             st.info(f"Select exactly {val_k} TFs above to run the comparison (currently {len(cmp_genes)}).")
         else:
             _M_COLORS = {
-                "M1 Evidence":  "#2563eb",
-                "M2 Moment":    "#16a34a",
-                "M3 SNP":       "#d97706",
-                "M4 Consensus": "#7c3aed",
-                "M5 Y1000+":    "#dc2626",
-                "Ensemble":     "#0f172a",
+                "M1 Evidence":       "#2563eb",
+                "M2 Moment":         "#16a34a",
+                "M3 SNP":            "#d97706",
+                "M4 Consensus":      "#7c3aed",
+                "M5 π₃ TFBS":        "#dc2626",
+                "M6 π₂ Seq.Hom.":   "#0891b2",
+                "M7 π₄ SNP Sites":   "#059669",
+                "Ensemble":          "#0f172a",
             }
 
             # Compute per-method estimate vectors
@@ -5235,6 +5360,7 @@ the **Y1000+ π Estimators** tab to unlock M5, M6, and M7 for those families.
             _mu_m3 = estimate_pi_from_snp(["YFL039C"] * val_k)["pi_vec"][0]
             _pi_m3 = [_mu_m3] * val_k
 
+            # M5 — π₃ TFBS conservation
             _pi3_cmp, _pi3_cmp_err = _val_load_pi3_for_test()
             if _pi3_cmp is not None:
                 _overall_m5 = float(_pi3_cmp["pi3_estimate"].mean())
@@ -5246,6 +5372,34 @@ the **Y1000+ π Estimators** tab to unlock M5, M6, and M7 for those families.
                     )
             else:
                 _pi_m5 = None
+
+            # M6 — π₂ sequence homology
+            _pi2_cmp, _pi2_cmp_err = _val_load_pi2_for_test()
+            if _pi2_cmp is not None:
+                _overall_m6 = float(_pi2_cmp["pi2_estimate"].mean())
+                _pi_m6 = []
+                for _tf in cmp_genes:
+                    _rows_m6 = _pi2_cmp[
+                        (_pi2_cmp["gene1"] == _tf) | (_pi2_cmp["gene2"] == _tf)
+                    ]
+                    _pi_m6.append(
+                        float(_rows_m6["pi2_estimate"].mean()) if not _rows_m6.empty else _overall_m6
+                    )
+            else:
+                _pi_m6 = None
+
+            # M7 — π₄ IC-weighted SNP at binding sites
+            _pi4_cmp, _pi4_cmp_err = _val_load_pi4_for_test()
+            if _pi4_cmp is not None:
+                _overall_m7 = float(_pi4_cmp["pi4_estimate"].mean())
+                _pi_m7 = []
+                for _tf in cmp_genes:
+                    _rows_m7 = _pi4_cmp[_pi4_cmp["tf_name"] == _tf]
+                    _pi_m7.append(
+                        float(_rows_m7["pi4_estimate"].mean()) if not _rows_m7.empty else _overall_m7
+                    )
+            else:
+                _pi_m7 = None
 
             with st.spinner("Running ensemble…"):
                 _ens_cmp = estimate_pi_per_family_ensemble(cmp_genes)
@@ -5273,17 +5427,29 @@ the **Y1000+ π Estimators** tab to unlock M5, M6, and M7 for those families.
                     float(np.mean([(e - t) ** 2 for e, t in zip(_pi_m5, true_pi_vec)]))
                     if _pi_m5 else float("nan")
                 )
+                # M6
+                _se_m6 = (
+                    float(np.mean([(e - t) ** 2 for e, t in zip(_pi_m6, true_pi_vec)]))
+                    if _pi_m6 else float("nan")
+                )
+                # M7
+                _se_m7 = (
+                    float(np.mean([(e - t) ** 2 for e, t in zip(_pi_m7, true_pi_vec)]))
+                    if _pi_m7 else float("nan")
+                )
                 # Ensemble
                 _se_ens = float(np.mean([(e - t) ** 2 for e, t in zip(_pi_ens, true_pi_vec)]))
 
                 cmp_rows.append({
-                    "Profile":      profile_name,
-                    "M1 Evidence":  round(_se_m1, 6),
-                    "M2 Moment":    round(_se_m2, 6) if not np.isnan(_se_m2) else float("nan"),
-                    "M3 SNP":       round(_se_m3, 6),
-                    "M4 Consensus": round(_se_m4, 6),
-                    "M5 Y1000+":    round(_se_m5, 6) if not np.isnan(_se_m5) else float("nan"),
-                    "Ensemble":     round(_se_ens, 6),
+                    "Profile":          profile_name,
+                    "M1 Evidence":      round(_se_m1, 6),
+                    "M2 Moment":        round(_se_m2, 6) if not np.isnan(_se_m2) else float("nan"),
+                    "M3 SNP":           round(_se_m3, 6),
+                    "M4 Consensus":     round(_se_m4, 6),
+                    "M5 π₃ TFBS":       round(_se_m5, 6) if not np.isnan(_se_m5) else float("nan"),
+                    "M6 π₂ Seq.Hom.":  round(_se_m6, 6) if not np.isnan(_se_m6) else float("nan"),
+                    "M7 π₄ SNP Sites":  round(_se_m7, 6) if not np.isnan(_se_m7) else float("nan"),
+                    "Ensemble":         round(_se_ens, 6),
                 })
 
             cmp_df = pd.DataFrame(cmp_rows)
@@ -5298,15 +5464,18 @@ the **Y1000+ π Estimators** tab to unlock M5, M6, and M7 for those families.
                 color="Method", color_discrete_map=_M_COLORS,
                 facet_col="Profile",
                 text="Per-family MSE",
-                title=f"Per-family MSE — all methods, k={val_k}, m={_VAL_M} (n=50 for M2)",
-                height=430,
+                title=f"Per-family MSE — all 7 methods + Ensemble, k={val_k}, m={_VAL_M} (n=50 for M2)",
+                height=450,
             )
             fig_cmp_all.update_traces(texttemplate="%{text:.4f}", textposition="outside")
             fig_cmp_all.update_layout(showlegend=True)
             st.plotly_chart(fig_cmp_all, use_container_width=True)
 
             # Winner summary
-            _method_cols = ["M1 Evidence", "M2 Moment", "M3 SNP", "M4 Consensus", "M5 Y1000+", "Ensemble"]
+            _method_cols = [
+                "M1 Evidence", "M2 Moment", "M3 SNP", "M4 Consensus",
+                "M5 π₃ TFBS", "M6 π₂ Seq.Hom.", "M7 π₄ SNP Sites", "Ensemble",
+            ]
             _avg_mse = {
                 m: float(cmp_df[m].mean())
                 for m in _method_cols
@@ -5325,10 +5494,10 @@ the **Y1000+ π Estimators** tab to unlock M5, M6, and M7 for those families.
                 )
                 st.dataframe(_rank_df, use_container_width=True, hide_index=True)
                 st.caption(
-                    "Average MSE is computed over Linear and Quadratic profiles. "
-                    "Results for Methods 1, 4, and 5 depend on which TFs are selected above — "
+                    "Average MSE is computed analytically over Linear and Quadratic profiles. "
+                    "Results for Methods 1, 4, 5, 6, 7, and Ensemble depend on which TFs are selected above — "
                     "try different gene combinations to see how rankings change. "
-                    "Method 5 is omitted from ranking if Y1000+ data is not yet generated. "
+                    "Y1000+ methods (M5, M6, M7) are omitted from ranking if data is not yet generated. "
                     "M2 uses n = 50 for this comparison."
                 )
 
@@ -5445,33 +5614,79 @@ survive more sequence drift after duplication, so their π is nudged upward.
 """)
 
                 # M5 explanation
-                if "M5 Y1000+" in _avg_mse:
-                    _m5_lin  = _lin_mse.get("M5 Y1000+", float("nan"))
-                    _m5_quad = _quad_mse.get("M5 Y1000+", float("nan"))
-                    _m5_rank = next(i+1 for i,(m,_) in enumerate(_avg_sorted) if m=="M5 Y1000+")
+                if "M5 π₃ TFBS" in _avg_mse:
+                    _m5_lin  = _lin_mse.get("M5 π₃ TFBS", float("nan"))
+                    _m5_quad = _quad_mse.get("M5 π₃ TFBS", float("nan"))
+                    _m5_rank = next(i+1 for i,(m,_) in enumerate(_avg_sorted) if m=="M5 π₃ TFBS")
                     st.markdown(f"""
-**M5 — Y1000+ π₃ TFBS Conservation** (ranked #{_m5_rank}, avg MSE = {_avg_mse['M5 Y1000+']:.6f})
+**M5 — Y1000+ π₃ TFBS Conservation** (ranked #{_m5_rank}, avg MSE = {_avg_mse['M5 π₃ TFBS']:.6f})
 
-Method 5 is the only method that gives each family a *different* estimate derived from real
-cross-species data. For each selected TF, the mean retention fraction across all its target
-genes in the Y1000+ 48-species panel becomes πᵢ. This means:
+Method 5 gives each family a per-TF estimate from real cross-species data: the mean retention
+fraction of a significant PWM hit upstream of the orthologous gene across the Y1000+ 48-species
+panel. It is the most direct measurement of binding-site inheritance available.
 
 - **No structural floor or ceiling:** unlike Methods 1 and 4, Method 5 can in principle reach
-  any π value from 0 to 1, limited only by the conservation patterns actually observed in the
-  1,154-genome Y1000+ dataset.
+  any π value from 0 to 1, limited only by the conservation patterns in the Y1000+ dataset.
 - **Per-family differentiation:** a TF whose binding sites are retained in most yeast species
-  gets a high πᵢ; a lineage-specific TF gets a low one. This matches what Methods 2 and 3
-  structurally cannot do.
+  gets a high πᵢ; a lineage-specific TF gets a low one.
 - **Linear profile** (MSE = {_m5_lin:.4f}): error depends on how well the selected TFs'
-  real conservation spread matches the profile's spread. If TFs with low and high mean π₃
-  were chosen, Method 5 can approximate the Linear shape better than Methods 1–4.
-- **Quadratic profile** (MSE = {_m5_quad:.4f}): similarly depends on match between TF
+  real conservation spread matches the profile's spread.
+- **Quadratic profile** (MSE = {_m5_quad:.4f}): similarly depends on the match between TF
   conservation patterns and the symmetric Quadratic shape.
-- **Bottom line:** Method 5's accuracy is primarily constrained by the *choice of TFs*, not
-  by model structure. If you select TFs whose evolutionary conservation patterns happen to
-  mirror the true profile shape, Method 5 will outperform all SGD-based methods. If the
-  selected TFs are uniformly well- or poorly-conserved, it behaves similarly to Method 3.
-  It is the most trustworthy method for TFs with broad JASPAR PWM coverage in Y1000+.
+- **Bottom line:** Method 5's accuracy is constrained by the *choice of TFs*, not by model
+  structure. It is the most trustworthy method for TFs with broad JASPAR PWM coverage in Y1000+.
+""")
+
+                # M6 explanation
+                if "M6 π₂ Seq.Hom." in _avg_mse:
+                    _m6_lin  = _lin_mse.get("M6 π₂ Seq.Hom.", float("nan"))
+                    _m6_quad = _quad_mse.get("M6 π₂ Seq.Hom.", float("nan"))
+                    _m6_rank = next(i+1 for i,(m,_) in enumerate(_avg_sorted) if m=="M6 π₂ Seq.Hom.")
+                    st.markdown(f"""
+**M6 — Y1000+ π₂ Sequence Homology** (ranked #{_m6_rank}, avg MSE = {_avg_mse['M6 π₂ Seq.Hom.']:.6f})
+
+Method 6 estimates each TF family's πᵢ from mean pairwise protein sequence identity with all
+other TFs in the Y1000+ dataset (π₂ = pct_identity / 100). A TF highly similar to its paralogs
+is expected to retain regulatory links; a diverged TF is not.
+
+- **Protein proxy, not binding proxy:** π₂ does not directly measure binding-site retention. A
+  TF can have high sequence identity but bind different sites after duplication. Method 5 is more
+  direct for TFs with JASPAR coverage.
+- **Broadest coverage:** available for every TF with a Y1000+ FASTA entry — no JASPAR PWM needed.
+  For TFs without PWM data, π₂ is often the only cross-species estimate available.
+- **Linear profile** (MSE = {_m6_lin:.4f}): depends on how spread the selected TFs' sequence
+  identities are relative to the Linear profile's extreme values.
+- **Quadratic profile** (MSE = {_m6_quad:.4f}): TFs with intermediate mean identity tend to
+  land near the Quadratic profile's centre, so Method 6 often performs well here.
+- **Bottom line:** use Method 6 as a cross-species baseline when JASPAR data is unavailable,
+  or as a structural complement to Methods 5 and 7 for TFs where all three are available.
+""")
+
+                # M7 explanation
+                if "M7 π₄ SNP Sites" in _avg_mse:
+                    _m7_lin  = _lin_mse.get("M7 π₄ SNP Sites", float("nan"))
+                    _m7_quad = _quad_mse.get("M7 π₄ SNP Sites", float("nan"))
+                    _m7_rank = next(i+1 for i,(m,_) in enumerate(_avg_sorted) if m=="M7 π₄ SNP Sites")
+                    st.markdown(f"""
+**M7 — Y1000+ π₄ Binding-site SNPs** (ranked #{_m7_rank}, avg MSE = {_avg_mse['M7 π₄ SNP Sites']:.6f})
+
+Method 7 estimates inheritance from the IC-weighted mutation rate at the exact binding-site
+positions of each TF across Y1000+ genomes: π₄ = 1 − Σ IC_weight[pos] × polymorphism_rate[pos].
+Positions with high information content (most critical to binding specificity) are up-weighted.
+
+- **Mechanistic precision:** unlike π₂ (whole-protein homology) or π₃ (site presence/absence),
+  π₄ captures *which positions within the binding site* are under selection.
+- **PWM required:** only available for TFs with a JASPAR 2024 PWM entry. TFs without a PWM
+  cannot be scored and fall back to the dataset-wide mean.
+- **Complements M5:** Method 5 asks "is there any binding site here?" while Method 7 asks
+  "how conserved are the specific positions?" A site can be present (high π₃) but diverging
+  at critical positions (low π₄).
+- **Linear profile** (MSE = {_m7_lin:.4f}): depends on how spread the selected TFs' binding-site
+  conservation patterns are relative to the Linear profile's extreme values.
+- **Quadratic profile** (MSE = {_m7_quad:.4f}): TFs with intermediate π₄ tend to land near
+  the Quadratic profile's centre.
+- **Bottom line:** Method 7 is best when you need position-level resolution to detect subtle
+  binding-site erosion not visible in presence/absence data. Use alongside Method 5.
 """)
 
                 # Ensemble explanation
@@ -5486,22 +5701,16 @@ The ensemble averages Methods 1, 3, 4, 5, 6, and 7 for each family independently
 excluded because Theorem 4 only recovers π̂ = Σπᵢ and cannot distinguish how inheritance is
 distributed across families — including it would dilute the per-family signal.
 
-- **When Y1000+ data is available:** the ensemble has access to M5 (TFBS conservation), M6
-  (sequence homology), and M7 (binding-site SNPs) in addition to the three SGD signals. These
-  cross-species signals provide per-family differentiation that M1–4 alone cannot reach, so
-  the ensemble typically outperforms any single SGD-based method on heterogeneous profiles.
+- **When all Y1000+ data is available:** the ensemble combines M5 (TFBS conservation), M6
+  (sequence homology), and M7 (binding-site SNPs) with the three SGD signals. These cross-species
+  signals provide per-family differentiation that M1–4 alone cannot reach.
 - **When only SGD data is available:** the ensemble falls back to M1, M3, M4. M3 returns a
-  near-constant across families (YFL039C mean), so it adds little differentiation. The ensemble
-  then behaves similarly to a weighted average of M1 and M4 — better than M2/M3 alone but
-  constrained by the same evidence-code range as M1.
+  near-constant across families, so it adds little differentiation.
 - **Linear profile** (MSE = {_ens_lin:.4f}): accuracy depends heavily on Y1000+ availability.
-  With cross-species signals the ensemble can reach extreme π values (near 0 or 1); without
-  them it inherits the structural floor/ceiling of the SGD methods.
-- **Quadratic profile** (MSE = {_ens_quad:.4f}): the Quadratic profile clusters near the
-  middle of the reachable range, so all three SGD signals contribute meaningfully and the
-  ensemble tends to do well even without Y1000+ data.
-- **Bottom line:** use the ensemble as your default per-family πᵢ estimate. Its MSE ranking
-  depends on the gene set and data availability, but its per-signal breakdown table (visible
-  in the Ensemble tab) is always informative — conflicting signals flag biologically interesting
-  TFs whose inheritance pattern is not uniform across scales of evidence.
+  With cross-species signals the ensemble can reach extreme π values (near 0 or 1).
+- **Quadratic profile** (MSE = {_ens_quad:.4f}): the Quadratic profile clusters near the centre
+  of the reachable range, so SGD signals alone already contribute meaningfully.
+- **Bottom line:** use the ensemble as your default per-family πᵢ estimate. Its per-signal
+  breakdown (visible in the Ensemble tab) is more informative than the final number alone —
+  conflicting signals flag biologically interesting TFs.
 """)
