@@ -2457,12 +2457,25 @@ with tab8:
                     use_container_width=True,
                 )
             with _col_open:
-                st.markdown(
-                    f'<a href="data:application/pdf;base64,{_pdf_b64}" target="_blank">'
-                    f'<button style="width:100%;padding:0.4rem 0.8rem;background:#FF4B4B;color:white;'
-                    f'border:none;border-radius:0.4rem;cursor:pointer;font-size:0.9rem;">'
-                    f'↗️ Open in new tab</button></a>',
-                    unsafe_allow_html=True,
+                components.html(
+                    f"""
+                    <script>
+                    function openPDF() {{
+                        const b64 = "{_pdf_b64}";
+                        const binary = atob(b64);
+                        const bytes = new Uint8Array(binary.length);
+                        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                        const blob = new Blob([bytes], {{type: "application/pdf"}});
+                        window.open(URL.createObjectURL(blob), "_blank");
+                    }}
+                    </script>
+                    <button onclick="openPDF()" style="width:100%;padding:0.4rem 0.8rem;
+                        background:#FF4B4B;color:white;border:none;border-radius:0.4rem;
+                        cursor:pointer;font-size:0.9rem;font-family:sans-serif;">
+                        ↗️ Open in new tab
+                    </button>
+                    """,
+                    height=45,
                 )
         else:
             st.warning("Pi_estimation.pdf not found in static/.", icon="⚠️")
