@@ -25,6 +25,7 @@ import plotly.graph_objects as go
 import sys
 import time
 import io
+import base64
 from pathlib import Path
 
 # Allow imports from the project root
@@ -2443,22 +2444,25 @@ with tab8:
         )
         _pdf_path = Path(__file__).parent / "static" / "Pi_estimation.pdf"
         if _pdf_path.exists():
-            _pdf_mtime = int(_pdf_path.stat().st_mtime)
+            with open(_pdf_path, "rb") as _pdf_fh:
+                _pdf_bytes = _pdf_fh.read()
+            _pdf_b64 = base64.b64encode(_pdf_bytes).decode()
             _col_dl, _col_open = st.columns(2)
             with _col_dl:
-                with open(_pdf_path, "rb") as _pdf_fh:
-                    st.download_button(
-                        label="⬇️ Download Pi_estimation.pdf",
-                        data=_pdf_fh.read(),
-                        file_name="Pi_estimation.pdf",
-                        mime="application/pdf",
-                        use_container_width=True,
-                    )
-            with _col_open:
-                st.link_button(
-                    "↗️ Open in new tab",
-                    f"/app/static/Pi_estimation.pdf?v={_pdf_mtime}",
+                st.download_button(
+                    label="⬇️ Download Pi_estimation.pdf",
+                    data=_pdf_bytes,
+                    file_name="Pi_estimation.pdf",
+                    mime="application/pdf",
                     use_container_width=True,
+                )
+            with _col_open:
+                st.markdown(
+                    f'<a href="data:application/pdf;base64,{_pdf_b64}" target="_blank">'
+                    f'<button style="width:100%;padding:0.4rem 0.8rem;background:#FF4B4B;color:white;'
+                    f'border:none;border-radius:0.4rem;cursor:pointer;font-size:0.9rem;">'
+                    f'↗️ Open in new tab</button></a>',
+                    unsafe_allow_html=True,
                 )
         else:
             st.warning("Pi_estimation.pdf not found in static/.", icon="⚠️")
