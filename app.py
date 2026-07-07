@@ -26,6 +26,7 @@ import sys
 import time
 import io
 import base64
+from math import comb
 from pathlib import Path
 
 # Allow imports from the project root
@@ -695,7 +696,7 @@ with tab1:
             "what": (
                 "Benchmark all seven π estimation methods plus the multi-signal ensemble against "
                 "known synthetic true-π profiles (Linear and Quadratic). "
-                "Choose a method (M1–M7 or Ensemble), a motif size k = 3 or 4, and — for "
+                "Choose a method (M1–M7 or Ensemble), a motif size k = 3, 4, or 5, and — for "
                 "M1/M4/M5/M6/M7/Ensemble — a set of k TFs. The app computes per-family MSE "
                 "analytically; Method 2 also shows a **1,000-replica Poisson simulation** "
                 "to capture count-observation noise. "
@@ -1240,7 +1241,7 @@ All four methods produce values in [0, 1] per family and are compared on the sam
         st.markdown("**🧮 Method Estimation Test**")
         st.markdown(
             "Each method's accuracy and structural limitations are tested head-to-head "
-            "using synthetic Linear and Quadratic π profiles (k = 3 or 4, m = 7). "
+            "using synthetic Linear and Quadratic π profiles (k = 3, 4, or 5, m = 7). "
             "Click below to navigate there directly:"
         )
         # JavaScript tab-jump: queries Streamlit's rendered tab buttons by label text
@@ -1309,6 +1310,11 @@ All four methods produce values in [0, 1] per family and are compared on the sam
                 "random: random sample"
             ),
         )
+
+    st.caption(
+        f"C({m4}, {k4}) = **{comb(m4, k4):,}** possible {k4}-family combinations "
+        f"from the {m4} available families (the strategy above picks one of them)."
+    )
 
     selected_fams = select_motif_families(fam_df4, k4, strategy=strat4)
     gene_names4 = [f["go_id"] for f in selected_fams]
@@ -1959,6 +1965,11 @@ Binary Inheritance is the refinement of Partial Duplication that *maximises* E[|
                 key="pm5",
             )
 
+        st.caption(
+            f"C({m5}, {k5}) = **{comb(m5, k5):,}** possible {k5}-family combinations "
+            f"from the {m5} available families."
+        )
+
         fams5 = select_motif_families(fam_df5, k5, strategy=strat5)
         gene_names5 = [f["go_id"] for f in fams5]
         family_sizes5 = [f["family_size"] for f in fams5]
@@ -2269,6 +2280,11 @@ pressure, not a precise biological prediction.
                 ["Evidence-based", "Moment Estimation (Theorem 4)", "Manual"],
                 key="pm_pred",
             )
+
+        st.caption(
+            f"C({m_p}, {k_p}) = **{comb(m_p, k_p):,}** possible {k_p}-family combinations "
+            f"from the {m_p} available families."
+        )
 
         fams_p = select_motif_families(fam_df_p, k_p, strategy=strat_p)
         gene_names_p = [f["go_id"] for f in fams_p]
@@ -3820,6 +3836,10 @@ _VAL_PROFILES = {
         "Linear":    [0.2, 0.4, 0.6, 0.8],
         "Quadratic": [0.1, 0.5, 0.5, 0.1],
     },
+    5: {
+        "Linear":    [0.1, 0.3, 0.5, 0.7, 0.9],
+        "Quadratic": [0.1, 0.4, 0.5, 0.4, 0.1],
+    },
 }
 _VAL_N_VALUES = [20, 50, 100]
 _VAL_M = 7
@@ -3948,9 +3968,9 @@ with tab9:
     with col_k:
         val_k = st.radio(
             "Motif size **k**",
-            [3, 4],
+            [3, 4, 5],
             horizontal=True,
-            help="k=3: 3-family regulatory pattern. k=4: 4-family pattern.",
+            help="k=3: 3-family regulatory pattern. k=4: 4-family pattern. k=5: 5-family pattern.",
         )
     with col_n:
         val_n_detail = st.radio(
@@ -3961,6 +3981,13 @@ with tab9:
             help="Only used by Method 2. Selects which n to show in the per-family breakdown.",
             disabled=not use_m2,
         )
+
+    st.caption(
+        f"C({_VAL_M}, {val_k}) = **{comb(_VAL_M, val_k):,}** possible {val_k}-family "
+        f"combinations from the {_VAL_M} synthetic families used here — this is the same "
+        f"count the standalone motif-significance analysis (scripts/analysis/_generate_doc.py) "
+        f"enumerates exhaustively at k=3 and k=4."
+    )
 
     profiles = _VAL_PROFILES[val_k]
 
@@ -4408,7 +4435,7 @@ with tab9:
         - **MSE is driven by profile variance around μ:** the MSE for a given profile equals
           the variance of the true πᵢ values around μ. Quadratic profiles — whose values
           cluster near the center — produce lower MSE than Linear profiles, whose extremes
-          (0.1 and 0.9 for k=3) are far from μ ≈ 0.59.
+          (0.1 and 0.9 for k={val_k}) are far from μ ≈ 0.59.
         - **The estimate is well-calibrated for moderate inheritance:** μ ≈ 0.59 sits in a
           biologically plausible range for yeast regulatory links. Strains with 0 alt alleles
           give π = 1.0 (fully conserved site); strains with 2 alt alleles give π = 0 (fully
@@ -5547,7 +5574,7 @@ table (IDA → 0.90, IEA → 0.30, …). This imposes a hard structural range of
 on every estimate — no combination of TF selections can push a family's πᵢ outside that window.
 
 - **Linear profile** (MSE = {_m1_lin:.4f}): high error because the Linear profile contains values
-  at both extremes (e.g. 0.1 and 0.9 for k=3), which Method 1 physically cannot reach. All families
+  at both extremes (e.g. 0.1 and 0.9 for k={val_k}), which Method 1 physically cannot reach. All families
   are pulled toward the middle, simultaneously underestimating the high-π families and overestimating
   the low-π ones.
 - **Quadratic profile** (MSE = {_m1_quad:.4f}): lower error because the Quadratic values cluster
