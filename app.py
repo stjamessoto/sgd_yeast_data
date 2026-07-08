@@ -3827,23 +3827,26 @@ def _val_load_pi4_for_test():
         return None, str(e)
 
 
+def _linear_profile(k, lo=0.1, hi=0.9):
+    """πᵢ linear in the family index i: πᵢ = lo + (hi - lo) · i / (k - 1)."""
+    return [lo + (hi - lo) * i / (k - 1) for i in range(k)]
+
+
+def _quadratic_profile(k, lo=0.1, peak=0.5):
+    """πᵢ quadratic in the family index i: symmetric parabola peaking at the
+    middle family, πᵢ = peak - (peak - lo) · (2i / (k - 1) - 1)²."""
+    return [peak - (peak - lo) * (2 * i / (k - 1) - 1) ** 2 for i in range(k)]
+
+
+_LABEL_LINEAR = "Linear in family index"
+_LABEL_QUADRATIC = "Quadratic in family index"
 _VAL_PROFILES = {
-    3: {
-        "Linear":    [0.1, 0.5, 0.9],
-        "Quadratic": [0.3, 0.5, 0.3],
-    },
-    4: {
-        "Linear":    [0.2, 0.4, 0.6, 0.8],
-        "Quadratic": [0.1, 0.5, 0.5, 0.1],
-    },
-    5: {
-        "Linear":    [0.1, 0.3, 0.5, 0.7, 0.9],
-        "Quadratic": [0.1, 0.4, 0.5, 0.4, 0.1],
-    },
+    k: {_LABEL_LINEAR: _linear_profile(k), _LABEL_QUADRATIC: _quadratic_profile(k)}
+    for k in (3, 4, 5)
 }
 _VAL_N_VALUES = [20, 50, 100]
 _VAL_M = 7
-_PROFILE_COLORS = {"Linear": "#2563eb", "Quadratic": "#7c3aed"}
+_PROFILE_COLORS = {_LABEL_LINEAR: "#2563eb", _LABEL_QUADRATIC: "#7c3aed"}
 
 
 def _val_per_family_chart(x_labels, true_pi_vec, est_pi_vec, est_label, title):
@@ -4188,7 +4191,7 @@ with tab9:
             results_df.groupby("Profile")["Per-family MSE"].mean().reset_index()
         )
         mse_summary["Profile"] = pd.Categorical(
-            mse_summary["Profile"], categories=["Linear", "Quadratic"], ordered=True
+            mse_summary["Profile"], categories=[_LABEL_LINEAR, _LABEL_QUADRATIC], ordered=True
         )
         mse_summary = mse_summary.sort_values("Profile")
 
@@ -5556,9 +5559,9 @@ the **Y1000+ π Estimators** tab to unlock M5, M6, and M7 for those families.
                             parts.append(f"{r['Profile']} MSE = {r[col]:.4f}")
                     return "; ".join(parts) if parts else "data not available"
 
-                _lin_mse  = {col: next((r[col] for r in cmp_rows if r["Profile"]=="Linear"), float("nan"))
+                _lin_mse  = {col: next((r[col] for r in cmp_rows if r["Profile"]==_LABEL_LINEAR), float("nan"))
                              for col in _method_cols if col in _avg_mse}
-                _quad_mse = {col: next((r[col] for r in cmp_rows if r["Profile"]=="Quadratic"), float("nan"))
+                _quad_mse = {col: next((r[col] for r in cmp_rows if r["Profile"]==_LABEL_QUADRATIC), float("nan"))
                              for col in _method_cols if col in _avg_mse}
 
                 # M1 explanation
