@@ -35,6 +35,15 @@ import networkx as nx
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+from matplotlib.patches import Patch
+
+LEGEND_HANDLES = [
+    Line2D([0], [0], color="#27ae60", lw=2.5,
+           label="higher-breadth family → lower-breadth family"),
+    Patch(facecolor="#c0392b", edgecolor="white", label="connected (≥1 shared-target edge)"),
+    Patch(facecolor="#7f8c8d", edgecolor="white", label="isolated (no shared-target edge)"),
+]
 
 OUT_DIR = Path(__file__).parent
 OUT_GRID_PNG = OUT_DIR / "dominant_coregulation_flow_grid.png"
@@ -115,10 +124,11 @@ fig1, ax1 = plt.subplots(figsize=(6.4, 6.4))
 draw_directed(ax1, WG, node_size_scale=6.5, base_node=260)
 ax1.set_title(
     "Dominant co-regulation flow — all 7 GO-Process families\n"
-    "arrow points from higher regulatory-breadth family to lower  ·  "
     "width = # shared-target TF pairs",
     fontsize=9.5,
 )
+ax1.legend(handles=LEGEND_HANDLES, loc="lower center", fontsize=8,
+           framealpha=0.9, bbox_to_anchor=(0.5, -0.1))
 fig1.tight_layout()
 fig1.savefig(OUT_WHOLE_PNG, dpi=150, bbox_inches="tight")
 plt.close(fig1)
@@ -142,11 +152,12 @@ for ax, c in zip(axes, sorted(combo_graphs, key=lambda c: (len(c["isolated"]), c
 for ax in axes[len(combo_graphs):]:
     ax.axis("off")
 fig2.suptitle(
-    "Dominant co-regulation flow in all 21 five-family (k=5) motif combinations\n"
-    "arrow: higher-breadth family -> lower-breadth family, on the same shared-target edges",
+    "Dominant co-regulation flow in all 21 five-family (k=5) motif combinations",
     fontsize=10.5, fontweight="bold", y=0.99,
 )
-fig2.tight_layout(rect=[0, 0, 1, 0.94])
+fig2.legend(handles=LEGEND_HANDLES, loc="lower center", ncol=3, fontsize=9,
+            framealpha=0.9, bbox_to_anchor=(0.5, -0.015))
+fig2.tight_layout(rect=[0, 0.03, 1, 0.94])
 fig2.savefig(OUT_GRID_PNG, dpi=150, bbox_inches="tight")
 plt.close(fig2)
 print(f"Grid figure saved: {OUT_GRID_PNG}")

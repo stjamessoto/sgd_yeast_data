@@ -36,6 +36,15 @@ import networkx as nx
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+from matplotlib.patches import Patch
+
+LEGEND_HANDLES = [
+    Line2D([0], [0], color="#e67e22", lw=2.5,
+           label="higher πᵢ family → lower πᵢ family (PROXY ONLY)"),
+    Patch(facecolor="#c0392b", edgecolor="white", label="connected (≥1 shared-target edge)"),
+    Patch(facecolor="#7f8c8d", edgecolor="white", label="isolated (no shared-target edge)"),
+]
 
 OUT_DIR = Path(__file__).parent
 OUT_GRID_PNG = OUT_DIR / "duplication_inheritance_order_grid.png"
@@ -108,10 +117,11 @@ fig1, ax1 = plt.subplots(figsize=(6.4, 6.4))
 draw_directed(ax1, WG, node_size_scale=6.5, base_node=260)
 ax1.set_title(
     "Duplication/inheritance-order proxy — all 7 GO-Process families\n"
-    "arrow: higher pi_i (evidence-based retention) -> lower pi_i  ·  "
-    "PROXY ONLY, not literal ohnolog ancestry (see module docstring)",
+    "not literal ohnolog ancestry (see module docstring)",
     fontsize=8.8,
 )
+ax1.legend(handles=LEGEND_HANDLES, loc="lower center", fontsize=8,
+           framealpha=0.9, bbox_to_anchor=(0.5, -0.1))
 fig1.tight_layout()
 fig1.savefig(OUT_WHOLE_PNG, dpi=150, bbox_inches="tight")
 plt.close(fig1)
@@ -135,11 +145,12 @@ for ax, c in zip(axes, sorted(combo_graphs, key=lambda c: (len(c["isolated"]), c
 for ax in axes[len(combo_graphs):]:
     ax.axis("off")
 fig2.suptitle(
-    "Duplication/inheritance-order proxy in all 21 five-family (k=5) motif combinations\n"
-    "arrow: higher pi_i -> lower pi_i, on the same shared-target edges  ·  PROXY ONLY",
+    "Duplication/inheritance-order proxy in all 21 five-family (k=5) motif combinations  ·  PROXY ONLY",
     fontsize=10.2, fontweight="bold", y=0.99,
 )
-fig2.tight_layout(rect=[0, 0, 1, 0.94])
+fig2.legend(handles=LEGEND_HANDLES, loc="lower center", ncol=3, fontsize=9,
+            framealpha=0.9, bbox_to_anchor=(0.5, -0.015))
+fig2.tight_layout(rect=[0, 0.03, 1, 0.94])
 fig2.savefig(OUT_GRID_PNG, dpi=150, bbox_inches="tight")
 plt.close(fig2)
 print(f"Grid figure saved: {OUT_GRID_PNG}")
