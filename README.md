@@ -27,6 +27,8 @@ python main.py significance --k 2 --strategy largest
 
 The app opens at `http://localhost:8501`. Cross-species data (π₂, π₃, π₄) is generated automatically in the background on first launch — see [Y1000+ Pipeline](#y1000-pipeline) for details.
 
+New to the app? Click **📘 Open User's Manual** on the Overview tab (the first tab) — it opens a self-contained, step-by-step guide to every control and tab in a new browser tab, independent of the Streamlit session.
+
 > **Note:** Utility scripts have moved to `scripts/`. Use `python scripts/utils/check_progress.py`, `python scripts/utils/reset_y1000_generation.py`, and `python scripts/data/download_y1000plus.py` instead of the root-level paths shown in older docs.
 
 ---
@@ -299,7 +301,7 @@ sgd_yeast_data/
 │       ├── gff3/                 Extracted per-species GFF3 annotation files
 │       └── pep/                  Extracted per-species peptide FASTA files
 │
-├── app.py                        Streamlit frontend (9 tabs)
+├── app.py                        Streamlit frontend (10 tabs)
 ├── main.py                       Command-line interface
 ├── requirements.txt
 └── README.md
@@ -307,7 +309,7 @@ sgd_yeast_data/
 
 ---
 
-## App — Nine Tabs
+## App — Ten Tabs
 
 ```bash
 python -m streamlit run app.py
@@ -315,7 +317,7 @@ python -m streamlit run app.py
 
 | Tab | Contents |
 |-----|----------|
-| **Overview** | Card-by-card map of all tabs — what each does and what data it uses |
+| **Overview** | Card-by-card map of all tabs — what each does and what data it uses; a **📘 Open User's Manual** button opens a standalone, step-by-step HTML guide to every control in a new browser tab |
 | **Introduction** | Plain-language biology primer: what duplication is, what π means |
 | **Methodology** | Mathematical background: Theorems 1–8, Pólya urn, Full vs Partial Duplication |
 | **TF Explorer** | Browse 179 TFs; evidence codes, GO terms, JASPAR PFMs, YEASTRACT consensus sequences, sequence logos, regulatory targets |
@@ -325,6 +327,8 @@ python -m streamlit run app.py
 | **Y1000+ π Estimators** | π₂/π₃/π₄ results with live generation status; per-TF retention histogram; per-gene upstream retention figure (1,000 bp from translational start, averaged across all targeting TFs); pairwise shared binding-site bar chart (y-axis fixed to [0,1]); π₃ vs π₁ scatter; phylogenetic context; expandable methodology guide on cross-species π inference with a **clickable button** linking to the Method Estimation Test tab |
 | **Method Estimation Test** | Synthetic validation of all seven estimation methods plus the multi-signal ensemble against known π profiles. Select a method (Method 1 – Evidence-based, Method 2 – Moment Estimation, Method 3 – SNP Divergence, Method 4 – Consensus-adjusted, **Method 5 – Y1000+ π₃ TFBS Conservation**, **Method 6 – Y1000+ π₂ Sequence Homology**, **Method 7 – Y1000+ π₄ Binding-site SNPs**, or **Multi-signal Ensemble**), a motif size k (3, 4, or 5), and — for Methods 1, 4, 5, 6, 7, and Ensemble — a set of k TFs. Each method estimates π from its real data source and the result is compared against Linear and Quadratic true-π profiles via per-family MSE (computed analytically over 2 profiles; **Method 2 additionally runs 1,000 Poisson-sampled partial duplication replicas** to show noise-aware MSE). Methods 1, 3, 4, 5, 6, 7, and Ensemble caption their MSE with a note that no partial duplication simulation is needed — their estimates come from independent data, not from observed motif counts. Every combination selector shows a `C(m, k)` caption stating how many k-family combinations are possible from the available families. A **📊 Compare All Methods** expander at the bottom runs all seven methods simultaneously with the same gene set, displays a grouped bar chart and rank table, highlights the winner, and includes a live per-method explanation of *why* each method achieves its accuracy level. Both the π Estimator tab and the Y1000+ π Estimators tab contain **clickable buttons** (JavaScript tab-jump) that navigate here directly; work both locally and on Streamlit Cloud. |
 | **Glossary & References** | Definitions of all model terms and full citations; includes a **⬇️ download button** for `Pi_estimation.pdf` — a self-contained reference covering all seven estimation methods, notation tables, accuracy rankings, and practical recommendations |
+
+The **User's Manual** is generated as a self-contained HTML string (`_USER_MANUAL_HTML` in `app.py`) and opened via a `Blob` + `window.open(..., "_blank")` call — the same "open in new tab" mechanism used for `Pi_estimation.pdf` — so it stays out of the Glossary & References tab and doesn't add to its scroll length.
 
 ### Sidebar settings
 

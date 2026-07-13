@@ -333,6 +333,211 @@ def _pi_interpretation(pi_hat: float, k: int, m: int, n: int) -> str:
 
 
 # ---------------------------------------------------------------------------
+# User's Manual — standalone HTML document opened in a new browser tab from
+# the Overview tab (kept out of the Glossary & References tab to avoid
+# crowding it further).
+# ---------------------------------------------------------------------------
+
+_USER_MANUAL_HTML = """<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>User's Manual — GRN Inheritance Model</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem;
+    line-height: 1.55; color: #1a1a1a; background: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { color: #e6e6e6; background: #121212; }
+    a { color: #7aa2f7; }
+    .card { background: #1c1c1c; border-color: #333; }
+    code { background: #2a2a2a; }
+  }
+  h1 { font-size: 1.7rem; margin-bottom: 0.2rem; }
+  h2 { font-size: 1.25rem; margin-top: 2.2rem; border-bottom: 2px solid #2563eb; padding-bottom: 0.3rem; }
+  h3 { font-size: 1.05rem; margin-top: 1.4rem; }
+  .subtitle { color: #6b7280; margin-top: 0; margin-bottom: 1.8rem; }
+  .card {
+    border: 1px solid #e5e7eb; border-radius: 10px; padding: 1rem 1.2rem;
+    margin: 1rem 0; background: #f9fafb;
+  }
+  ul, ol { padding-left: 1.3rem; }
+  li { margin-bottom: 0.35rem; }
+  code { background: #eef1f5; padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.92em; }
+  .tag {
+    display: inline-block; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.03em;
+    text-transform: uppercase; color: #2563eb; margin-bottom: 0.3rem;
+  }
+</style>
+</head>
+<body>
+
+<h1>📘 User's Manual</h1>
+<p class="subtitle">GRN Inheritance Model &mdash; Scruse, Arnold &amp; Robinson (2026)</p>
+
+<p>A practical, step-by-step guide to every control and tab in the app &mdash;
+what to click and what happens. The app has <strong>ten tabs</strong>, covered below in
+the order they appear, left to right. For the conceptual introduction, see the
+<strong>📘 Introduction</strong> tab in the app; for a one-glance map of every tab, see
+<strong>📋 Overview</strong>. Keep this document open alongside the app while you work
+&mdash; it opened in its own browser tab, so it won't be lost if you navigate the app.</p>
+
+<div class="card">
+<span class="tag">Quick Start</span>
+<ol>
+  <li><strong>Start in the sidebar.</strong> Set your Min. evidence score filter, Max TFs for
+      network build, Min gene-family size, and Family grouping method &mdash; these apply
+      globally to every tab.</li>
+  <li><strong>Read Introduction and Methodology</strong> if you want the biological /
+      mathematical background before touching any data.</li>
+  <li><strong>Explore TF Explorer</strong> to get familiar with the underlying
+      transcription-factor data.</li>
+  <li><strong>Build families in Gene Families</strong>, then <strong>estimate π in
+      π Estimator</strong>.</li>
+  <li><strong>Test significance</strong> in Motif Significance, <strong>cross-check with
+      real genomes</strong> in Y1000+ π Estimators, and <strong>validate the methods
+      themselves</strong> in Method Estimation Test.</li>
+  <li><strong>Visit Glossary &amp; References</strong> any time you hit an unfamiliar term
+      or want a citation.</li>
+</ol>
+</div>
+
+<h2>⚙️ Sidebar — Global Settings</h2>
+<p>The sidebar controls apply across the whole app, not just one tab.</p>
+<ul>
+  <li><strong>Min. evidence score filter</strong> &mdash; hides TFs whose SGD evidence-code
+      quality score falls below this threshold. Raise it to focus on well-studied TFs only;
+      leave at 0.0 to include everything.</li>
+  <li><strong>Max TFs for network build</strong> &mdash; caps how many TFs are used when
+      building the TF &rarr; target regulatory network graph (performance safeguard on
+      large networks).</li>
+  <li><strong>Min gene-family size</strong> &mdash; the smallest family size counted when
+      grouping genes; 1 is the model's assumption that every family starts as a singleton.</li>
+  <li><strong>Family grouping method</strong> &mdash; chooses how genes are clustered into
+      paralog families: by GO Biological Process, GO Molecular Function, GO Cellular
+      Component, or by JASPAR TF Class/Family (DNA-binding domain similarity). This choice
+      changes the family sizes and therefore the derived m, n, d parameters everywhere
+      downstream.</li>
+</ul>
+
+<h2>📘 Introduction tab</h2>
+<p>Start here for a plain-language explanation of gene duplication, subnetwork motifs, and
+why inheritance probability π matters. No controls to operate &mdash; just read top to
+bottom. Ends with a How to Use This App section and a Data Sources summary of JASPAR,
+YEASTRACT, SGD, and Y1000+.</p>
+
+<h2>📋 Overview tab</h2>
+<p>The app's home/landing tab. Click any of the expander cards to see what a tab does,
+what data it uses, and what question it answers &mdash; useful for deciding where to go
+next. The <strong>📘 Open User's Manual</strong> button at the top opens this document.</p>
+
+<h2>📊 Methodology tab</h2>
+<p>Read-only mathematical background: Theorems 1&ndash;8, the Pólya urn model, Full vs.
+Partial Duplication, and the significance-testing framework. Expand Key Mathematical
+Framework and Binding Sites: What Do They Bind? for detail. No data selections are made
+here &mdash; it's reference material for the tabs that follow.</p>
+
+<h2>🔬 TF Explorer tab</h2>
+<ol>
+  <li>Use the <strong>role filter</strong> (multiselect) to narrow TFs by
+      activator/repressor/DNA-binding role.</li>
+  <li>Pick a single TF from the <strong>Single TF Deep-dive</strong> selectbox to see its
+      JASPAR PFM, IUPAC consensus sequences (expand YEASTRACT Consensus Sequences),
+      information content, GO annotations, and evidence score.</li>
+  <li>Scroll to <strong>TF &rarr; Target Regulatory Network</strong> to see that TF's
+      regulatory targets as a graph (respects the sidebar's Max TFs for network build cap).</li>
+  <li>Expand <strong>What is the Evidence Score?</strong> if the score column is
+      unfamiliar.</li>
+</ol>
+
+<h2>👨‍👩‍👧 Gene Families tab</h2>
+<ol>
+  <li>Families are built automatically using the sidebar's Family grouping method and
+      Min gene-family size.</li>
+  <li>Review <strong>Top Gene Families</strong> for the size distribution.</li>
+  <li>Expand <strong>Connection to the Pólya Urn Model</strong> to see how family sizes
+      translate into the model parameters <strong>m</strong> (number of families),
+      <strong>n</strong> (total genes), and <strong>d = n &minus; m</strong> (duplication
+      events) &mdash; these three numbers feed directly into every downstream tab.</li>
+</ol>
+
+<h2>🎲 π Estimator tab</h2>
+<ol>
+  <li><strong>Step 1 &mdash; Define the subnetwork motif:</strong> choose motif size k and
+      a family selection strategy (largest / highest evidence / balanced / random).</li>
+  <li>Pick an estimation <strong>method</strong> with the radio buttons: Method 1
+      (evidence-based), Method 2 (Moment Estimation / Theorem 4), Method 3 (SNP divergence
+      at YFL039C), or Method 4 (YEASTRACT consensus flexibility). Expand About the four
+      estimation methods for a comparison table and recommendations on which to use when.</li>
+  <li>Each method shows a <strong>🔍 What do these results mean?</strong> and a
+      <strong>📖 How this method works &mdash; step by step</strong> expander directly
+      beneath its output &mdash; read these before trusting a number.</li>
+  <li><strong>Step 3 &mdash; π̂ Sensitivity Analysis</strong> (Corollary 9) shows how
+      robust the estimate is to small changes in the inputs.</li>
+  <li>Inside the methodology expander, a <strong>🧮 Open Method Estimation Test</strong>
+      button jumps straight to the validation tab for that method.</li>
+</ol>
+
+<h2>🧪 Motif Significance tab</h2>
+<p>Two sub-tabs:</p>
+<ul>
+  <li><strong>📊 Inferential Test:</strong> configure k and a π-estimation method, then
+      click Run Significance Test to get Z-scores, p-values, and a Variance Decomposition
+      against both Full and Partial Duplication null models. Expand What do these results
+      mean? for interpretation, or Full result JSON for raw output.</li>
+  <li><strong>🔮 Predictive Forecast:</strong> Step 1 configures the motif (same controls
+      as above), Step 2 sets a forecast horizon (extra duplication events), and the
+      Forecast Summary projects future motif counts.</li>
+</ul>
+
+<h2>🌍 Y1000+ π Estimators tab</h2>
+<ol>
+  <li>On first launch, background data generation runs automatically across 1,154 yeast
+      genomes &mdash; check the <strong>Y1000+ dataset status</strong> expander at the
+      bottom if results seem to be missing, or click Generate now to force it.</li>
+  <li>Review <strong>Species panel &amp; phylogenetic context</strong> to see the
+      48-species panel used.</li>
+  <li>Choose a <strong>method</strong> (radio) and <strong>family definition</strong>
+      (selectbox), then scroll through the three estimator sections: π₃ &mdash; TFBS
+      Conservation, π₂ &mdash; Sequence Homology, and π₄ &mdash; SNP rate at binding
+      sites. Each has a TF/gene selector, a 🔍 results-mean? expander, a 📖 step-by-step
+      expander, and a Full table expander for raw numbers.</li>
+  <li><strong>Cross-estimator comparison</strong> at the bottom benchmarks π₃ against the
+      evidence-based π₁ from the π Estimator tab.</li>
+</ol>
+
+<h2>🧮 Method Estimation Test tab</h2>
+<ol>
+  <li>Pick a method with the top radio buttons: M1&ndash;M7 (each corresponding to a
+      π Estimator / Y1000+ method) or Ensemble (multi-signal combination).</li>
+  <li>Expand <strong>Parameter glossary</strong> if the m/n/k notation is unfamiliar.</li>
+  <li>Choose motif size k (3, 4, or 5) and, for methods that need it, select the TFs/genes
+      via the multiselect control.</li>
+  <li>Read the <strong>Summary &mdash; all profiles</strong> and
+      <strong>Per-family MSE / breakdown</strong> sections to see how close the method's
+      estimate is to the known synthetic Linear and Quadratic π profiles. Method 2
+      additionally runs a 1,000-replica Poisson simulation shown further down.</li>
+  <li>Expand <strong>📊 Compare All Methods</strong> at the very bottom to rank all seven
+      methods plus the ensemble by average MSE, with an explanation of why each one
+      performs the way it does.</li>
+</ol>
+
+<h2>📖 Glossary &amp; References tab</h2>
+<p>Use <strong>📄 Method Reference Document</strong> to download or open the full PDF
+write-up, <strong>📚 Primary References</strong> for citations to the source papers, and
+<strong>🔤 Glossary of Terms</strong> for definitions of every symbol and term (π, m, n,
+d, k-motif, Pólya urn, evidence code, &hellip;) &mdash; alphabetically ordered, click any
+term to expand its definition.</p>
+
+</body>
+</html>
+"""
+
+
+# ---------------------------------------------------------------------------
 # Sidebar
 # ---------------------------------------------------------------------------
 
@@ -596,6 +801,36 @@ with tab1:
         "A quick map of every tab in this app — what it contains, what data it uses, "
         "and what questions it answers."
     )
+
+    # User's Manual: opens as a standalone HTML document in a new browser tab
+    # (same blob/window.open mechanism as the "Open in new tab" PDF button in
+    # the Glossary & References tab), rather than navigating within the app.
+    _manual_b64 = base64.b64encode(_USER_MANUAL_HTML.encode("utf-8")).decode()
+    components.html(f"""
+    <script>
+    function openUserManual() {{
+        const b64 = "{_manual_b64}";
+        const binary = atob(b64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        const blob = new Blob([bytes], {{type: "text/html;charset=utf-8"}});
+        window.open(URL.createObjectURL(blob), "_blank");
+    }}
+    </script>
+    <button onclick="openUserManual()" style="padding:8px 20px; background:#2563eb; color:white;
+            border:none; border-radius:6px; font-size:0.92em; font-weight:500;
+            font-family:-apple-system,BlinkMacSystemFont,sans-serif; cursor:pointer;"
+       onmouseover="this.style.background='#1d4ed8'"
+       onmouseout="this.style.background='#2563eb'">
+      📘 Open User's Manual ↗
+    </button>
+    """, height=48)
+
+    st.caption(
+        "New to the app? The **User's Manual** opens in a new browser tab and walks "
+        "through every control, tab, and workflow step by step."
+    )
+    st.divider()
 
     tabs_info = [
         {
