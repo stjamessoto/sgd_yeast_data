@@ -617,6 +617,78 @@ with st.sidebar:
 
 
 # ---------------------------------------------------------------------------
+# Shared download / open-in-new-tab button pair (identical size across every
+# tab that uses it; only the background colors differ between the two).
+# ---------------------------------------------------------------------------
+
+def _file_action_buttons(
+    file_bytes: bytes,
+    mime: str,
+    file_name: str,
+    download_label: str,
+    open_label: str,
+    download_color: str = "#2563eb",
+    open_color: str = "#FF4B4B",
+):
+    """Render a download button and an 'open in new tab' button, side by side,
+    at identical size — both are plain HTML buttons so their padding, font
+    size, and border-radius always match regardless of Streamlit's own
+    default button styling."""
+    b64 = base64.b64encode(file_bytes).decode()
+    btn_css = (
+        "width:100%;box-sizing:border-box;padding:0.5rem 0.8rem;border:none;"
+        "border-radius:0.4rem;cursor:pointer;font-size:0.9rem;font-weight:500;"
+        "font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:white;"
+    )
+    col_dl, col_open = st.columns(2)
+    with col_dl:
+        components.html(
+            f"""
+            <script>
+            function _dlFile() {{
+                const b64 = "{b64}";
+                const binary = atob(b64);
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                const blob = new Blob([bytes], {{type: "{mime}"}});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "{file_name}";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }}
+            </script>
+            <button onclick="_dlFile()" style="{btn_css}background:{download_color};">
+                {download_label}
+            </button>
+            """,
+            height=48,
+        )
+    with col_open:
+        components.html(
+            f"""
+            <script>
+            function _openFile() {{
+                const b64 = "{b64}";
+                const binary = atob(b64);
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                const blob = new Blob([bytes], {{type: "{mime}"}});
+                window.open(URL.createObjectURL(blob), "_blank");
+            }}
+            </script>
+            <button onclick="_openFile()" style="{btn_css}background:{open_color};">
+                {open_label}
+            </button>
+            """,
+            height=48,
+        )
+
+
+# ---------------------------------------------------------------------------
 # Tabs
 # ---------------------------------------------------------------------------
 
@@ -812,33 +884,20 @@ with tab1:
         "and what questions it answers."
     )
 
-    # User's Manual: opens as a standalone HTML document in a new browser tab
-    # (same blob/window.open mechanism as the "Open in new tab" PDF button in
-    # the Glossary & References tab), rather than navigating within the app.
-    _manual_b64 = base64.b64encode(_USER_MANUAL_HTML.encode("utf-8")).decode()
-    components.html(f"""
-    <script>
-    function openUserManual() {{
-        const b64 = "{_manual_b64}";
-        const binary = atob(b64);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-        const blob = new Blob([bytes], {{type: "text/html;charset=utf-8"}});
-        window.open(URL.createObjectURL(blob), "_blank");
-    }}
-    </script>
-    <button onclick="openUserManual()" style="padding:8px 20px; background:#2563eb; color:white;
-            border:none; border-radius:6px; font-size:0.92em; font-weight:500;
-            font-family:-apple-system,BlinkMacSystemFont,sans-serif; cursor:pointer;"
-       onmouseover="this.style.background='#1d4ed8'"
-       onmouseout="this.style.background='#2563eb'">
-      📘 Open User's Manual ↗
-    </button>
-    """, height=48)
+    # User's Manual: download and "open in new tab" buttons side by side,
+    # sized identically to the PDF reference document buttons in the
+    # Glossary & References tab (only the colors differ between the two).
+    _file_action_buttons(
+        file_bytes=_USER_MANUAL_HTML.encode("utf-8"),
+        mime="text/html;charset=utf-8",
+        file_name="Users_Manual.html",
+        download_label="⬇️ Download User's Manual",
+        open_label="↗️ Open User's Manual in new tab",
+    )
 
     st.caption(
-        "New to the app? The **User's Manual** opens in a new browser tab and walks "
-        "through every control, tab, and workflow step by step."
+        "New to the app? The **User's Manual** walks through every control, tab, and "
+        "workflow step by step — download it or open it in a new browser tab."
     )
     st.divider()
 
@@ -2707,37 +2766,13 @@ with tab8:
         if _pdf_path.exists():
             with open(_pdf_path, "rb") as _pdf_fh:
                 _pdf_bytes = _pdf_fh.read()
-            _pdf_b64 = base64.b64encode(_pdf_bytes).decode()
-            _col_dl, _col_open = st.columns(2)
-            with _col_dl:
-                st.download_button(
-                    label="⬇️ Download Pi_estimation.pdf",
-                    data=_pdf_bytes,
-                    file_name="Pi_estimation.pdf",
-                    mime="application/pdf",
-                    use_container_width=True,
-                )
-            with _col_open:
-                components.html(
-                    f"""
-                    <script>
-                    function openPDF() {{
-                        const b64 = "{_pdf_b64}";
-                        const binary = atob(b64);
-                        const bytes = new Uint8Array(binary.length);
-                        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-                        const blob = new Blob([bytes], {{type: "application/pdf"}});
-                        window.open(URL.createObjectURL(blob), "_blank");
-                    }}
-                    </script>
-                    <button onclick="openPDF()" style="width:100%;padding:0.4rem 0.8rem;
-                        background:#FF4B4B;color:white;border:none;border-radius:0.4rem;
-                        cursor:pointer;font-size:0.9rem;font-family:sans-serif;">
-                        ↗️ Open in new tab
-                    </button>
-                    """,
-                    height=45,
-                )
+            _file_action_buttons(
+                file_bytes=_pdf_bytes,
+                mime="application/pdf",
+                file_name="Pi_estimation.pdf",
+                download_label="⬇️ Download Pi_estimation.pdf",
+                open_label="↗️ Open in new tab",
+            )
         else:
             st.warning("Pi_estimation.pdf not found in static/.", icon="⚠️")
 
