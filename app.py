@@ -344,32 +344,42 @@ _USER_MANUAL_HTML = """<!doctype html>
 <meta charset="utf-8">
 <title>User's Manual — GRN Inheritance Model</title>
 <style>
-  :root { color-scheme: light dark; }
+  :root {
+    color-scheme: light dark;
+    --fg: #1a1a1a; --bg: #ffffff; --link: #2563eb; --subtitle: #6b7280;
+    --card-bg: #f9fafb; --card-border: #e5e7eb; --code-bg: #eef1f5;
+    --h2-rule: #2563eb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fg: #e6e6e6; --bg: #121212; --link: #7aa2f7; --subtitle: #a3a3a3;
+      --card-bg: #1c1c1c; --card-border: #333333; --code-bg: #2a2a2a;
+      --h2-rule: #7aa2f7;
+    }
+  }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
     max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem;
-    line-height: 1.55; color: #1a1a1a; background: #ffffff;
+    line-height: 1.55; color: var(--fg); background: var(--bg);
   }
-  @media (prefers-color-scheme: dark) {
-    body { color: #e6e6e6; background: #121212; }
-    a { color: #7aa2f7; }
-    .card { background: #1c1c1c; border-color: #333; }
-    code { background: #2a2a2a; }
-  }
+  a { color: var(--link); }
   h1 { font-size: 1.7rem; margin-bottom: 0.2rem; }
-  h2 { font-size: 1.25rem; margin-top: 2.2rem; border-bottom: 2px solid #2563eb; padding-bottom: 0.3rem; }
+  h2 {
+    font-size: 1.25rem; margin-top: 2.2rem; border-bottom: 2px solid var(--h2-rule);
+    padding-bottom: 0.3rem;
+  }
   h3 { font-size: 1.05rem; margin-top: 1.4rem; }
-  .subtitle { color: #6b7280; margin-top: 0; margin-bottom: 1.8rem; }
+  .subtitle { color: var(--subtitle); margin-top: 0; margin-bottom: 1.8rem; }
   .card {
-    border: 1px solid #e5e7eb; border-radius: 10px; padding: 1rem 1.2rem;
-    margin: 1rem 0; background: #f9fafb;
+    border: 1px solid var(--card-border); border-radius: 10px; padding: 1rem 1.2rem;
+    margin: 1rem 0; background: var(--card-bg);
   }
   ul, ol { padding-left: 1.3rem; }
   li { margin-bottom: 0.35rem; }
-  code { background: #eef1f5; padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.92em; }
+  code { background: var(--code-bg); padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.92em; }
   .tag {
     display: inline-block; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.03em;
-    text-transform: uppercase; color: #2563eb; margin-bottom: 0.3rem;
+    text-transform: uppercase; color: var(--link); margin-bottom: 0.3rem;
   }
 </style>
 </head>
