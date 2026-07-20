@@ -2281,6 +2281,15 @@ Binary Inheritance is the refinement of Partial Duplication that *maximises* E[|
 
         st.markdown(f"**Selected {k5} families:** {', '.join(gene_names5[:4])}{'…' if k5 > 4 else ''}")
         st.markdown(f"Family sizes: {family_sizes5}  |  Full-duplication count: **{obs_full5:,}**")
+        st.info(
+            f"The **Observed count** field below is pre-filled with **{obs_full5:,}**, the "
+            "Full Duplication Cartesian product (c₁ × c₂ × ... × cₖ of the family sizes above) — "
+            "**not** a real observed count from network data. This app has no ground-truth motif "
+            "census, so the Full Duplication upper bound is used as a placeholder starting point. "
+            "Left unedited, the test will trivially report *no significant difference* (Z ≈ 0), "
+            "since the input equals the Full Duplication expectation by construction. "
+            "**Replace it with your own observed |M(n)| to get a meaningful result.**"
+        )
 
         # Get π
         if pi_method5 == "Evidence-based":
@@ -2306,10 +2315,15 @@ Binary Inheritance is the refinement of Partial Duplication that *maximises* E[|
 
         # Observed count input
         obs5 = st.number_input(
-            "Observed motif instance count |M(n)|",
+            "Observed motif instance count |M(n)| — edit this to your real observed value",
             min_value=0, max_value=max(obs_full5 * 2, 10),
             value=obs_full5, step=1,
-            help="Under Full Duplication this equals the Cartesian product of family sizes.",
+            help=(
+                "Defaults to the Full Duplication Cartesian product (c₁ × c₂ × ... × cₖ), "
+                "used as a placeholder since this app has no real observed motif census. "
+                "This is an upper-bound estimate, not a measured value — edit it to test "
+                "an actual observed count."
+            ),
         )
 
         # Run analysis
