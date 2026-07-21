@@ -381,8 +381,9 @@ def layout_tree(G, root):
 
 
 ypos, depth, parent, leaf_order = layout_tree(Gr, root_node)
+root_y = ypos[root_node]
 
-fig1, ax1 = plt.subplots(figsize=(9, 5.5))
+fig1, ax1 = plt.subplots(figsize=(9.5, 6))
 for node, p in parent.items():
     if p is None:
         continue
@@ -398,22 +399,46 @@ for node in Gr.nodes:
 for leaf in leaf_order:
     fam = FAM_BY_IDX[leaf]
     tag = "  <- RNA World outgroup" if leaf == OUTGROUP else ""
-    ax1.text(depth[leaf] + diam * 0.015, ypos[leaf],
+    ax1.text(depth[leaf] + diam * 0.02, ypos[leaf],
               f"F{leaf}  {fam['name']}{tag}", va="center", fontsize=8)
-ax1.axvline(0, color="#95a5a6", lw=0.8, ls="--")
-ax1.text(0, -0.7, "root\n(F5 branch\nmidpoint)", ha="center", fontsize=7, color="#7f8c8d")
-ax1.set_xlabel("Divergence from the RNA-synthesis (F5) outgroup root (weighted regulatory-link character changes)")
+
+# root marker: label placed in the empty space above the tree, connected to
+# the actual root point with a thin line, so it never collides with the
+# x-axis tick labels or the F5 leaf's own text below it.
+ax1.axvline(0, color="#bdc3c7", lw=0.8, ls="--", zorder=0)
+ax1.annotate(
+    "root (F5 branch midpoint)",
+    xy=(0, root_y), xycoords="data",
+    xytext=(diam * 0.05, len(leaf_order) - 0.35), textcoords="data",
+    fontsize=7.5, color="#7f8c8d", ha="left", va="top",
+    arrowprops=dict(arrowstyle="-", color="#95a5a6", lw=0.7,
+                     connectionstyle="arc3,rad=-0.2"),
+)
+
+ax1.set_xlim(-diam * 0.02, diam * 1.28)
+ax1.set_ylim(-0.6, len(leaf_order) - 0.1)
+ax1.set_xlabel("Divergence from the RNA-synthesis (F5) outgroup root "
+               "(weighted regulatory-link character changes)")
 ax1.set_yticks([])
 for spine in ("top", "right", "left"):
     ax1.spines[spine].set_visible(False)
 ax1.set_title(
-    f"Maximum-parsimony tree of 7 GO-Process TF families, from binary\n"
-    f"regulatory-link characters (pi4 target coverage) -- score {best_score:.0f} changes, "
-    f"rooted on F5 (core RNA-Pol-II transcription) per the RNA World hypothesis "
-    f"(PROXY, not a dated phylogeny -- see module docstring)",
-    fontsize=9.2,
+    "Maximum-parsimony tree of 7 GO-Process TF families\n"
+    f"binary regulatory-link characters (pi4 target coverage)  --  score {best_score:.0f} changes\n"
+    "rooted on F5 (core RNA-Pol-II transcription) per the RNA World hypothesis  --  "
+    "PROXY, not a dated phylogeny",
+    fontsize=9.5, pad=14, linespacing=1.6,
 )
-fig1.tight_layout()
+source_text = (
+    "Data source: pi4 SNP-derived TF binding-site predictions "
+    "(y1000plus_data/processed/pi4_snp_binding_sites.csv)  |  "
+    "TF families: GO-Process groupings (model/gene_families.py)"
+)
+fig1.text(0.5, 0.005, source_text, ha="center", va="bottom", fontsize=6.5,
+           color="#555555",
+           bbox=dict(boxstyle="round,pad=0.35", facecolor="#f7f7f7",
+                      edgecolor="#bbbbbb", linewidth=0.6))
+fig1.tight_layout(rect=[0, 0.035, 1, 1])
 fig1.savefig(OUT_TREE_PNG, dpi=150, bbox_inches="tight")
 plt.close(fig1)
 print(f"\nTree figure saved: {OUT_TREE_PNG}")
