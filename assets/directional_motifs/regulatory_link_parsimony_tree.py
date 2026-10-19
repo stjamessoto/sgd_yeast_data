@@ -383,63 +383,42 @@ def layout_tree(G, root):
 ypos, depth, parent, leaf_order = layout_tree(Gr, root_node)
 root_y = ypos[root_node]
 
-fig1, ax1 = plt.subplots(figsize=(9.5, 6))
+# Science style: 2-column width, no title or source box, no guide lines
+sys.path.insert(0, str(Path(__file__).parent.parent))
+import science_style as sci
+sci.apply()
+
+fig1, ax1 = plt.subplots(figsize=(sci.WIDTH_2COL, 6.4 * sci.CM))
+fig1.subplots_adjust(left=0.05, right=0.98, top=0.97, bottom=0.17)
 for node, p in parent.items():
     if p is None:
         continue
     ax1.plot([depth[p], depth[node]], [ypos[p], ypos[node]],
-             color="#2c3e50", lw=1.8, solid_capstyle="round")
+             color=sci.BLACK, lw=0.9, solid_capstyle="round")
 for node in Gr.nodes:
     is_leaf = node in TAXA
     is_outgroup = node == OUTGROUP
     ax1.scatter([depth[node]], [ypos[node]],
-                s=110 if is_outgroup else (90 if is_leaf else 28),
-                color="#2980b9" if is_outgroup else ("#c0392b" if is_leaf else "#7f8c8d"),
-                edgecolor="white", linewidths=0.8, zorder=3)
+                s=16 if is_leaf else 5,
+                color=sci.BLUE if is_outgroup else (sci.VERMILLION if is_leaf else sci.GRAY),
+                linewidths=0, zorder=3)
 for leaf in leaf_order:
     fam = FAM_BY_IDX[leaf]
-    tag = "  <- RNA World outgroup" if leaf == OUTGROUP else ""
-    ax1.text(depth[leaf] + diam * 0.02, ypos[leaf],
-              f"F{leaf}  {fam['name']}{tag}", va="center", fontsize=8)
+    tag = " (outgroup)" if leaf == OUTGROUP else ""
+    ax1.text(depth[leaf] + diam * 0.015, ypos[leaf],
+             f"F{leaf}  {fam['name']}{tag}", va="center", fontsize=6)
+ax1.text(-diam * 0.012, root_y, "Root", ha="right", va="center", fontsize=6)
 
-# root marker: label placed in the empty space above the tree, connected to
-# the actual root point with a thin line, so it never collides with the
-# x-axis tick labels or the F5 leaf's own text below it.
-ax1.axvline(0, color="#bdc3c7", lw=0.8, ls="--", zorder=0)
-ax1.annotate(
-    "root (F5 branch midpoint)",
-    xy=(0, root_y), xycoords="data",
-    xytext=(diam * 0.05, len(leaf_order) - 0.35), textcoords="data",
-    fontsize=7.5, color="#7f8c8d", ha="left", va="top",
-    arrowprops=dict(arrowstyle="-", color="#95a5a6", lw=0.7,
-                     connectionstyle="arc3,rad=-0.2"),
-)
-
-ax1.set_xlim(-diam * 0.02, diam * 1.28)
-ax1.set_ylim(-0.6, len(leaf_order) - 0.1)
-ax1.set_xlabel("Divergence from the RNA-synthesis (F5) outgroup root "
-               "(weighted regulatory-link character changes)")
+ax1.set_xlim(-diam * 0.09, diam * 1.95)   # room for the longest leaf label
+ax1.set_ylim(-0.5, len(leaf_order) - 0.5)
+_xt = list(np.arange(0, np.ceil(diam / 1000) * 1000 + 1, 1000))   # axis spans the deepest leaf
+ax1.set_xticks(_xt)
+ax1.set_xlabel("Weighted regulatory-link character changes from root")
 ax1.set_yticks([])
 for spine in ("top", "right", "left"):
     ax1.spines[spine].set_visible(False)
-ax1.set_title(
-    "Maximum-parsimony tree of 7 GO-Process TF families\n"
-    f"binary regulatory-link characters (pi4 target coverage)  --  score {best_score:.0f} changes\n"
-    "rooted on F5 (core RNA-Pol-II transcription) per the RNA World hypothesis  --  "
-    "PROXY, not a dated phylogeny",
-    fontsize=9.5, pad=14, linespacing=1.6,
-)
-source_text = (
-    "Data source: pi4 SNP-derived TF binding-site predictions "
-    "(y1000plus_data/processed/pi4_snp_binding_sites.csv)  |  "
-    "TF families: GO-Process groupings (model/gene_families.py)"
-)
-fig1.text(0.5, 0.005, source_text, ha="center", va="bottom", fontsize=6.5,
-           color="#555555",
-           bbox=dict(boxstyle="round,pad=0.35", facecolor="#f7f7f7",
-                      edgecolor="#bbbbbb", linewidth=0.6))
-fig1.tight_layout(rect=[0, 0.035, 1, 1])
-fig1.savefig(OUT_TREE_PNG, dpi=150, bbox_inches="tight")
+ax1.spines["bottom"].set_bounds(0, max(_xt))
+fig1.savefig(OUT_TREE_PNG, dpi=sci.DPI)
 plt.close(fig1)
 print(f"\nTree figure saved: {OUT_TREE_PNG}")
 

@@ -11,8 +11,8 @@ dominant_coregulation_flow.py and duplication_inheritance_order.py). Each
 method colors its arrows differently and means something different by
 them, so each gets its own file and its own legend rather than one script
 with a combined legend that would misrepresent the other two methods'
-arrow colors -- this file's purple/blue legend matches
-tf_regulates_tf_cascade.py's own ARROW_LEGEND exactly.
+arrow colors -- this file's legend describes only this method's
+arrows (vermillion = mutual, blue = one-way).
 
 WHY THIS IS SEPARATE FROM THE EXISTING GRID
 tf_regulates_tf_cascade.py already draws all 21 combos as a grid, sorted
@@ -46,6 +46,7 @@ from itertools import combinations as icombs
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from _shared_family_data import load_families, load_pi4
 
 import pandas as pd
@@ -54,17 +55,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
-from matplotlib.patches import Patch
 
-LEGEND_HANDLES = [
-    Line2D([0], [0], color="#8e44ad", lw=2.5,
-           label="mutual / feedback  (A→B and B→A both exist)"),
-    Line2D([0], [0], color="#2980b9", lw=2.5,
-           label="one-way  (A→B only, no edge back)"),
-    Patch(facecolor="#c0392b", edgecolor="white", label="connected node (≥1 edge)"),
-    Patch(facecolor="#7f8c8d", edgecolor="white", label="isolated node (0 edges)"),
-    Patch(facecolor="#eaf2f8", edgecolor="#95a5a6", label="background shade = topology group"),
-]
 
 OUT_DIR = Path(__file__).parent
 REPO_ROOT = OUT_DIR.parent.parent
@@ -141,65 +132,70 @@ for key, members in sorted(buckets.items(), key=lambda kv: group_ids[kv[0]]):
     print(f"  Group {gid}: {n_edges} directed edges, {n_mut} mutual pair(s), "
           f"{n_iso} isolated node(s)  ->  {len(members)} combos: {nums}")
 
-# ── grid figure, panels ordered/shaded by topology group ───────────────────
-GROUP_PALETTE = [
-    "#eaf2f8", "#fdebd0", "#eafaf1", "#f9ebea", "#f4ecf7",
-    "#fef9e7", "#e8f8f5", "#fadbd8", "#e8eaf6", "#fff3e0",
+# ── grid figure (Science style: 3-column width, no title, no shading) ───────
+import science_style as sci
+sci.apply()
+
+MUTUAL_COLOR, ONEWAY_COLOR = sci.VERMILLION, sci.BLUE
+LEGEND_HANDLES = [
+    Line2D([0], [0], color=MUTUAL_COLOR, lw=1.4, label="Mutual (A→B and B→A)"),
+    Line2D([0], [0], color=ONEWAY_COLOR, lw=1.4, label="One-way (A→B only)"),
+    Line2D([0], [0], marker="o", ls="none", markersize=5, markerfacecolor=sci.BLACK,
+           markeredgecolor=sci.BLACK, label="Family with ≥1 edge"),
+    Line2D([0], [0], marker="o", ls="none", markersize=5, markerfacecolor="white",
+           markeredgecolor=sci.GRAY, label="Family with no edges"),
 ]
+
 combos_sorted = sorted(combos, key=lambda c: (c["group"], c["num"]))
-fig, axes = plt.subplots(3, 7, figsize=(15.5, 7.6))
+fig, axes = plt.subplots(3, 7, figsize=(sci.WIDTH_3COL, 9.4 * sci.CM))
+fig.subplots_adjust(left=0.005, right=0.995, top=0.94, bottom=0.10, wspace=0.06, hspace=0.45)
 axes = axes.flatten()
 sizes_by_idx = {f["idx"]: f["size"] for f in fam_list}
 
 for ax, c in zip(axes, combos_sorted):
     G = c["G"]
     pos = nx.circular_layout(G)
-    ax.set_facecolor(GROUP_PALETTE[(c["group"] - 1) % len(GROUP_PALETTE)])
-    node_sizes = [140 + 5.5 * sizes_by_idx[n] for n in G.nodes]
-    node_colors = ["#7f8c8d" if G.degree(n) == 0 else "#c0392b" for n in G.nodes]
+    isolated = {n for n in G.nodes if G.degree(n) == 0}
+    node_sizes = [75 + 0.9 * sizes_by_idx[n] for n in G.nodes]   # min size fits a 5 pt label
     max_w = max((d["weight"] for _, _, d in G.edges(data=True)), default=1)
     for u, v, d in G.edges(data=True):
         bidir = G.has_edge(v, u)
-        rad = 0.15 if bidir else 0.0
-        ecolor = "#8e44ad" if bidir else "#2980b9"
         ax.annotate(
             "", xy=pos[v], xytext=pos[u],
             arrowprops=dict(
-                arrowstyle="-|>", color=ecolor, alpha=0.8,
-                linewidth=0.5 + 2.6 * (d["weight"] / max_w),
-                connectionstyle=f"arc3,rad={rad}",
-                shrinkA=13, shrinkB=13, mutation_scale=10,
+                arrowstyle="-|>", color=MUTUAL_COLOR if bidir else ONEWAY_COLOR,
+                linewidth=0.3 + 1.2 * (d["weight"] / max_w),
+                connectionstyle=f"arc3,rad={0.18 if bidir else 0.0}",
+                shrinkA=7, shrinkB=7, mutation_scale=5,
             ),
         )
-    nx.draw_networkx_nodes(G, pos, ax=ax, node_size=node_sizes,
-                            node_color=node_colors, edgecolors="white",
-                            linewidths=0.8, alpha=0.95)
-    nx.draw_networkx_labels(G, pos, ax=ax, labels={n: f"F{n}" for n in G.nodes},
-                             font_size=6, font_color="white", font_weight="bold")
-    ax.set_xlim(-1.35, 1.35)
-    ax.set_ylim(-1.35, 1.35)
-    for spine in ax.spines.values():
-        spine.set_visible(True)
-        spine.set_color("#95a5a6")
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.set_title(
-        f"#{c['num']}  {c['label']}  (group {c['group']})\n"
-        f"{c['n_edges']} edges" + (f", {c['n_mutual']} mutual" if c["n_mutual"] else ""),
-        fontsize=6.5, pad=2,
+    nx.draw_networkx_nodes(
+        G, pos, ax=ax, node_size=node_sizes,
+        node_color=["white" if n in isolated else sci.BLACK for n in G.nodes],
+        edgecolors=[sci.GRAY if n in isolated else sci.BLACK for n in G.nodes],
+        linewidths=0.6,
     )
+    for n in G.nodes:
+        ax.text(*pos[n], f"F{n}", fontsize=5, ha="center", va="center",
+                color=sci.GRAY if n in isolated else "white", fontweight="bold")
+    ax.set_xlim(-1.3, 1.3)
+    ax.set_ylim(-1.3, 1.3)
+    ax.set_aspect("equal")
+    ax.axis("off")
+    ax.text(0.0, 1.0, f"#{c['num']}", transform=ax.transAxes, fontsize=8,
+            fontweight="bold", ha="left", va="bottom")
+    ax.text(0.98, 1.0, c["label"], transform=ax.transAxes, fontsize=5,
+            ha="right", va="bottom")
+    ax.text(0.5, -0.06, f"Group {c['group']}: {c['n_edges']} edges, {c['n_mutual']} mutual",
+            transform=ax.transAxes, fontsize=5, ha="center", va="top")
 for ax in axes[len(combos_sorted):]:
     ax.axis("off")
 
-fig.suptitle(
-    "TF-regulates-TF cascade (real binding direction)\n"
-    "all 21 combos, numbered and shaded by topology group "
-    "(same # directed edges + same # mutual pairs = same shading)",
-    fontsize=10, fontweight="bold", y=0.995,
-)
-fig.legend(handles=LEGEND_HANDLES, loc="lower center", ncol=3, fontsize=8.5,
-           framealpha=0.9, bbox_to_anchor=(0.5, -0.02))
-fig.tight_layout(rect=[0, 0.035, 1, 0.94])
-fig.savefig(OUT_PNG, dpi=150, bbox_inches="tight")
+if not any(c["n_isolated"] for c in combos):
+    LEGEND_HANDLES = LEGEND_HANDLES[:3]
+    LEGEND_HANDLES[2].set_label("TF family")
+fig.legend(handles=LEGEND_HANDLES, loc="lower center", ncol=len(LEGEND_HANDLES), fontsize=6,
+           bbox_to_anchor=(0.5, 0.0), handlelength=1.8, columnspacing=2.0)
+fig.savefig(OUT_PNG, dpi=sci.DPI)
 plt.close(fig)
-print(f"\nGrid figure saved: {OUT_PNG}")
+print(f"Grid figure saved: {OUT_PNG}")

@@ -4,7 +4,7 @@ Run: python _generate_doc.py
 """
 
 import sys, io, math
-from itertools import combinations as icombs, product as iproduct
+from itertools import combinations as icombs
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -14,7 +14,6 @@ from scipy.stats import norm
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 
 from docx import Document
 from docx.shared import Pt, Inches, RGBColor
@@ -53,50 +52,10 @@ for i, (_, row) in enumerate(families.iterrows()):
         'member_tfs': [t.upper() for t in row['member_tfs']],
     })
 
-# ── pi4 binding data: TF → set of target gene IDs ─────────────────────────
-_PI4_PATH = Path(__file__).parent.parent.parent / 'y1000plus_data' / 'processed' / 'pi4_snp_binding_sites.csv'
-_pi4_df   = pd.read_csv(_PI4_PATH, usecols=['tf_name', 'target_gene_id'])
-_pi4_df['tf_name'] = _pi4_df['tf_name'].str.upper()
-# Build lookup: TF name → frozenset of target gene IDs
-_tf_targets: dict[str, frozenset] = {
-    tf: frozenset(grp['target_gene_id'])
-    for tf, grp in _pi4_df.groupby('tf_name')
-}
-_pi4_tfs = set(_tf_targets)
-
-
 # ── Method 1 (corrected): normalize evidence scores per paper Eq. 3 ────────
 # π̂ᵢ = raw evidence score; πᵢ = π̂ᵢ / Σⱼ π̂ⱼ  (Scruse et al. Eq. 3)
 _ev_total = sum(f['ev'] for f in fam_list)
 _fam_pi   = {f['idx']: f['ev'] / _ev_total for f in fam_list}
-
-
-def _count_coreg(fams_sel):
-    """
-    Count k-tuples (one TF per family) that all share ≥1 common target,
-    using the pi4 JASPAR binding data.  Falls back to Cartesian product
-    if none of the families have pi4 coverage.
-    """
-    # Filter each family to the TFs that appear in the pi4 data
-    covered = [
-        [tf for tf in f['member_tfs'] if tf in _pi4_tfs]
-        for f in fams_sel
-    ]
-    # If any family has no coverage at all, fall back to Cartesian product
-    if any(len(c) == 0 for c in covered):
-        return math.prod(f['size'] for f in fams_sel), True
-
-    count = 0
-    for tf_tuple in iproduct(*covered):
-        # Intersection of target sets across all k TFs
-        shared = _tf_targets[tf_tuple[0]]
-        for tf in tf_tuple[1:]:
-            shared = shared & _tf_targets[tf]
-            if not shared:
-                break
-        if shared:
-            count += 1
-    return count, False
 
 
 def run_motifs(k):
@@ -106,14 +65,14 @@ def run_motifs(k):
         sizes    = [f['size']  for f in fams_sel]
         label    = '+'.join('F%d' % f['idx'] for f in fams_sel)
         pi_vec   = [_fam_pi[f['idx']] for f in fams_sel]
-        obs, fallback = _count_coreg(fams_sel)
+        # observed = Cartesian product of family sizes: one gene per family
+        obs      = math.prod(sizes)
         try:
             sig = full_significance_analysis(pi_vec, M, N, float(obs), k)
         except Exception:
             continue
         out.append({
             'label': label, 'sizes': sizes, 'obs': obs,
-            'fallback': fallback,
             'z':  sig['z_partial'], 'p':  sig['p_partial'],
             'sig': sig['sig_partial'],
         })
@@ -150,82 +109,62 @@ sig4  = sum(1 for r in res4 if r.get('bh_sig'))
 over3 = sum(1 for r in res3 if r.get('bh_sig') and r['z'] and r['z'] > 0)
 over4 = sum(1 for r in res4 if r.get('bh_sig') and r['z'] and r['z'] > 0)
 
-# ── figure ─────────────────────────────────────────────────────────────────
-fig, (ax_strip, ax_hist) = plt.subplots(
-    1, 2, figsize=(8.2, 4.6),
-    gridspec_kw={'width_ratios': [1, 1.6], 'left': 0.07,
-                 'right': 0.97, 'top': 0.88, 'bottom': 0.14, 'wspace': 0.35}
-)
+# ── figure (Science style: 2-column width, no title, see assets/science_style.py)
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'assets'))
+import science_style as sci
+sci.apply()
 
-# ── left panel: strip / jitter chart ──────────────────────────────────────
-np.random.seed(42)
-z3_vals = [r['z'] for r in res3 if r['z'] is not None]
-z4_vals = [r['z'] for r in res4 if r['z'] is not None]
-lz3 = np.log10(np.maximum(z3_vals, 1e-4))
-lz4 = np.log10(np.maximum(z4_vals, 1e-4))
+fig = plt.figure(figsize=(sci.WIDTH_2COL, 5.6 * sci.CM))
+ax_strip = fig.add_axes([0.11, 0.17, 0.30, 0.76])
+ax_hist  = fig.add_axes([0.53, 0.17, 0.45, 0.76])
 
+z3_vals = np.array([r['z'] for r in res3 if r['z'] is not None])
+z4_vals = np.array([r['z'] for r in res4 if r['z'] is not None])
+lz3, lz4 = np.log10(z3_vals), np.log10(z4_vals)
 sig3_mask = np.array([r.get('bh_sig', False) for r in res3 if r['z'] is not None])
 sig4_mask = np.array([r.get('bh_sig', False) for r in res4 if r['z'] is not None])
+K_COLORS = (sci.BLUE, sci.VERMILLION)
 
-jit3 = np.random.uniform(-0.16, 0.16, len(lz3))
-jit4 = np.random.uniform(-0.16, 0.16, len(lz4))
-
-# significant points
-ax_strip.scatter(0 + jit3[sig3_mask],  lz3[sig3_mask],
-                 c='#c0392b', s=28, alpha=0.8, linewidths=0, zorder=3)
-ax_strip.scatter(1 + jit4[sig4_mask],  lz4[sig4_mask],
-                 c='#c0392b', s=28, alpha=0.8, linewidths=0, zorder=3)
-# non-significant points
-ax_strip.scatter(0 + jit3[~sig3_mask], lz3[~sig3_mask],
-                 c='#aaaaaa', s=28, alpha=0.9, linewidths=0, zorder=3)
-ax_strip.scatter(1 + jit4[~sig4_mask], lz4[~sig4_mask],
-                 c='#aaaaaa', s=28, alpha=0.9, linewidths=0, zorder=3)
-
-# label the non-significant k=3 points
-for r in res3:
-    if r['z'] is not None and not r.get('bh_sig', False):
-        ax_strip.annotate(
-            r['label'], xy=(0, np.log10(max(r['z'], 1e-4))),
-            xytext=(0.22, np.log10(max(r['z'], 1e-4))),
-            fontsize=6.5, color='#555555',
-            arrowprops=dict(arrowstyle='-', color='#aaaaaa', lw=0.8),
-        )
-
-ax_strip.axhline(SIG_THRESH, color='#e74c3c', linestyle='--', linewidth=1.2,
-                 label='BH FDR=5%%  (Z=%.2f)' % BH_CRIT_Z, zorder=2)
+# ── panel A: one point per motif combination; open = not significant ──────
+rng = np.random.default_rng(42)
+for x0, lz, mask, col in ((0, lz3, sig3_mask, K_COLORS[0]), (1, lz4, sig4_mask, K_COLORS[1])):
+    jit = x0 + rng.uniform(-0.18, 0.18, len(lz))
+    ax_strip.scatter(jit[mask], lz[mask], s=9, color=col, linewidths=0, zorder=3)
+    ax_strip.scatter(jit[~mask], lz[~mask], s=9, facecolors='none', edgecolors=col,
+                     linewidths=0.6, zorder=3)
+ax_strip.axhline(SIG_THRESH, color=sci.BLACK, linestyle='--', linewidth=0.7, zorder=2)
 ax_strip.set_xticks([0, 1])
-ax_strip.set_xticklabels(['k=3\n(3-node)', 'k=4\n(4-node)'], fontsize=9)
-ax_strip.set_ylabel('log₁₀(Z-score)', fontsize=9)
-ax_strip.set_xlim(-0.5, 1.5)
-ax_strip.set_title('Each point = one\nmotif combination', fontsize=8.5, pad=4)
+ax_strip.set_xticklabels(['3', '4'])
+ax_strip.set_xlabel('Motif size, k (families)')
+ax_strip.set_xlim(-0.55, 1.55)
+_yt = np.arange(0, 8)
+_tick_labels = ['1', '10'] + ['10$^{%d}$' % e for e in _yt[2:]]
+ax_strip.set_yticks(_yt)
+ax_strip.set_yticklabels(_tick_labels)
+ax_strip.set_ylim(0, 7)
+ax_strip.set_ylabel('Z-score')
 
-patches = [mpatches.Patch(color='#c0392b', label='significant (BH FDR<5%)'),
-           mpatches.Patch(color='#aaaaaa', label='not significant')]
-ax_strip.legend(handles=patches, fontsize=7.5, loc='upper left',
-                framealpha=0.85, borderpad=0.5)
+# ── panel B: Z-score distribution, side-by-side bars per k ─────────────────
+# edges start at the BH threshold so no bar straddles the significance line
+bins = SIG_THRESH + 0.5 * np.arange(-2, 14)
+ax_hist.hist([lz3, lz4], bins=bins, color=list(K_COLORS), rwidth=0.9,
+             label=['k = 3 (n = %d)' % len(lz3), 'k = 4 (n = %d)' % len(lz4)])
+ax_hist.axvline(SIG_THRESH, color=sci.BLACK, linestyle='--', linewidth=0.7,
+                label='BH threshold, FDR = 0.05 (Z = %.2f)' % BH_CRIT_Z)
+ax_hist.set_xticks(_yt)
+ax_hist.set_xticklabels(_tick_labels)
+ax_hist.set_xlim(0, 7)
+ax_hist.set_xlabel('Z-score')
+ax_hist.set_ylabel('Motif combinations')
+# headroom so the legend never overlaps a bar
+ax_hist.set_ylim(0, max(np.histogram(lz3, bins)[0].max(), np.histogram(lz4, bins)[0].max()) * 1.4)
+ax_hist.legend(loc='upper right', handlelength=1.6)
 
-# ── right panel: histogram ─────────────────────────────────────────────────
-bins = np.linspace(-1.5, 5.5, 14)
-ax_hist.hist(lz3, bins=bins, color='#2980b9', alpha=0.75,
-             label='k=3  (n=35)', edgecolor='white', linewidth=0.5)
-ax_hist.hist(lz4, bins=bins, color='#c0392b', alpha=0.72,
-             label='k=4  (n=35)', edgecolor='white', linewidth=0.5)
-ax_hist.axvline(SIG_THRESH, color='black', linestyle='--',
-                linewidth=1.4, label='BH FDR=5%')
-ax_hist.axvspan(SIG_THRESH, 6.0, alpha=0.07, color='red')
-ax_hist.set_xlabel('Z-score  (log₁₀ axis)', fontsize=9)
-ax_hist.set_ylabel('Count', fontsize=9)
-ax_hist.set_title('Z-score distribution\n(all 70 combinations)', fontsize=8.5, pad=4)
-ax_hist.legend(fontsize=7.5, framealpha=0.85, borderpad=0.5)
-ax_hist.set_xticks([-1, 0, 1, 2, 3, 4, 5])
-ax_hist.set_xticklabels(['0.1', '1', '10', '100', '1k', '10k', '100k'], fontsize=8)
-ax_hist.set_xlim(-1.8, 5.6)
+sci.panel_label(fig, ax_strip, 'A', dx=-0.075)
+sci.panel_label(fig, ax_hist, 'B', dx=-0.075)
 
-fig.suptitle(
-    'Subnetwork Motif Significance  ·  S. cerevisiae GRN  '
-    '(m=%d families, n=%d TFs, Partial Duplication null)' % (M, N),
-    fontsize=10, fontweight='bold'
-)
+OUT_PNG = Path(__file__).parent.parent.parent / 'assets' / 'motif_significance.png'
+fig.savefig(OUT_PNG, dpi=sci.DPI)
 
 buf = io.BytesIO()
 fig.savefig(buf, format='png', dpi=150, bbox_inches='tight')
@@ -316,17 +255,14 @@ intro_run = intro_body.add_run(
     'families form subnetwork motifs at rates that exceed neutral expectations under '
     'the Partial Duplication model of Scruse, Arnold & Robinson (2026). The model '
     'parameterises gene regulatory network (GRN) inheritance through a per-family '
-    'probability π̂ that a regulatory link survives a duplication event, estimated '
-    'via Method of Moments inversion of Theorem 4. We enumerate all C(7,3) = 35 '
+    'probability πᵢ that a regulatory link survives a duplication event. We enumerate all C(7,3) = 35 '
     'three-node and C(7,4) = 35 four-node family combinations (70 total), compute '
     'the Cartesian product of family sizes as the observed co-membership count, and '
     'derive Z-scores using the Binary Inheritance variance (Corollary 16) to assess '
     'statistical significance against the Partial Duplication null, with '
     'Benjamini-Hochberg FDR correction applied across all 70 tests (α = 5%). '
     'Per-family inheritance probabilities πᵢ are estimated from SGD evidence '
-    'codes and normalized by their sum across all m families (Eq. 3). '
-    'Observed motif counts are actual co-regulatory k-tuples from JASPAR '
-    'pi4 binding data.'
+    'codes and normalized by their sum across all m families (Eq. 3).'
 )
 intro_run.font.size = Pt(9)
 
@@ -431,6 +367,7 @@ kf_run = kf.add_run(
 )
 kf_run.bold = True; kf_run.font.size = Pt(9)
 
+_z_by_label = {r['label']: r['z'] for r in res3 + res4}
 _ns3 = [r['label'] for r in res3 if not r.get('bh_sig', False) and r['z'] is not None]
 _ns3_str = (', '.join(_ns3) + ' — ') if _ns3 else 'none — all k=3 combinations are significant. '
 kf_body = kf.add_run(
@@ -440,10 +377,12 @@ kf_body = kf.add_run(
     'these combinations include near-singleton families (F6: 2 TFs, F7: 1 TF) whose '
     'Cartesian products fall close to the Partial Duplication expected count. '
     'The strongest over-representation involves the three largest families — '
-    'F1+F2+F3 (101×98×86 = 851,228; Z = 13,766) and '
-    'F1+F2+F3+F4 (Z = 153,482 for k=4) — reflecting dense co-regulatory wiring '
+    'F1+F2+F3 (101×98×86 = 851,228; Z = %s) and '
+    'F1+F2+F3+F4 (Z = %s for k=4) — reflecting dense co-regulatory wiring '
     'among core RNA Pol II transcriptional regulators far exceeding neutral '
-    'duplication predictions.' % (sig3, round(100 * sig3 / 35), sig4, _ns3_str)
+    'duplication predictions.' % (sig3, round(100 * sig3 / 35), sig4, _ns3_str,
+                              '{:,.0f}'.format(_z_by_label['F1+F2+F3']),
+                              '{:,.0f}'.format(_z_by_label['F1+F2+F3+F4']))
 )
 kf_body.font.size = Pt(9)
 
