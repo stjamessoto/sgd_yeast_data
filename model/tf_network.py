@@ -55,6 +55,16 @@ REGULATION_GO_TERMS = {
     "GO:0006357": "regulation of transcription by RNAP II",
 }
 
+# Umbrella process terms carried by nearly every TF (and every other
+# regulator). Sharing one of these says nothing about a specific regulatory
+# relationship, so they are excluded when inferring TF → target edges.
+GENERIC_PROCESS_TERMS = set(REGULATION_GO_TERMS) | {
+    "GO:0006351",  # transcription, DNA-templated
+    "GO:0045893",  # positive regulation of transcription, DNA-templated
+    "GO:0045892",  # negative regulation of transcription, DNA-templated
+    "GO:0008150",  # biological_process (root / unknown)
+}
+
 
 # ---------------------------------------------------------------------------
 # 1. TF identification
@@ -222,7 +232,11 @@ def build_tf_target_map(
     Build a long-format DataFrame of (tf_name, target_gene, shared_go_process, evidence_score).
 
     Method: a gene is a candidate target of TF X if both share at least one
-    Biological Process GO term (go_aspect == 'P').  Evidence quality is the
+    specific Biological Process GO term (go_aspect == 'P').  The TF's process
+    terms come from the full SGD GO annotation file, minus the generic
+    transcription-regulation umbrella terms (GENERIC_PROCESS_TERMS); those are
+    shared by every TF and would make each TF "regulate" every other
+    regulator (~300 targets/TF instead of ~50).  Evidence quality is the
     mean of the TF's evidence score and the target gene's evidence score for
     that term.
 
@@ -235,7 +249,11 @@ def build_tf_target_map(
         tfs = tfs.head(max_tfs)
 
     go_full = load_go_annotations_full()
-    go_process = go_full[go_full["go_aspect"] == "P"].copy()
+    go_process = go_full[
+        (go_full["go_aspect"] == "P")
+        & ~go_full["go_id"].isin(GENERIC_PROCESS_TERMS)
+    ].copy()
+    gene_process_terms = go_process.groupby("gene_name")["go_id"].apply(set).to_dict()
 
     # Build lookup: go_id → {gene_name: evidence_score}
     go_gene_map: dict[str, dict[str, float]] = {}
@@ -252,7 +270,7 @@ def build_tf_target_map(
     for _, tf_row in tfs.iterrows():
         tf_name = tf_row["gene_name"]
         tf_ev = float(tf_row["evidence_score"])
-        process_terms = tf_row["tf_process_go_list"]
+        process_terms = gene_process_terms.get(tf_name, set())
 
         seen: dict[str, tuple[str, float]] = {}  # target → (go_id, score)
         for go_id in process_terms:

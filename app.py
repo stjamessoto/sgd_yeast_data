@@ -748,8 +748,7 @@ with tab0:
     col_a, col_b = st.columns(2)
     with col_a:
         st.markdown("""
-        **Subnetwork motif** — a pattern of TFs from *k* different gene families
-        all co-regulating the same target. The model counts how many such patterns
+        **Subnetwork motif** — a pattern of TFs from *k* different gene families. Gene-family-specific substructures, instances must involve specific labelled gene families The model counts how many such patterns
         exist in the GRN and asks: *is this count surprising?*
 
         **Full Duplication (π = 1)** — every duplication perfectly copies all
@@ -3214,7 +3213,7 @@ Subnetwork motifs differ from network motifs (Milo et al.) in that they carry
     with st.expander("Transcription Factor (TF)"):
         st.markdown("""
 A protein that binds specific DNA sequences (**binding sites / TFBS**) to control
-the rate of transcription of nearby genes. TFs are the primary regulatory elements
+the rate of transcription of nearby genes. TFs are the best studied regulatory elements
 in a GRN.
 
 In this app, TFs are sourced from:
