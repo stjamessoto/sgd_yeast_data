@@ -748,7 +748,7 @@ with tab0:
     col_a, col_b = st.columns(2)
     with col_a:
         st.markdown("""
-        **Subnetwork motif** — a pattern of TFs from *k* different gene families. Gene-family-specific substructures, instances must involve specific labelled gene families The model counts how many such patterns
+        **Subnetwork motif** — a pattern of TFs from *k* different gene families. Gene-family-specific substructures, instances must involve specific labelled gene families. The model counts how many such patterns
         exist in the GRN and asks: *is this count surprising?*
 
         **Full Duplication (π = 1)** — every duplication perfectly copies all
